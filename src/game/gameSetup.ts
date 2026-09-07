@@ -30,6 +30,7 @@ export const createScenarioContext = (situation: Situation): ScenarioContext => 
   hits: 0,
   flags: {},
   records: [],
+  completionRecords: [],
   playerBase: null,
 })
 

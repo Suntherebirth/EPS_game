@@ -25,6 +25,9 @@ export type Play = {
 }
 
 export const RUNNING_CHANCES = {
+  outfieldDropClear: 0.1,
+  outfieldDropAmbiguous: 0.15,
+  advanceOnAmbiguousDrop: 0.7,
   stealSecond: 0.72,
   stealThird: 0.68,
   safeAdvance: 0.94,

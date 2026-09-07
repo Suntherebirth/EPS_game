@@ -43,13 +43,13 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     ...EMPTY_BASES_SINGLE_NODES,
     'hit.single.firstThird': {
       id: 'hit.single.firstThird', type: 'event', view: 'runner:first', title: '1루타',
-      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '1루타, 3루 주자 득점' }, { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.' }],
-      transition: { to: 'runner.route' },
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '1루타' }, { type: 'record', message: '3루 주자 득점', showInCompletion: false }, { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.' }],
+      transition: { to: 'single.outfield.check' },
     },
     'hit.single.generic': {
       id: 'hit.single.generic', type: 'event', view: 'runner:first', title: '1루타',
       effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '1루타' }, { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.' }],
-      transition: { to: 'runner.route' },
+      transition: { to: 'single.outfield.check' },
     },
     'hit.double.generic': completeEvent('hit.double.generic', '2루타', [{ type: 'applyHit', batterTo: 2, creditHit: true }]),
     'hit.triple.generic': completeEvent('hit.triple.generic', '3루타', [{ type: 'applyHit', batterTo: 3, creditHit: true }]),

@@ -6,7 +6,16 @@ const cloneContext = (context: ScenarioContext): ScenarioContext => ({
   bases: [...context.bases],
   flags: { ...context.flags },
   records: [...context.records],
+  completionRecords: [...context.completionRecords],
 })
+
+const makeRoomForRunner = (bases: number[], base: number): { bases: number[]; runs: number } => {
+  if (!bases.includes(base)) return { bases, runs: 0 }
+  const withoutRunner = bases.filter((occupiedBase) => occupiedBase !== base)
+  if (base === 3) return { bases: withoutRunner, runs: 1 }
+  const advanced = makeRoomForRunner(withoutRunner, base + 1)
+  return { bases: [...advanced.bases, base + 1], runs: advanced.runs }
+}
 
 export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEffect): ScenarioContext => {
   const next = cloneContext(context)
@@ -17,9 +26,17 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'setBases') next.bases = [...effect.value]
   if (effect.type === 'placeRunner' && !next.bases.includes(effect.base)) next.bases.push(effect.base)
   if (effect.type === 'setFlag') next.flags[effect.key] = effect.value
-  if (effect.type === 'record') next.records.push(effect.message)
+  if (effect.type === 'record') {
+    next.records.push(effect.message)
+    if (effect.showInCompletion ?? true) next.completionRecords.push(effect.message)
+  }
   if (effect.type === 'setPlayerBase') next.playerBase = effect.value
-  if (effect.type === 'announce') next.announcement = { title: effect.title, detail: effect.detail }
+  if (effect.type === 'announce') {
+    next.announcement = {
+      title: effect.title,
+      detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : effect.detail,
+    }
+  }
 
   if (effect.type === 'applyHit') {
     if (next.playerBase !== null) {
@@ -68,6 +85,22 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     if (next.playerBase === effect.from) next.playerBase = typeof effect.to === 'number' ? effect.to : null
   }
 
+  if (effect.type === 'movePlayer' && next.playerBase !== null) {
+    next.bases = next.bases.filter((base) => base !== next.playerBase)
+    if (effect.to === 'home') {
+      next.runs += 1
+      next.playerBase = null
+    } else if (effect.to === 'out') {
+      next.outs = Math.min(3, next.outs + 1)
+      next.playerBase = null
+    } else {
+      const room = makeRoomForRunner(next.bases, effect.to)
+      next.bases = [...room.bases, effect.to]
+      next.runs += room.runs
+      next.playerBase = effect.to
+    }
+  }
+
   if (effect.type === 'applyBattingEvent') {
     const event = BATTING_EVENTS.find((item) => item.kind === next.battingEvent)
     if (!event) throw new Error(`적용할 타격 이벤트가 없습니다: ${next.battingEvent ?? 'undefined'}`)
@@ -80,9 +113,17 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
         : event.advance > 0
           ? applyScenarioEffect(next, { type: 'applyHit', batterTo: event.advance, creditHit: event.hit })
           : applyScenarioEffect(next, { type: 'addOuts', value: event.outs })
-    const destination = resolved.playerBase === null ? '홈에 들어왔습니다.' : `${resolved.playerBase}루에 도착했습니다.`
+    if (resolved.outs >= 3) {
+      resolved.announcement = { title: `후속 타자: ${event.label}!`, detail: '3아웃 · 공수교대입니다.' }
+      return resolved
+    }
+    const destination = resolved.playerBase === null
+      ? '홈에 들어왔습니다.'
+      : resolved.playerBase === before
+        ? `${before}루에서 움직이지 못했습니다.`
+        : `${resolved.playerBase}루에 도착했습니다.`
     resolved.announcement = {
-      title: `후속 타자 ${event.label}!`,
+      title: `후속 타자: ${event.label}!`,
       detail: before === null ? '후속 타자의 플레이가 끝났습니다.' : destination,
     }
     return resolved
@@ -92,6 +133,8 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (next.outs >= 3) {
     next.bases = []
     next.playerBase = null
+    if (next.announcement) next.announcement = { ...next.announcement, detail: '3아웃 · 공수교대입니다.' }
+    else next.announcement = { title: '플레이 종료', detail: '3아웃 · 공수교대입니다.' }
   }
   return next
 }

@@ -21,10 +21,11 @@ export type ScenarioEffect =
   | { type: 'scoreAll'; creditHit: boolean }
   | { type: 'applyBattingEvent' }
   | { type: 'setPlayerBase'; value: number | null }
+  | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'announce'; title: string; detail: string }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
-  | { type: 'record'; message: string }
+  | { type: 'record'; message: string; showInCompletion?: boolean }
 
 export type ScenarioTransition = {
   to: ScenarioNodeId
@@ -62,6 +63,7 @@ export type ChanceNode = ScenarioNodeBase & {
   type: 'chance'
   outcomes: Array<{
     id: string
+    label?: string
     weight: number
     transition: ScenarioTransition
   }>
@@ -101,6 +103,7 @@ export type ScenarioContext = {
   battingEvent?: BattingEventId
   flags: Record<string, boolean | number | string>
   records: string[]
+  completionRecords: string[]
   selectedLabel?: string
   playerBase: number | null
   announcement?: ScenarioAnnouncement
