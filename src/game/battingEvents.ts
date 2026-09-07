@@ -28,6 +28,8 @@ export type Play = {
 export const RUNNING_CHANCES = {
   outfieldDropClear: 0.1,
   outfieldDropAmbiguous: 0.15,
+  infieldGroundFieldingError: 0.08,
+  infieldGroundThrowingError: 0.08,
   advanceOnAmbiguousDrop: 0.7,
   wildPitchClear: 0.1,
   wildPitchAmbiguous: 0.15,

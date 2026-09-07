@@ -38,7 +38,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'bases', operator: 'excludes', value: [1] }] },
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'eq', value: 2 }] },
         { to: 'out.strikeout.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }] },
-        { to: 'out.ground.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
+        { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
         { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
         { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }] },
         { to: 'fly.outfield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
@@ -113,6 +113,24 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'strikeout.reachFirst': {
       id: 'strikeout.reachFirst', type: 'event', view: 'runner:first', title: '낫아웃 1루 진루',
       effects: [{ type: 'placeRunner', base: 1 }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '낫아웃 1루 진루' }, { type: 'announce', title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', tone: 'positive' }],
+      transition: { to: 'runner.route' },
+    },
+    'ground.infield.check': {
+      id: 'ground.infield.check', type: 'chance', view: 'batter', title: '내야 땅볼 수비 판정',
+      outcomes: [
+        { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.fieldingError' } },
+        { id: 'throwingError', label: '내야수 송구 실책', weight: RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'ground.infield.throwingError' } },
+        { id: 'cleanPlay', label: '내야수 정상 수비', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError - RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'out.ground.generic' } },
+      ],
+    },
+    'ground.infield.fieldingError': {
+      id: 'ground.infield.fieldingError', type: 'event', view: 'runner:first', title: '내야수 포구 실책',
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 포구 실책' }, { type: 'announce', title: '내야수가 땅볼 포구를 놓쳤습니다!', detail: '실책으로 1루에 출루했습니다.' }],
+      transition: { to: 'runner.route' },
+    },
+    'ground.infield.throwingError': {
+      id: 'ground.infield.throwingError', type: 'event', view: 'runner:first', title: '내야수 송구 실책',
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'announce', title: '내야수의 1루 송구가 빗나갔습니다!', detail: '실책으로 1루에 출루했습니다.' }],
       transition: { to: 'runner.route' },
     },
     'fly.outfield.check': {

@@ -35,8 +35,8 @@ button { font: inherit; }
 .base-third { top: 25px; left: 2px; }
 .base-first { top: 25px; right: 2px; }
 
-.game-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, .75fr); min-height: 500px; border: 1px solid var(--line); }
-.media-stage { position: relative; min-height: 500px; overflow: hidden; color: white; background-color: var(--green); background-image: linear-gradient(rgba(9,31,22,.12), rgba(9,31,22,.12)), repeating-linear-gradient(100deg, transparent 0, transparent 64px, rgba(255,255,255,.018) 64px, rgba(255,255,255,.018) 128px); }
+.game-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, .75fr); height: clamp(500px, calc(100svh - 180px), 720px); border: 1px solid var(--line); }
+.media-stage { position: relative; min-height: 0; overflow: hidden; color: white; background-color: var(--green); background-image: linear-gradient(rgba(9,31,22,.12), rgba(9,31,22,.12)), repeating-linear-gradient(100deg, transparent 0, transparent 64px, rgba(255,255,255,.018) 64px, rgba(255,255,255,.018) 128px); }
 .media-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .broadcast-watermark { position: absolute; z-index: 2; top: 22px; right: 24px; display: flex; align-items: center; gap: 7px; color: rgba(255,255,255,.82); font: 17px 'Bebas Neue', sans-serif; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
 .broadcast-watermark span { padding: 2px 5px; color: white; border-radius: 2px; background: var(--red); font-size: 9px; font-family: 'Noto Sans KR', sans-serif; font-weight: 800; }
@@ -54,7 +54,7 @@ button { font: inherit; }
 .broadcast-outs i.on { border-color: var(--gold); background: var(--gold); }
 .eyebrow { margin: 24px 0 8px; color: var(--gold); font: 18px 'Bebas Neue', sans-serif; }
 
-.decision-panel { padding: 32px 34px 38px; background: #fff; }
+.decision-panel { min-height: 0; padding: 32px 34px 38px; overflow-y: auto; background: #fff; }
 .panel-heading { min-height: 32px; }
 .view-chip { display: inline-flex; padding: 5px 8px; border-left: 3px solid var(--red); color: var(--ink); background: #eeeae0; font-size: 12px; font-weight: 800; }
 .view-chip.surprise-chip { color: #7d2417; border-left-color: var(--gold); background: #fff1c7; box-shadow: inset 0 0 0 1px rgba(223,183,79,.45); animation: surprise-chip-flash .9s ease-in-out infinite alternate; }
@@ -141,11 +141,11 @@ button { font: inherit; }
 @media (max-width: 760px) {
   .app-shell { width: 100%; padding: 0 0 24px; }
   .brand-bar { padding: 0 16px; border-top: 0; }
-  .game-grid { display: block; border-inline: 0; }
+  .game-grid { display: block; height: auto; border-inline: 0; }
   .media-stage { min-height: 330px; padding: 28px 22px; }
   .broadcast-watermark { top: 16px; right: 16px; }
   .broadcast-bug { right: 16px; bottom: 16px; }
-  .decision-panel { padding: 28px 18px; }
+  .decision-panel { padding: 28px 18px; overflow-y: visible; }
   .panel-heading { min-height: 82px; }
   .batting-choices { grid-template-columns: 1fr; }
   .progress-strip { border-inline: 0; }

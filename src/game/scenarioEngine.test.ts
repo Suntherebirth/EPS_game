@@ -66,6 +66,19 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcement).toEqual({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' })
   })
 
+  it('offers distinct fielding and throwing errors for an infield ground ball', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+    const fieldingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'fieldingError', { manualChance: true })
+    const throwingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'throwingError', { manualChance: true })
+
+    expect(fielding.nodeId).toBe('ground.infield.check')
+    expect(fieldingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
+    expect(fieldingError.context.announcement).toEqual({ title: '내야수가 땅볼 포구를 놓쳤습니다!', detail: '실책으로 1루에 출루했습니다.' })
+    expect(throwingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
+    expect(throwingError.context.announcement).toEqual({ title: '내야수의 1루 송구가 빗나갔습니다!', detail: '실책으로 1루에 출루했습니다.' })
+  })
+
   it('treats a dropped infield fly as a single', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'infieldFly', { manualChance: true })
