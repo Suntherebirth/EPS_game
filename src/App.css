@@ -64,6 +64,7 @@ button { font: inherit; }
 .result-notice p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
 .result-notice.positive p { color: #18704f; font-weight: 800; }
 .result-notice.negative p { color: #b33325; font-weight: 800; }
+.result-notice.caution p { color: #9b6a13; font-weight: 800; }
 .result-notice.positive p, .result-notice.negative p { text-align: center; }
 .action-instruction { margin: 0 0 12px; color: var(--ink); font-size: 13px; font-weight: 800; }
 .admin-console { margin: 0 0 18px; padding: 12px; border: 1px dashed #b89642; background: #fffaf0; }
@@ -85,7 +86,7 @@ button { font: inherit; }
   0%, 100% { box-shadow: 0 0 0 3px #4c3914, 0 0 0 5px rgba(255,238,154,.55), 0 0 10px rgba(255,219,94,.8); }
   50% { box-shadow: 0 0 0 3px #4c3914, 0 0 0 7px rgba(255,238,154,.08), 0 0 22px rgba(255,249,215,1); }
 }
-.batting-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.batting-choices { display: grid; grid-template-columns: 1fr; }
 .batting-choices button { min-height: 86px; grid-template-columns: 28px 1fr; }
 .batting-choices button svg { display: none; }
 .admin-batting-choices { padding: 12px; border: 1px dashed #b89642; background: #fffaf0; }

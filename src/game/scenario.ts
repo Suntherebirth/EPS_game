@@ -22,7 +22,8 @@ export type ScenarioEffect =
   | { type: 'applyBattingEvent' }
   | { type: 'setPlayerBase'; value: number | null }
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
-  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'neutral' }
+  | { type: 'advancePlayer' }
+  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
   | { type: 'record'; message: string; showInCompletion?: boolean }
@@ -112,7 +113,7 @@ export type ScenarioContext = {
 export type ScenarioAnnouncement = {
   title: string
   detail: string
-  tone?: 'positive' | 'negative' | 'neutral'
+  tone?: 'positive' | 'negative' | 'caution' | 'neutral'
 }
 
 export type ScenarioState = {
@@ -140,8 +141,8 @@ export const validateScenarioPack = (pack: ScenarioPack): string[] => {
     for (const transition of transitionsOf(node)) {
       if (!pack.nodes[transition.to]) errors.push(`${node.id}가 없는 노드를 가리킵니다: ${transition.to}`)
     }
-    if (node.type === 'chance' && node.outcomes.some((outcome) => outcome.weight <= 0)) {
-      errors.push(`${node.id}의 확률 가중치는 0보다 커야 합니다.`)
+    if (node.type === 'chance' && node.outcomes.some((outcome) => outcome.weight < 0)) {
+      errors.push(`${node.id}의 확률 가중치는 음수일 수 없습니다.`)
     }
     if (node.type === 'choice' && new Set(node.choices.map((choice) => choice.id)).size !== node.choices.length) {
       errors.push(`${node.id}에 중복된 선택지 id가 있습니다.`)

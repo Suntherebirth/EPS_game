@@ -25,7 +25,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '외야 수비 판정',
     outcomes: [
       { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.first.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' }] } },
-      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.' }] } },
+      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
       { id: 'normalFielding', label: '정상 수비', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.route' } },
     ],
   },
@@ -37,7 +37,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     tags: ['surprise-event'],
     description: '1루 주자: 주루 방침을 선택하세요.',
     choices: [
-      { id: 'stayFirst', label: '안전하게 1루에 머문다', transition: { to: 'runner.route' } },
+      { id: 'stayFirst', label: '안전하게 1루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative' }] } },
       { id: 'advanceSecond', label: '2루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 2 }, { type: 'record', message: '외야 실책 이용, 2루 진루', showInCompletion: false }, { type: 'announce', title: '2루 진루 성공!', detail: '외야수 실책을 이용해 2루에 도착했습니다.' }] } },
     ],
   },
@@ -49,7 +49,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     tags: ['surprise-event'],
     description: '1루 주자: 주루 방침을 선택하세요.',
     choices: [
-      { id: 'stayFirst', label: '안전하게 1루에 머문다', transition: { to: 'runner.route' } },
+      { id: 'stayFirst', label: '안전하게 1루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 진루하지 않았습니다.' }] } },
       { id: 'advanceSecond', label: '2루로 진루한다', description: `애매한 타구 · 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousDrop * 100)}%`, transition: { to: 'runner.first.ambiguousDrop.advance' } },
     ],
   },
@@ -59,7 +59,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:first',
     title: '2루 진루',
     outcomes: [
-      { id: 'success', label: '2루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 2 }, { type: 'record', message: '외야 실책 이용, 2루 진루 성공', showInCompletion: false }, { type: 'announce', title: '2루 진루 성공!', detail: '외야수가 공을 수습하기 전에 2루에 도착했습니다.' }] } },
+      { id: 'success', label: '2루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 2 }, { type: 'record', message: '외야 실책 이용, 2루 진루 성공', showInCompletion: false }, { type: 'announce', title: '2루 진루 성공!', detail: '위험을 감수하고 추가 진루에 성공했습니다.', tone: 'positive' }] } },
       { id: 'out', label: '2루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '외야 실책 이용, 2루 진루 실패', showInCompletion: false }, { type: 'announce', title: '2루 진루 실패', detail: '2루에서 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
@@ -84,7 +84,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '1루 주자 시점',
     description: '1루 주자: 주루 방침을 선택하세요.',
     choices: [
-      { id: 'waitForBatter', label: '1루에 머물면서 타격을 기다린다', description: '후속 타자의 타격 결과를 확인한다', transition: { to: 'followUp.batting.resolve' } },
+      { id: 'waitForBatter', label: '1루에 머물면서 타격을 기다린다', description: '후속 타자의 타격 결과를 확인한다', transition: { to: 'wildPitch.check' } },
       { id: 'stealSecond', label: '2루 도루를 시도한다', description: `성공률 ${Math.round(RUNNING_CHANCES.stealSecond * 100)}%`, when: [{ field: 'bases', operator: 'excludes', value: [2] }], transition: { to: 'runner.first.stealSecond' } },
     ],
   },
@@ -105,7 +105,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '2루 주자 시점',
     description: '2루 주자: 주루 방침을 선택하세요.',
     choices: [
-      { id: 'waitForBatter', label: '2루에 머물면서 타격을 기다린다', description: '후속 타자의 타격 결과를 확인한다', transition: { to: 'followUp.batting.resolve' } },
+      { id: 'waitForBatter', label: '2루에 머물면서 타격을 기다린다', description: '후속 타자의 타격 결과를 확인한다', transition: { to: 'wildPitch.check' } },
       { id: 'stealThird', label: '3루 도루를 시도한다', description: `성공률 ${Math.round(RUNNING_CHANCES.stealThird * 100)}%`, when: [{ field: 'bases', operator: 'excludes', value: [3] }], transition: { to: 'runner.second.stealThird' } },
     ],
   },
@@ -126,7 +126,52 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '3루 주자 시점',
     description: '3루 주자: 주루 방침을 선택하세요.',
     choices: [
-      { id: 'waitForBatter', label: '3루에 머물면서 타격을 기다린다', description: '후속 타자의 타격 결과를 확인한다', transition: { to: 'followUp.batting.resolve' } },
+      { id: 'waitForBatter', label: '3루에 머물면서 타격을 기다린다', description: '후속 타자의 타격 결과를 확인한다', transition: { to: 'wildPitch.check' } },
+    ],
+  },
+  'wildPitch.check': {
+    id: 'wildPitch.check',
+    type: 'chance',
+    view: 'runner:first',
+    title: '폭투 판정',
+    outcomes: [
+      { id: 'clearWildPitch', label: '명백한 폭투', weight: RUNNING_CHANCES.wildPitchClear, transition: { to: 'runner.wildPitch.clear.decide', effects: [{ type: 'record', message: '포수 뒤로 공이 완전히 빠짐', showInCompletion: false }, { type: 'announce', title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' }] } },
+      { id: 'ambiguousWildPitch', label: '애매한 폭투', weight: RUNNING_CHANCES.wildPitchAmbiguous, transition: { to: 'runner.wildPitch.ambiguous.decide', effects: [{ type: 'record', message: '포수 뒤로 공이 애매하게 빠짐', showInCompletion: false }, { type: 'announce', title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+      { id: 'normalPitch', label: '정상 포구', weight: 1 - RUNNING_CHANCES.wildPitchClear - RUNNING_CHANCES.wildPitchAmbiguous, transition: { to: 'followUp.batting.resolve' } },
+    ],
+  },
+  'runner.wildPitch.clear.decide': {
+    id: 'runner.wildPitch.clear.decide',
+    type: 'choice',
+    view: 'runner:first',
+    title: '폭투',
+    tags: ['surprise-event', 'player-position-view'],
+    description: '주루 방침을 선택하세요.',
+    choices: [
+      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '폭투, 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '폭투가 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative' }] } },
+      { id: 'advance', label: '다음 베이스로 진루한다', description: '폭투를 이용한다 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '폭투 이용 진루 성공', showInCompletion: false }, { type: 'announce', title: '폭투 진루 성공!', detail: '다음 베이스에 도착했습니다.' }] } },
+    ],
+  },
+  'runner.wildPitch.ambiguous.decide': {
+    id: 'runner.wildPitch.ambiguous.decide',
+    type: 'choice',
+    view: 'runner:first',
+    title: '폭투',
+    tags: ['surprise-event', 'player-position-view'],
+    description: '주루 방침을 선택하세요.',
+    choices: [
+      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '폭투, 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '폭투가 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 진루하지 않았습니다.' }] } },
+      { id: 'advance', label: '다음 베이스로 진루한다', description: `폭투를 이용한다 · 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousWildPitch * 100)}%`, transition: { to: 'runner.wildPitch.ambiguous.advance' } },
+    ],
+  },
+  'runner.wildPitch.ambiguous.advance': {
+    id: 'runner.wildPitch.ambiguous.advance',
+    type: 'chance',
+    view: 'runner:first',
+    title: '폭투 진루 판정',
+    outcomes: [
+      { id: 'success', label: '폭투 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousWildPitch, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '폭투 이용 진루 성공', showInCompletion: false }, { type: 'announce', title: '폭투 진루 성공!', detail: '위험을 감수하고 추가 진루에 성공했습니다.', tone: 'positive' }] } },
+      { id: 'out', label: '폭투 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousWildPitch, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '폭투 이용 진루 실패', showInCompletion: false }, { type: 'announce', title: '폭투 진루 실패', detail: '다음 베이스에서 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
   'followUp.batting.resolve': {
@@ -146,7 +191,64 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'result',
     title: '후속 타격 적용',
     effects: [{ type: 'applyBattingEvent' }],
-    transition: { to: 'runner.route' },
+    transition: { to: 'followUp.batting.route' },
+  },
+  'followUp.batting.route': {
+    id: 'followUp.batting.route',
+    type: 'router',
+    view: 'result',
+    title: '후속 타격 주루 확인',
+    routes: [
+      { to: 'runner.battingAdvance.outfield.check', when: [{ field: 'flag', operator: 'eq', key: 'advancedByFollowUpHit', value: true }] },
+      { to: 'runner.route' },
+    ],
+  },
+  'runner.battingAdvance.outfield.check': {
+    id: 'runner.battingAdvance.outfield.check',
+    type: 'chance',
+    view: 'runner:first',
+    title: '외야 수비 판정',
+    tags: ['player-position-view'],
+    outcomes: [
+      { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.battingAdvance.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' }] } },
+      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.battingAdvance.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+      { id: 'normalFielding', label: '정상 수비', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.route' } },
+    ],
+  },
+  'runner.battingAdvance.clearDrop.decide': {
+    id: 'runner.battingAdvance.clearDrop.decide',
+    type: 'choice',
+    view: 'runner:first',
+    title: '외야수 실책',
+    tags: ['surprise-event', 'player-position-view'],
+    description: '주루 방침을 선택하세요.',
+    choices: [
+      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative' }] } },
+      { id: 'advance', label: '다음 베이스로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '외야 실책 이용, 추가 진루', showInCompletion: false }, { type: 'announce', title: '추가 진루 성공!', detail: '외야수 실책을 이용해 다음 베이스에 도착했습니다.' }] } },
+    ],
+  },
+  'runner.battingAdvance.ambiguousDrop.decide': {
+    id: 'runner.battingAdvance.ambiguousDrop.decide',
+    type: 'choice',
+    view: 'runner:first',
+    title: '외야수 실책',
+    tags: ['surprise-event', 'player-position-view'],
+    description: '주루 방침을 선택하세요.',
+    choices: [
+      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 진루하지 않았습니다.' }] } },
+      { id: 'advance', label: '다음 베이스로 진루한다', description: `애매한 타구 · 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousDrop * 100)}%`, transition: { to: 'runner.battingAdvance.ambiguousDrop.advance' } },
+    ],
+  },
+  'runner.battingAdvance.ambiguousDrop.advance': {
+    id: 'runner.battingAdvance.ambiguousDrop.advance',
+    type: 'chance',
+    view: 'runner:first',
+    title: '추가 진루',
+    tags: ['player-position-view'],
+    outcomes: [
+      { id: 'success', label: '추가 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '외야 실책 이용, 추가 진루 성공', showInCompletion: false }, { type: 'announce', title: '추가 진루 성공!', detail: '위험을 감수하고 추가 진루에 성공했습니다.', tone: 'positive' }] } },
+      { id: 'out', label: '추가 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '외야 실책 이용, 추가 진루 실패', showInCompletion: false }, { type: 'announce', title: '추가 진루 실패', detail: '다음 베이스에서 아웃되었습니다.', tone: 'negative' }] } },
+    ],
   },
   'plate.complete': {
     id: 'plate.complete',

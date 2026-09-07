@@ -102,6 +102,10 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     }
   }
 
+  if (effect.type === 'advancePlayer' && next.playerBase !== null) {
+    return applyScenarioEffect(next, { type: 'movePlayer', to: next.playerBase === 3 ? 'home' : next.playerBase + 1 })
+  }
+
   if (effect.type === 'applyBattingEvent') {
     const event = BATTING_EVENTS.find((item) => item.kind === next.battingEvent)
     if (!event) throw new Error(`적용할 타격 이벤트가 없습니다: ${next.battingEvent ?? 'undefined'}`)
@@ -114,6 +118,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
         : event.advance > 0
           ? applyScenarioEffect(next, { type: 'applyHit', batterTo: event.advance, creditHit: event.hit })
           : applyScenarioEffect(next, { type: 'addOuts', value: event.outs })
+    resolved.flags.advancedByFollowUpHit = event.hit && before !== null && resolved.playerBase !== null && resolved.playerBase > before
     if (resolved.outs >= 3) {
       resolved.announcement = { title: `후속 타자: ${event.label}!`, detail: '3아웃 · 공수교대입니다.', tone: 'negative' }
       return resolved

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OFFENSE_CORE_PACK } from './packs/offenseCorePack'
+import { RUNNING_CHANCES } from './battingEvents'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, startScenario } from './scenarioEngine'
 import { applyScenarioEffect } from './scenarioEffects'
 import { validateScenarioPack, type ScenarioContext } from './scenario'
@@ -35,6 +36,75 @@ describe('offense core scenario pack', () => {
     const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'walk')
 
     expect(result.context).toMatchObject({ bases: [1, 2, 3], runs: 1, hits: 0 })
+  })
+
+  it('moves the player to first and skips outfield chance after a walk', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'walk')
+
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 0 })
+    expect(result.context.announcement).toEqual({ title: '볼넷!', detail: '1루에 도착했습니다.' })
+  })
+
+  it('moves the player to first and skips outfield chance after a hit by pitch', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'hitByPitch')
+
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 0 })
+    expect(result.context.announcement).toEqual({ title: '사구!', detail: '1루에 도착했습니다.' })
+  })
+
+  it('records a normal strikeout when the catcher secures the ball', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'strikeout')
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
+    expect(result.context.announcement).toEqual({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' })
+  })
+
+  it('lets an admin select a clear dropped third strike and reach first by running hard', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const catcherCheck = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'strikeout', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'clearDrop', { manualChance: true })
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'runHard', { manualChance: true })
+
+    expect(catcherCheck.nodeId).toBe('strikeout.catcher.check')
+    expect(decision.nodeId).toBe('strikeout.clearDrop.decide')
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ outs: 0, bases: [1], playerBase: 1 })
+    expect(result.context.announcement).toEqual({ title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', tone: 'positive' })
+  })
+
+  it('lets an admin select a failed slow run after an ambiguous dropped third strike', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const catcherCheck = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'strikeout', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'ambiguousDrop', { manualChance: true })
+    const runCheck = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'runSlow', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, runCheck, 'out', { manualChance: true })
+
+    expect(runCheck.nodeId).toBe('strikeout.ambiguousDrop.slowRun')
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
+  })
+
+  it('uses the configured messages and odds for clear and ambiguous dropped third strikes', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const catcherCheck = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'strikeout', { manualChance: true })
+    const clear = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'clearDrop', { manualChance: true })
+    const ambiguous = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'ambiguousDrop', { manualChance: true })
+
+    expect(clear.context.announcement).toEqual({ title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.' })
+    expect(ambiguous.context.announcement).toEqual({ title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 열심히 뛴다면 살 수 있을지도 모릅니다.' })
+    expect(RUNNING_CHANCES).toMatchObject({
+      runHardOnClearDroppedStrike: 1,
+      runSlowOnClearDroppedStrike: 0.5,
+      runHardOnAmbiguousDroppedStrike: 0.8,
+      runSlowOnAmbiguousDroppedStrike: 0,
+    })
   })
 
   it('offers a runner decision after an empty-base single', () => {
@@ -127,7 +197,7 @@ describe('offense core scenario pack', () => {
   })
 
   it('continues to a follow-up hit when staying at first', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValue(0)
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValueOnce(0.99).mockReturnValueOnce(0).mockReturnValue(0.99)
     const initial = startScenario(OFFENSE_CORE_PACK, context())
     const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
     const result = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'waitForBatter')
@@ -135,6 +205,23 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context).toMatchObject({ bases: [1, 2], hits: 2, battingEvent: 'single', playerBase: 2 })
     expect(result.context.announcement).toEqual({ title: '후속 타자: 1루타!', detail: '2루에 도착했습니다.' })
+  })
+
+  it('offers the common outfield error choices after a follow-up hit advances the player', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const runner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, runner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'single', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'clearDrop', { manualChance: true })
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'advance', { manualChance: true })
+
+    expect(fielding.nodeId).toBe('runner.battingAdvance.outfield.check')
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, decision).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
+    expect(result.nodeId).toBe('runner.third.decide')
+    expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 3, hits: 2 })
+    expect(result.context.announcement).toEqual({ title: '추가 진루 성공!', detail: '외야수 실책을 이용해 다음 베이스에 도착했습니다.' })
   })
 
   it('reports that the runner stayed put after a follow-up strikeout', () => {
@@ -151,7 +238,7 @@ describe('offense core scenario pack', () => {
   })
 
   it('moves the player from first to third on a follow-up double with runners on first and second', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValue(0.25)
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValueOnce(0.99).mockReturnValueOnce(0.25).mockReturnValue(0.99)
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [1, 3]))
     const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
 
@@ -173,6 +260,16 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.first.clearDrop.decide')
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, result).map((choice) => choice.id)).toEqual(['stayFirst', 'advanceSecond'])
+  })
+
+  it('updates the announcement after staying at first on an outfield error', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'stayFirst')
+
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context.announcement).toEqual({ title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative' })
   })
 
   it('pauses at the outfield result node in manual chance mode', () => {
@@ -208,9 +305,11 @@ describe('offense core scenario pack', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
     const runner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'normalFielding', { manualChance: true })
-    const followUp = chooseScenarioOption(OFFENSE_CORE_PACK, runner, 'waitForBatter', { manualChance: true })
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, runner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
     const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'strikeout', { manualChance: true })
 
+    expect(wildPitch.nodeId).toBe('wildPitch.check')
     expect(followUp.nodeId).toBe('followUp.batting.resolve')
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context.announcement).toEqual({ title: '후속 타자: 삼진!', detail: '1루에서 움직이지 못했습니다.' })
@@ -224,7 +323,53 @@ describe('offense core scenario pack', () => {
 
     expect(single.nodeId).toBe('runner.first.ambiguousDrop.decide')
     expect(result.nodeId).toBe('runner.second.decide')
-    expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '외야수가 공을 수습하기 전에 2루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '위험을 감수하고 추가 진루에 성공했습니다.', tone: 'positive' })
+  })
+
+  it('offers a guaranteed advance after a clear wild pitch', () => {
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValueOnce(0)
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'waitForBatter')
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'advance')
+
+    expect(wildPitch.nodeId).toBe('runner.wildPitch.clear.decide')
+    expect(result.nodeId).toBe('runner.second.decide')
+    expect(result.context).toMatchObject({ bases: [2], playerBase: 2 })
+    expect(result.context.announcement).toEqual({ title: '폭투 진루 성공!', detail: '다음 베이스에 도착했습니다.' })
+  })
+
+  it('uses a 70 percent chance for an ambiguous wild pitch advance', () => {
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValueOnce(0.15).mockReturnValueOnce(0.69)
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'waitForBatter')
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'advance')
+
+    expect(wildPitch.nodeId).toBe('runner.wildPitch.ambiguous.decide')
+    expect(result.context).toMatchObject({ bases: [2], playerBase: 2 })
+  })
+
+  it('returns to the runner decision after staying on base during a wild pitch', () => {
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValueOnce(0)
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'waitForBatter')
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'stayOnBase')
+
+    expect(wildPitch.nodeId).toBe('runner.wildPitch.clear.decide')
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ bases: [1], playerBase: 1 })
+    expect(result.context.announcement).toEqual({ title: '폭투가 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative' })
+  })
+
+  it('scores a third-base player on a wild pitch advance', () => {
+    const result = applyScenarioEffect(
+      { ...context(0, [3]), playerBase: 3 },
+      { type: 'advancePlayer' },
+    )
+
+    expect(result).toMatchObject({ bases: [], playerBase: null, runs: 1 })
   })
 
   it('moves the existing runner to third when the player advances into occupied second', () => {
