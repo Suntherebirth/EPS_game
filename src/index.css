@@ -1,0 +1,22 @@
+:root {
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #15201b;
+  background-color: #e7e5dc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background-color: #e7e5dc;
+  background-image: radial-gradient(#cac8bf 0.75px, transparent 0.75px);
+  background-size: 9px 9px;
+}
+
+button:focus-visible {
+  outline: 3px solid #dfb74f;
+  outline-offset: 2px;
+}
