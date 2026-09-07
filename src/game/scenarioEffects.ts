@@ -35,6 +35,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.announcement = {
       title: effect.title,
       detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : effect.detail,
+      ...(effect.tone ? { tone: effect.tone } : {}),
     }
   }
 
@@ -114,7 +115,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
           ? applyScenarioEffect(next, { type: 'applyHit', batterTo: event.advance, creditHit: event.hit })
           : applyScenarioEffect(next, { type: 'addOuts', value: event.outs })
     if (resolved.outs >= 3) {
-      resolved.announcement = { title: `후속 타자: ${event.label}!`, detail: '3아웃 · 공수교대입니다.' }
+      resolved.announcement = { title: `후속 타자: ${event.label}!`, detail: '3아웃 · 공수교대입니다.', tone: 'negative' }
       return resolved
     }
     const destination = resolved.playerBase === null
@@ -124,7 +125,8 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
         : `${resolved.playerBase}루에 도착했습니다.`
     resolved.announcement = {
       title: `후속 타자: ${event.label}!`,
-      detail: before === null ? '후속 타자의 플레이가 끝났습니다.' : destination,
+      detail: before === null ? '홈에 들어왔습니다.' : destination,
+      ...(resolved.playerBase === null ? { tone: 'positive' as const } : {}),
     }
     return resolved
   }
@@ -133,8 +135,8 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (next.outs >= 3) {
     next.bases = []
     next.playerBase = null
-    if (next.announcement) next.announcement = { ...next.announcement, detail: '3아웃 · 공수교대입니다.' }
-    else next.announcement = { title: '플레이 종료', detail: '3아웃 · 공수교대입니다.' }
+    if (next.announcement) next.announcement = { ...next.announcement, detail: '3아웃 · 공수교대입니다.', tone: 'negative' }
+    else next.announcement = { title: '플레이 종료', detail: '3아웃 · 공수교대입니다.', tone: 'negative' }
   }
   return next
 }

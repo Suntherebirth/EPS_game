@@ -119,15 +119,16 @@ function App() {
   const displayedSituation = { outs: scenario.context.outs, bases: scenario.context.bases as Base[] }
   const viewLabel = node.view.startsWith('runner:')
     ? `${node.view.split(':')[1] === 'first' ? 1 : node.view.split(':')[1] === 'second' ? 2 : 3}루 주자 시점`
-    : '타석 시점'
+    : node.view === 'batter' ? '타석 시점' : null
   const isSurpriseEvent = node.tags?.includes('surprise-event')
-  const highlightedViewLabel = isSurpriseEvent ? `${viewLabel} : 돌발 이벤트!` : viewLabel
-  const isViewTitle = node.title === viewLabel
+  const highlightedViewLabel = isSurpriseEvent && viewLabel ? `${viewLabel} : 돌발 이벤트!` : viewLabel
   const availableChoices = getAvailableScenarioChoices(OFFENSE_CORE_PACK, scenario)
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
     : node.type === 'choice'
       ? node.description ?? '주루 방침을 선택해주세요.'
+      : node.type === 'chance' && adminMode
+        ? '관리자: 확률 결과를 지정하세요.'
       : ''
 
   return <main className="app-shell">
@@ -135,8 +136,8 @@ function App() {
     <div className="game-grid">
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} />
       <section className="decision-panel">
-        <div className="panel-heading"><span className={`view-chip ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{highlightedViewLabel}</span>{!isViewTitle && <p>{node.title}</p>}</div>
-        {scenario.context.announcement && <aside className="result-notice" aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}><span>방금 일어난 일</span><strong>{scenario.context.announcement.title}</strong><p>{scenario.context.announcement.detail}</p></aside>}
+        {highlightedViewLabel && <div className="panel-heading"><span className={`view-chip ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{highlightedViewLabel}</span></div>}
+        {scenario.context.announcement && <aside className={`result-notice ${scenario.context.announcement.tone ?? 'neutral'}`} aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}><span>방금 일어난 일</span><strong>{scenario.context.announcement.title}</strong><p>{scenario.context.announcement.detail}</p></aside>}
         {phase === 'playing' && actionInstruction && <p className="action-instruction">{actionInstruction}</p>}
         {phase === 'playing' && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : event.kind === 'single')).map((event, index) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
         {phase === 'playing' && node.type === 'choice' && <div className="choices runner-choices">{availableChoices.map((choice, index) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}

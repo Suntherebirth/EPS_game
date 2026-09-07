@@ -103,7 +103,16 @@ describe('offense core scenario pack', () => {
     expect(result.context.outs).toBe(3)
     expect(result.context.bases).toEqual([])
     expect(result.context.records).toContain('2루 도루 실패')
-    expect(result.context.announcement).toEqual({ title: '2루 도루 실패', detail: '3아웃 · 공수교대입니다.' })
+    expect(result.context.announcement).toEqual({ title: '2루 도루 실패', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+  })
+
+  it('marks a failed steal as a negative transition before three outs', () => {
+    vi.spyOn(Math, 'random').mockReturnValueOnce(0.99).mockReturnValue(0.99)
+    const initial = startScenario(OFFENSE_CORE_PACK, context())
+    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'stealSecond')
+
+    expect(result.context.announcement).toEqual({ title: '2루 도루 실패', detail: '2루에서 아웃되었습니다.', tone: 'negative' })
   })
 
   it('announces a side change instead of scoring when a follow-up strikeout makes three outs', () => {
@@ -114,7 +123,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 3, bases: [], playerBase: null })
-    expect(result.context.announcement).toEqual({ title: '후속 타자: 삼진!', detail: '3아웃 · 공수교대입니다.' })
+    expect(result.context.announcement).toEqual({ title: '후속 타자: 삼진!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
   })
 
   it('continues to a follow-up hit when staying at first', () => {

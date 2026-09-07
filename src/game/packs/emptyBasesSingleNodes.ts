@@ -60,7 +60,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '2루 진루',
     outcomes: [
       { id: 'success', label: '2루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 2 }, { type: 'record', message: '외야 실책 이용, 2루 진루 성공', showInCompletion: false }, { type: 'announce', title: '2루 진루 성공!', detail: '외야수가 공을 수습하기 전에 2루에 도착했습니다.' }] } },
-      { id: 'out', label: '2루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '외야 실책 이용, 2루 진루 실패', showInCompletion: false }, { type: 'announce', title: '2루 진루 실패', detail: '2루에서 아웃되었습니다.' }] } },
+      { id: 'out', label: '2루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '외야 실책 이용, 2루 진루 실패', showInCompletion: false }, { type: 'announce', title: '2루 진루 실패', detail: '2루에서 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
   'runner.route': {
@@ -95,7 +95,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '2루 도루',
     outcomes: [
       { id: 'success', label: '2루 도루 성공', weight: RUNNING_CHANCES.stealSecond, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 2 }, { type: 'record', message: '2루 도루 성공' }, { type: 'announce', title: '2루 도루 성공!', detail: '2루에 도착했습니다.' }] } },
-      { id: 'out', label: '2루 도루 실패', weight: 1 - RUNNING_CHANCES.stealSecond, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '2루 도루 실패' }, { type: 'announce', title: '2루 도루 실패', detail: '2루에서 아웃되었습니다.' }] } },
+      { id: 'out', label: '2루 도루 실패', weight: 1 - RUNNING_CHANCES.stealSecond, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '2루 도루 실패' }, { type: 'announce', title: '2루 도루 실패', detail: '2루에서 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
   'runner.second.decide': {
@@ -116,7 +116,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '3루 도루',
     outcomes: [
       { id: 'success', label: '3루 도루 성공', weight: RUNNING_CHANCES.stealThird, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 3 }, { type: 'record', message: '3루 도루 성공' }, { type: 'announce', title: '3루 도루 성공!', detail: '3루에 도착했습니다.' }] } },
-      { id: 'out', label: '3루 도루 실패', weight: 1 - RUNNING_CHANCES.stealThird, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '3루 도루 실패' }, { type: 'announce', title: '3루 도루 실패', detail: '3루에서 아웃되었습니다.' }] } },
+      { id: 'out', label: '3루 도루 실패', weight: 1 - RUNNING_CHANCES.stealThird, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '3루 도루 실패' }, { type: 'announce', title: '3루 도루 실패', detail: '3루에서 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
   'runner.third.decide': {

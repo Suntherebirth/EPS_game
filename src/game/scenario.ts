@@ -22,7 +22,7 @@ export type ScenarioEffect =
   | { type: 'applyBattingEvent' }
   | { type: 'setPlayerBase'; value: number | null }
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
-  | { type: 'announce'; title: string; detail: string }
+  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'neutral' }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
   | { type: 'record'; message: string; showInCompletion?: boolean }
@@ -112,6 +112,7 @@ export type ScenarioContext = {
 export type ScenarioAnnouncement = {
   title: string
   detail: string
+  tone?: 'positive' | 'negative' | 'neutral'
 }
 
 export type ScenarioState = {
