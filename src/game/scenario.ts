@@ -20,10 +20,12 @@ export type ScenarioEffect =
   | { type: 'forceWalk'; creditHit?: boolean }
   | { type: 'scoreAll'; creditHit: boolean }
   | { type: 'applyBattingEvent' }
+  | { type: 'applyFollowUpGroundOut' }
   | { type: 'setPlayerBase'; value: number | null }
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }
   | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
+  | { type: 'announceFollowUpOutfieldError'; clear: boolean }
   | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'setFlag'; key: string; value: boolean | number | string }

@@ -38,6 +38,14 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       ...(effect.tone ? { tone: effect.tone } : {}),
     }
   }
+  if (effect.type === 'announceFollowUpOutfieldError') {
+    const event = BATTING_EVENTS.find((item) => item.kind === next.battingEvent)
+    next.announcement = {
+      title: `후속 타자: ${event?.label ?? '타구'}! 외야수가 타구를 뒤로 빠뜨렸습니다.`,
+      detail: effect.clear ? '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' : '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.',
+      ...(!effect.clear ? { tone: 'caution' as const } : {}),
+    }
+  }
   if (effect.type === 'announcePlayerAdvance') {
     next.announcement = {
       title: effect.title,
@@ -111,6 +119,23 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
 
   if (effect.type === 'advancePlayer' && next.playerBase !== null) {
     return applyScenarioEffect(next, { type: 'movePlayer', to: next.playerBase === 3 ? 'home' : next.playerBase + 1 })
+  }
+
+  if (effect.type === 'applyFollowUpGroundOut') {
+    const playerBase = next.playerBase
+    const playerIsForced = playerBase !== null && Array.from({ length: playerBase }, (_, index) => index + 1).every((base) => next.bases.includes(base))
+    next.outs = Math.min(3, next.outs + 1)
+    next.records.push(playerIsForced ? '후속 타자 내야 땅볼, 포스 아웃' : '후속 타자 내야 땅볼 아웃')
+    next.completionRecords.push(playerIsForced ? '내야 땅볼 포스 아웃' : '내야 땅볼 아웃')
+    if (playerIsForced && playerBase !== null) {
+      next.bases = next.bases.filter((base) => base !== playerBase)
+      next.playerBase = null
+    }
+    next.announcement = playerIsForced
+      ? { title: '내야 땅볼 포스 아웃!', detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : '선행 주자가 아웃되었습니다.', tone: 'negative' }
+      : playerBase === 2
+        ? { title: '후속 타자: 내야 땅볼, 정상 수비!', detail: '내야수 송구 순간 3루 진루를 시도할 수 있습니다.' }
+      : { title: '후속 타자: 내야 땅볼 아웃!', detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : '현재 베이스에 머뭅니다.' }
   }
 
   if (effect.type === 'applyBattingEvent') {
