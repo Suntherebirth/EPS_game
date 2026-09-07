@@ -38,6 +38,13 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       ...(effect.tone ? { tone: effect.tone } : {}),
     }
   }
+  if (effect.type === 'announcePlayerAdvance') {
+    next.announcement = {
+      title: effect.title,
+      detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : effect.detail,
+      ...(effect.tone ? { tone: effect.tone } : {}),
+    }
+  }
 
   if (effect.type === 'applyHit') {
     if (next.playerBase !== null) {

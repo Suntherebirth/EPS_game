@@ -39,7 +39,9 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'eq', value: 2 }] },
         { to: 'out.strikeout.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }] },
         { to: 'out.ground.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
-        { to: 'out.fly.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
+        { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
+        { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }] },
+        { to: 'fly.outfield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
       ],
     },
     ...EMPTY_BASES_SINGLE_NODES,
@@ -113,6 +115,35 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       effects: [{ type: 'placeRunner', base: 1 }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '낫아웃 1루 진루' }, { type: 'announce', title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', tone: 'positive' }],
       transition: { to: 'runner.route' },
     },
+    'fly.outfield.check': {
+      id: 'fly.outfield.check', type: 'chance', view: 'batter', title: '외야수 포구 판정',
+      outcomes: [
+        { id: 'dropped', label: '외야수가 놓침', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.outfield.drop', effects: [{ type: 'record', message: '외야 뜬공, 외야수 포구 실책', showInCompletion: false }] } },
+        { id: 'caught', label: '외야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
+      ],
+    },
+    'fly.outfield.drop': {
+      id: 'fly.outfield.drop', type: 'event', view: 'runner:first', title: '외야수 포구 실책',
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '외야수 포구 실책 1루타' }, { type: 'announce', title: '외야수가 뜬공을 놓쳤습니다!', detail: '1루타가 되었습니다.' }],
+      transition: { to: 'runner.route' },
+    },
+    'fly.infield.check': {
+      id: 'fly.infield.check', type: 'chance', view: 'batter', title: '내야수 포구 판정',
+      outcomes: [
+        { id: 'dropped', label: '내야수가 놓침', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.infield.drop', effects: [{ type: 'record', message: '내야 뜬공, 내야수 포구 실책', showInCompletion: false }] } },
+        { id: 'caught', label: '내야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.infieldFly.generic' } },
+      ],
+    },
+    'fly.infield.drop': {
+      id: 'fly.infield.drop', type: 'event', view: 'runner:first', title: '내야수 포구 실책',
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야수 포구 실책 1루타' }, { type: 'announce', title: '내야수가 뜬공을 놓쳤습니다!', detail: '1루타가 되었습니다.' }],
+      transition: { to: 'runner.route' },
+    },
+    'infieldFly.rule.out': {
+      id: 'infieldFly.rule.out', type: 'event', view: 'batter', title: '인필드 플라이',
+      effects: [{ type: 'addOuts', value: 1 }, { type: 'record', message: '인필드 플라이 아웃' }, { type: 'announce', title: '인필드 플라이 선언!', detail: '타자 아웃. 주자는 원래 베이스에 머뭅니다.' }],
+      transition: { to: 'plate.complete' },
+    },
     'hit.double.generic': completeEvent('hit.double.generic', '2루타', [{ type: 'applyHit', batterTo: 2, creditHit: true }]),
     'hit.triple.generic': completeEvent('hit.triple.generic', '3루타', [{ type: 'applyHit', batterTo: 3, creditHit: true }]),
     'hit.homeRun.generic': completeEvent('hit.homeRun.generic', '홈런', [{ type: 'scoreAll', creditHit: true }]),
@@ -124,6 +155,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       transition: { to: 'plate.complete' },
     },
     'out.ground.generic': completeEvent('out.ground.generic', '내야 땅볼 아웃', [{ type: 'addOuts', value: 1 }]),
+    'out.infieldFly.generic': completeEvent('out.infieldFly.generic', '내야 뜬공', [{ type: 'addOuts', value: 1 }]),
     'out.fly.generic': completeEvent('out.fly.generic', '외야 뜬공', [{ type: 'addOuts', value: 1 }]),
   },
 }

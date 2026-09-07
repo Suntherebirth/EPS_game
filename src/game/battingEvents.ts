@@ -11,6 +11,7 @@ export type BattingEventId =
   | 'infieldHit'
   | 'infieldError'
   | 'groundOut'
+  | 'infieldFly'
   | 'flyOut'
 
 export type Play = {
@@ -65,5 +66,6 @@ export const BATTING_EVENTS: Play[] = [
   battingEvent('hitByPitch', '사구', '몸에 맞는 공으로 1루에 진출한다', '몸에 맞는 공으로 1루에 진출합니다.', 1, 0, false, 2),
   battingEvent('strikeout', '삼진', '아웃 카운트가 하나 올라간다', '타자가 삼진으로 물러납니다.', 0, 1, false, 20),
   battingEvent('groundOut', '내야 땅볼 아웃', '내야 땅볼로 타자가 아웃된다', '내야수가 타구를 잡아 1루로 던집니다.', 0, 1, false, 14),
+  battingEvent('infieldFly', '내야 뜬공', '내야수가 뜬공을 잡아낸다', '내야수가 타구를 잡아 아웃됩니다.', 0, 1, false, 8),
   battingEvent('flyOut', '외야 뜬공', '외야수가 타구를 잡아낸다', '외야수가 낙구 지점에서 타구를 잡습니다.', 0, 1, false, 11),
 ]

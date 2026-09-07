@@ -66,6 +66,38 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcement).toEqual({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' })
   })
 
+  it('treats a dropped infield fly as a single', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'infieldFly', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'dropped', { manualChance: true })
+
+    expect(fielding.nodeId).toBe('fly.infield.check')
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 1 })
+    expect(result.context.announcement).toEqual({ title: '내야수가 뜬공을 놓쳤습니다!', detail: '1루타가 되었습니다.' })
+  })
+
+  it('applies the infield fly rule with runners on first and second before two outs', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1, [1, 2]), { manualChance: true })
+    const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'infieldFly', { manualChance: true })
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 2, bases: [1, 2], hits: 0 })
+    expect(result.context.records).toContain('인필드 플라이 아웃')
+    expect(result.context.announcement).toEqual({ title: '인필드 플라이 선언!', detail: '타자 아웃. 주자는 원래 베이스에 머뭅니다.' })
+  })
+
+  it('treats a dropped fly ball as a single', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'dropped', { manualChance: true })
+
+    expect(fielding.nodeId).toBe('fly.outfield.check')
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 1 })
+    expect(result.context.announcement).toEqual({ title: '외야수가 뜬공을 놓쳤습니다!', detail: '1루타가 되었습니다.' })
+  })
+
   it('lets an admin select a clear dropped third strike and reach first by running hard', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const catcherCheck = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'strikeout', { manualChance: true })
@@ -222,6 +254,21 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.third.decide')
     expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 3, hits: 2 })
     expect(result.context.announcement).toEqual({ title: '추가 진루 성공!', detail: '외야수 실책을 이용해 다음 베이스에 도착했습니다.' })
+  })
+
+  it('announces a home score when an outfield error advances a player from third', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const runner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, runner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'double', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'clearDrop', { manualChance: true })
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'advance', { manualChance: true })
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ bases: [2], playerBase: null, runs: 1 })
+    expect(result.context.announcement).toEqual({ title: '추가 진루 성공!', detail: '홈에 들어왔습니다.' })
   })
 
   it('reports that the runner stayed put after a follow-up strikeout', () => {
