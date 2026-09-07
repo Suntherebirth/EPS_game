@@ -21,6 +21,7 @@ export type ScenarioEffect =
   | { type: 'scoreAll'; creditHit: boolean }
   | { type: 'applyBattingEvent' }
   | { type: 'setPlayerBase'; value: number | null }
+  | { type: 'announce'; title: string; detail: string }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
   | { type: 'record'; message: string }
@@ -102,6 +103,12 @@ export type ScenarioContext = {
   records: string[]
   selectedLabel?: string
   playerBase: number | null
+  announcement?: ScenarioAnnouncement
+}
+
+export type ScenarioAnnouncement = {
+  title: string
+  detail: string
 }
 
 export type ScenarioState = {

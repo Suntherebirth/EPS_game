@@ -42,6 +42,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1], hits: 1 })
+    expect(result.context.announcement).toEqual({ title: '1루타 성공!', detail: '1루에 도착했습니다.' })
   })
 
   it('offers stay or steal after a single turns second-and-third into first-and-third', () => {
@@ -73,6 +74,7 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context.bases).toEqual([2])
     expect(result.context.records).toContain('2루 도루 성공')
+    expect(result.context.announcement).toEqual({ title: '2루 도루 성공!', detail: '2루에 도착했습니다.' })
   })
 
   it('continues to the third-base runner decision on another successful steal', () => {
@@ -106,6 +108,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context).toMatchObject({ bases: [1, 2], hits: 2, battingEvent: 'single', playerBase: 2 })
+    expect(result.context.announcement).toEqual({ title: '후속 타자 1루타!', detail: '2루에 도착했습니다.' })
   })
 
   it('moves the player from first to third on a follow-up double with runners on first and second', () => {

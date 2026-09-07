@@ -45,15 +45,22 @@ button { font: inherit; }
 .broadcast-outs i.on { border-color: var(--gold); background: var(--gold); }
 .eyebrow { margin: 24px 0 8px; color: var(--gold); font: 18px 'Bebas Neue', sans-serif; }
 
-.decision-panel { padding: 38px 34px; background: #fff; }
-.panel-heading { min-height: 92px; }
+.decision-panel { padding: 32px 34px 38px; background: #fff; }
+.panel-heading { min-height: 52px; }
 .view-chip { display: inline-flex; padding: 5px 8px; border-left: 3px solid var(--red); color: var(--ink); background: #eeeae0; font-size: 12px; font-weight: 800; }
-.panel-heading p { margin: 14px 0 20px; color: var(--ink); font-weight: 700; }
-.event-alert { margin: -2px 0 16px; padding: 14px 15px; border-left: 3px solid var(--gold); background: #f4f1e7; }
-.event-alert span { display: block; margin-bottom: 5px; color: var(--red); font-size: 10px; font-weight: 800; }
-.event-alert strong { display: block; color: var(--ink); font-size: 14px; }
-.event-alert p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.panel-heading p { margin: 12px 0 0; color: var(--ink); font-weight: 700; }
+.result-notice { margin: 0 0 18px; padding: 15px 16px; border-left: 3px solid var(--red); background: #f4f1e7; animation: announce-play .42s cubic-bezier(.2, .8, .2, 1); }
+.result-notice > span { display: block; margin-bottom: 8px; color: var(--red); font-size: 11px; font-weight: 800; }
+.result-notice strong { display: block; color: var(--ink); font-size: 25px; line-height: 1.35; }
+.result-notice p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.action-instruction { margin: 0 0 12px; color: var(--ink); font-size: 13px; font-weight: 800; }
 .choices { display: flex; flex-direction: column; gap: 8px; }
+
+@keyframes announce-play {
+  0% { opacity: 0; transform: translateY(10px); border-left-color: var(--gold); }
+  55% { opacity: 1; transform: translateY(-2px); border-left-color: var(--gold); }
+  100% { transform: translateY(0); border-left-color: var(--red); }
+}
 .batting-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .batting-choices button { min-height: 86px; grid-template-columns: 28px 1fr; }
 .batting-choices button svg { display: none; }

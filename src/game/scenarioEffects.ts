@@ -19,6 +19,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'setFlag') next.flags[effect.key] = effect.value
   if (effect.type === 'record') next.records.push(effect.message)
   if (effect.type === 'setPlayerBase') next.playerBase = effect.value
+  if (effect.type === 'announce') next.announcement = { title: effect.title, detail: effect.detail }
 
   if (effect.type === 'applyHit') {
     if (next.playerBase !== null) {
@@ -71,10 +72,20 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     const event = BATTING_EVENTS.find((item) => item.kind === next.battingEvent)
     if (!event) throw new Error(`적용할 타격 이벤트가 없습니다: ${next.battingEvent ?? 'undefined'}`)
     next.records.push(`후속 타자 ${event.label}`)
-    if (event.kind === 'homeRun') return applyScenarioEffect(next, { type: 'scoreAll', creditHit: true })
-    if (event.kind === 'walk' || event.kind === 'hitByPitch') return applyScenarioEffect(next, { type: 'forceWalk' })
-    if (event.advance > 0) return applyScenarioEffect(next, { type: 'applyHit', batterTo: event.advance, creditHit: event.hit })
-    return applyScenarioEffect(next, { type: 'addOuts', value: event.outs })
+    const before = next.playerBase
+    const resolved = event.kind === 'homeRun'
+      ? applyScenarioEffect(next, { type: 'scoreAll', creditHit: true })
+      : event.kind === 'walk' || event.kind === 'hitByPitch'
+        ? applyScenarioEffect(next, { type: 'forceWalk' })
+        : event.advance > 0
+          ? applyScenarioEffect(next, { type: 'applyHit', batterTo: event.advance, creditHit: event.hit })
+          : applyScenarioEffect(next, { type: 'addOuts', value: event.outs })
+    const destination = resolved.playerBase === null ? '홈에 들어왔습니다.' : `${resolved.playerBase}루에 도착했습니다.`
+    resolved.announcement = {
+      title: `후속 타자 ${event.label}!`,
+      detail: before === null ? '후속 타자의 플레이가 끝났습니다.' : destination,
+    }
+    return resolved
   }
 
   next.bases.sort((a, b) => a - b)

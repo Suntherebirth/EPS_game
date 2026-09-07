@@ -14,6 +14,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
       { type: 'setPlayerBase', value: 1 },
       { type: 'addHits', value: 1 },
       { type: 'record', message: '1루타' },
+      { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.' },
     ],
     transition: { to: 'runner.route' },
   },
@@ -36,7 +37,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     type: 'choice',
     view: 'runner:first',
     title: '1루 주자 시점',
-    description: '다음 플레이를 선택하세요.',
+    description: '1루 주자: 주루 방침을 선택하세요.',
     choices: [
       { id: 'waitForBatter', label: '1루에 머물면서 타격을 기다린다', description: '후속 타자의 타격 결과를 확인한다', transition: { to: 'followUp.batting.resolve' } },
       { id: 'stealSecond', label: '2루 도루를 시도한다', description: `성공률 ${Math.round(RUNNING_CHANCES.stealSecond * 100)}%`, when: [{ field: 'bases', operator: 'excludes', value: [2] }], transition: { to: 'runner.first.stealSecond' } },
@@ -48,8 +49,8 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:first',
     title: '2루 도루',
     outcomes: [
-      { id: 'success', weight: RUNNING_CHANCES.stealSecond, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 1, to: 2 }, { type: 'record', message: '2루 도루 성공' }] } },
-      { id: 'out', weight: 1 - RUNNING_CHANCES.stealSecond, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 1, to: 'out' }, { type: 'record', message: '2루 도루 실패' }] } },
+      { id: 'success', weight: RUNNING_CHANCES.stealSecond, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 1, to: 2 }, { type: 'record', message: '2루 도루 성공' }, { type: 'announce', title: '2루 도루 성공!', detail: '2루에 도착했습니다.' }] } },
+      { id: 'out', weight: 1 - RUNNING_CHANCES.stealSecond, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 1, to: 'out' }, { type: 'record', message: '2루 도루 실패' }, { type: 'announce', title: '2루 도루 실패', detail: '2루에서 아웃되었습니다.' }] } },
     ],
   },
   'runner.second.decide': {
@@ -68,8 +69,8 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:second',
     title: '3루 도루',
     outcomes: [
-      { id: 'success', weight: RUNNING_CHANCES.stealThird, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 2, to: 3 }, { type: 'record', message: '3루 도루 성공' }] } },
-      { id: 'out', weight: 1 - RUNNING_CHANCES.stealThird, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: '3루 도루 실패' }] } },
+      { id: 'success', weight: RUNNING_CHANCES.stealThird, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 2, to: 3 }, { type: 'record', message: '3루 도루 성공' }, { type: 'announce', title: '3루 도루 성공!', detail: '3루에 도착했습니다.' }] } },
+      { id: 'out', weight: 1 - RUNNING_CHANCES.stealThird, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: '3루 도루 실패' }, { type: 'announce', title: '3루 도루 실패', detail: '3루에서 아웃되었습니다.' }] } },
     ],
   },
   'runner.third.decide': {

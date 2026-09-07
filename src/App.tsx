@@ -79,8 +79,9 @@ function App() {
   }
 
   const acceptState = (next: ScenarioState) => {
-    if (OFFENSE_CORE_PACK.nodes[next.nodeId].type === 'terminal') completeScenario(next)
-    else setScenario(next)
+    const terminal = OFFENSE_CORE_PACK.nodes[next.nodeId].type === 'terminal'
+    setScenario(next)
+    if (terminal) completeScenario(next)
   }
 
   const chooseBatting = (eventId: BattingEventId) => acceptState(selectScenarioBattingEvent(OFFENSE_CORE_PACK, scenario, eventId))
@@ -111,15 +112,23 @@ function App() {
   const viewLabel = node.view.startsWith('runner:')
     ? `${node.view.split(':')[1] === 'first' ? 1 : node.view.split(':')[1] === 'second' ? 2 : 3}루 주자 시점`
     : '타석 시점'
+  const isViewTitle = node.title === viewLabel
   const availableChoices = getAvailableScenarioChoices(OFFENSE_CORE_PACK, scenario)
+  const actionInstruction = node.type === 'batting'
+    ? '타격 결과를 선택해주세요.'
+    : node.type === 'choice'
+      ? node.description ?? '주루 방침을 선택해주세요.'
+      : ''
 
   return <main className="app-shell">
     <header className="brand-bar"><div><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></div><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></header>
     <div className="game-grid">
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} />
-      <section className="decision-panel"><div className="panel-heading"><span className="view-chip">{viewLabel}</span><p>{node.title}</p></div>
-        {phase === 'playing' && scenario.context.records.at(-1)?.startsWith('후속 타자') && <div className="event-alert"><span>후속 타격 결과</span><strong>{scenario.context.records.at(-1)}</strong></div>}
-        {phase === 'playing' && node.type === 'batting' && <div className="choices batting-choices">{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind)).map((event, index) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
+      <section className="decision-panel">
+        <div className="panel-heading"><span className="view-chip">{viewLabel}</span>{!isViewTitle && <p>{node.title}</p>}</div>
+        {scenario.context.announcement && <aside className="result-notice" aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}><span>방금 일어난 일</span><strong>{scenario.context.announcement.title}</strong><p>{scenario.context.announcement.detail}</p></aside>}
+        {phase === 'playing' && actionInstruction && <p className="action-instruction">{actionInstruction}</p>}
+        {phase === 'playing' && node.type === 'batting' && <div className="choices batting-choices">{BATTING_EVENTS.filter((event) => event.kind === 'single' && node.eventIds.includes(event.kind)).map((event, index) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
         {phase === 'playing' && node.type === 'choice' && <div className="choices runner-choices">{availableChoices.map((choice, index) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {phase === 'between' && <div className="play-result"><p className="eyebrow">PLAY COMPLETE</p><h3>{records.at(-1)?.result}</h3><p>{plateAppearance === 3 ? '모든 타석이 끝났습니다.' : '다음 타석은 새로운 상황에서 시작합니다.'}</p><button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button></div>}
       </section>
