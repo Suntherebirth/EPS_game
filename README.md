@@ -23,4 +23,8 @@ npm run dev
 
 타격 이벤트와 확률 값은 `src/game/battingEvents.ts`에서 관리합니다. 새 이벤트는 `BATTING_EVENTS`에 추가하고, 확률형 가중치는 각 이벤트의 `randomWeight`, 주루 확률은 `RUNNING_CHANCES`에서 조정합니다.
 
+타격과 주루 분기는 하나의 시나리오 팩으로 연결합니다. 타입 계약은 `src/game/scenario.ts`, 노드 작성 및 통합 규칙은 [통합 시나리오 팩 규칙](docs/scenario-pack-rules.md)을 따릅니다.
+
+단일 실행 팩 `src/game/packs/offenseCorePack.ts`가 전체 공격 흐름을 소유합니다. `emptyBasesSingleNodes.ts`는 주자 없는 1루타 흐름을 제공하는 노드 조각이며 독립 실행되지 않습니다. 공통 실행기는 `src/game/scenarioEngine.ts`, 상태 효과는 `src/game/scenarioEffects.ts`, 초기 상황은 `src/game/gameSetup.ts`에서 관리합니다.
+
 프로덕션 빌드는 `npm run build`, 코드 검사는 `npm run lint`로 실행합니다.

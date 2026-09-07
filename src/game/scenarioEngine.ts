@@ -1,0 +1,103 @@
+import { BATTING_EVENTS } from './battingEvents'
+import { applyScenarioEffect } from './scenarioEffects'
+import type {
+  BattingNode,
+  ScenarioCondition,
+  ScenarioContext,
+  ScenarioPack,
+  ScenarioState,
+  ScenarioTransition,
+} from './scenario'
+
+const matchesCondition = (context: ScenarioContext, condition: ScenarioCondition): boolean => {
+  if (condition.field === 'outs') {
+    if (condition.operator === 'eq') return context.outs === condition.value
+    if (condition.operator === 'lt') return context.outs < condition.value
+    return context.outs >= condition.value
+  }
+  if (condition.field === 'bases') {
+    if (condition.operator === 'empty') return context.bases.length === 0
+    if (condition.operator === 'includes') return (condition.value ?? []).every((base) => context.bases.includes(base))
+    if (condition.operator === 'excludes') return (condition.value ?? []).every((base) => !context.bases.includes(base))
+    return [...context.bases].sort().join(',') === [...(condition.value ?? [])].sort().join(',')
+  }
+  if (condition.field === 'battingEvent') {
+    return condition.operator === 'eq'
+      ? context.battingEvent === condition.value
+      : (condition.value as string[]).includes(context.battingEvent ?? '')
+  }
+  if (condition.field === 'playerBase') return context.playerBase === condition.value
+  return context.flags[condition.key] === condition.value
+}
+
+const applyTransition = (state: ScenarioState, transition: ScenarioTransition): ScenarioState => ({
+  nodeId: transition.to,
+  context: (transition.effects ?? []).reduce(applyScenarioEffect, state.context),
+})
+
+const pickWeighted = <T extends { weight: number }>(items: T[]): T => {
+  let roll = Math.random() * items.reduce((sum, item) => sum + item.weight, 0)
+  return items.find((item) => (roll -= item.weight) <= 0) ?? items[0]
+}
+
+const resolveBattingNode = (node: BattingNode, context: ScenarioContext) => {
+  const events = BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind))
+  const selected = pickWeighted(events.map((event) => ({ event, weight: event.randomWeight }))).event
+  const nextContext = { ...context, battingEvent: selected.kind, selectedLabel: context.selectedLabel ?? selected.label }
+  const route = node.routes.find((item) => (item.when ?? []).every((condition) => matchesCondition(nextContext, condition)))
+  if (!route) throw new Error(`${node.id}에 ${selected.kind} 결과를 처리할 경로가 없습니다.`)
+  return { route, context: nextContext }
+}
+
+export const settleScenario = (pack: ScenarioPack, initialState: ScenarioState): ScenarioState => {
+  let state = initialState
+  for (let step = 0; step < 100; step += 1) {
+    const node = pack.nodes[state.nodeId]
+    if (!node) throw new Error(`시나리오 노드를 찾을 수 없습니다: ${state.nodeId}`)
+    if (node.type === 'choice' || node.type === 'terminal' || (node.type === 'batting' && node.mode === 'direct')) return state
+    if (node.type === 'event') state = applyTransition({ ...state, context: node.effects.reduce(applyScenarioEffect, state.context) }, node.transition)
+    if (node.type === 'chance') state = applyTransition(state, pickWeighted(node.outcomes).transition)
+    if (node.type === 'router') {
+      const route = node.routes.find((item) => (item.when ?? []).every((condition) => matchesCondition(state.context, condition)))
+      if (!route) throw new Error(`${node.id}에서 현재 상태를 처리할 경로가 없습니다.`)
+      state = applyTransition(state, route)
+    }
+    if (node.type === 'batting') {
+      const resolved = resolveBattingNode(node, state.context)
+      state = applyTransition({ ...state, context: resolved.context }, resolved.route)
+    }
+  }
+  throw new Error('시나리오가 100단계 안에 대기 또는 종료 노드에 도달하지 못했습니다.')
+}
+
+export const startScenario = (pack: ScenarioPack, context: ScenarioContext): ScenarioState =>
+  settleScenario(pack, { nodeId: pack.entryNodeId, context })
+
+export const chooseScenarioOption = (pack: ScenarioPack, state: ScenarioState, choiceId: string): ScenarioState => {
+  const node = pack.nodes[state.nodeId]
+  if (node?.type !== 'choice') throw new Error(`선택 노드가 아닙니다: ${state.nodeId}`)
+  const choice = node.choices.find((item) => item.id === choiceId)
+  if (!choice) throw new Error(`선택지를 찾을 수 없습니다: ${choiceId}`)
+  if (!(choice.when ?? []).every((condition) => matchesCondition(state.context, condition))) {
+    throw new Error(`현재 상황에서 선택할 수 없습니다: ${choiceId}`)
+  }
+  return settleScenario(pack, applyTransition(state, choice.transition))
+}
+
+export const getAvailableScenarioChoices = (pack: ScenarioPack, state: ScenarioState) => {
+  const node = pack.nodes[state.nodeId]
+  if (node?.type !== 'choice') return []
+  return node.choices.filter((choice) => (choice.when ?? []).every((condition) => matchesCondition(state.context, condition)))
+}
+
+export const selectScenarioBattingEvent = (pack: ScenarioPack, state: ScenarioState, eventId: string): ScenarioState => {
+  const node = pack.nodes[state.nodeId]
+  if (node?.type !== 'batting' || node.mode !== 'direct') throw new Error(`확정 타격 선택 노드가 아닙니다: ${state.nodeId}`)
+  if (!node.eventIds.includes(eventId as never)) throw new Error(`허용되지 않은 타격 이벤트입니다: ${eventId}`)
+  const event = BATTING_EVENTS.find((item) => item.kind === eventId)
+  if (!event) throw new Error(`타격 이벤트를 찾을 수 없습니다: ${eventId}`)
+  const context = { ...state.context, battingEvent: event.kind, selectedLabel: event.label }
+  const route = node.routes.find((item) => (item.when ?? []).every((condition) => matchesCondition(context, condition)))
+  if (!route) throw new Error(`${node.id}에 ${eventId} 결과를 처리할 경로가 없습니다.`)
+  return settleScenario(pack, applyTransition({ ...state, context }, route))
+}

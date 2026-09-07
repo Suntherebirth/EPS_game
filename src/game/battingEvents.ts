@@ -24,22 +24,11 @@ export type Play = {
   randomWeight: number
 }
 
-export type GameSettings = {
-  battingMode: BattingMode
-}
-
-export type RunnerEvent = 'outfieldMisplay' | 'infieldMisplay' | 'standard'
-
-export const DEFAULT_SETTINGS: GameSettings = {
-  battingMode: 'direct',
-}
-
 export const RUNNING_CHANCES = {
-  outfieldMisplay: 0.25,
+  stealSecond: 0.72,
+  stealThird: 0.68,
   safeAdvance: 0.94,
   aggressiveAdvance: 0.7,
-  aggressiveOnMisplay: 0.8,
-  aggressiveOnCleanFielding: 0.35,
 } as const
 
 const battingEvent = (
@@ -66,13 +55,3 @@ export const BATTING_EVENTS: Play[] = [
   battingEvent('groundOut', '내야 땅볼 아웃', '내야 땅볼로 타자가 아웃된다', '내야수가 타구를 잡아 1루로 던집니다.', 0, 1, false, 14),
   battingEvent('flyOut', '외야 뜬공', '외야수가 타구를 잡아낸다', '외야수가 낙구 지점에서 타구를 잡습니다.', 0, 1, false, 11),
 ]
-
-export const resolveBattingEvent = (selected: BattingEventId, mode: BattingMode): Play => {
-  if (mode === 'direct') return BATTING_EVENTS.find((event) => event.kind === selected) ?? BATTING_EVENTS[0]
-
-  let roll = Math.random() * BATTING_EVENTS.reduce((sum, event) => sum + event.randomWeight, 0)
-  return BATTING_EVENTS.find((event) => (roll -= event.randomWeight) <= 0) ?? BATTING_EVENTS[0]
-}
-
-export const rollSingleRunnerEvent = (): RunnerEvent =>
-  Math.random() < RUNNING_CHANCES.outfieldMisplay ? 'outfieldMisplay' : 'standard'
