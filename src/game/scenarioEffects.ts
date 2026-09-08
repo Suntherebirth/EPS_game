@@ -12,7 +12,7 @@ const cloneContext = (context: ScenarioContext): ScenarioContext => ({
 })
 
 const setAnnouncement = (context: ScenarioContext, announcement: ScenarioContext['announcement']) => {
-  if (context.announcement) context.announcementHistory.push({ announcement: context.announcement, category: context.announcementCategory })
+  if (context.announcement && context.announcement.title !== '플레이 종료') context.announcementHistory.push({ announcement: context.announcement, category: context.announcementCategory })
   context.announcement = announcement
   context.announcementCategory = context.flags.surpriseEvent === true ? 'surprise' : 'normal'
 }
@@ -43,13 +43,12 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     setAnnouncement(next, {
       title: effect.title,
       detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : effect.detail,
-      ...(effect.tone ? { tone: effect.tone } : {}),
+      ...(effect.tone ? { tone: effect.tone } : next.outs >= 3 ? { tone: 'negative' as const } : {}),
     })
   }
   if (effect.type === 'announceFollowUpOutfieldError') {
-    const event = BATTING_EVENTS.find((item) => item.kind === next.battingEvent)
     setAnnouncement(next, {
-      title: `후속타자의 ${event?.label ?? '타구'}! 외야수가 타구를 뒤로 빠뜨렸습니다.`,
+      title: '외야수가 타구를 뒤로 빠뜨렸습니다.',
       detail: effect.clear ? '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' : '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.',
       ...(!effect.clear ? { tone: 'caution' as const } : {}),
     })
@@ -218,6 +217,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     if (!event) throw new Error(`적용할 타격 이벤트가 없습니다: ${next.battingEvent ?? 'undefined'}`)
     next.records.push(`후속 타자 ${event.label}`)
     const before = next.playerBase
+    const followUpTitle = event.kind === 'flyOut' ? `후속타자의 ${event.label} 발생!` : `후속타자의 ${event.label}!`
     const resolved = event.kind === 'homeRun'
       ? applyScenarioEffect(next, { type: 'scoreAll', creditHit: true })
       : event.kind === 'walk' || event.kind === 'hitByPitch'
@@ -225,10 +225,10 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
         : event.advance > 0
           ? applyScenarioEffect(next, { type: 'applyHit', batterTo: event.advance, creditHit: event.hit })
           : applyScenarioEffect(next, { type: 'addOuts', value: event.outs })
-    resolved.announcement = undefined
+    if (resolved.announcement?.title === '플레이 종료') resolved.announcement = undefined
     resolved.flags.advancedByFollowUpHit = event.hit && before !== null && resolved.playerBase !== null && resolved.playerBase > before
     if (resolved.outs >= 3) {
-      setAnnouncement(resolved, { title: `후속타자의 ${event.label}!`, detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+      setAnnouncement(resolved, { title: followUpTitle, detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
       return resolved
     }
     const destination = resolved.playerBase === null
@@ -237,7 +237,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
         ? `${before}루에서 움직이지 못했습니다.`
         : `${resolved.playerBase}루에 도착했습니다.`
     setAnnouncement(resolved, {
-      title: `후속타자의 ${event.label}!`,
+      title: followUpTitle,
       detail: before === null ? '홈에 들어왔습니다.' : destination,
       ...(resolved.playerBase === null ? { tone: 'positive' as const } : {}),
     })
@@ -248,8 +248,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (next.outs >= 3) {
     next.bases = []
     next.playerBase = null
-    if (next.announcement) next.announcement = { ...next.announcement, detail: '3아웃 · 공수교대입니다.', tone: 'negative' }
-    else next.announcement = { title: '플레이 종료', detail: '3아웃 · 공수교대입니다.', tone: 'negative' }
+    if (!next.announcement) next.announcement = { title: '플레이 종료', detail: '3아웃 · 공수교대입니다.', tone: 'negative' }
   }
   return next
 }

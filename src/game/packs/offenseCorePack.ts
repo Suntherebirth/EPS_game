@@ -38,10 +38,10 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'bases', operator: 'excludes', value: [1] }] },
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'eq', value: 2 }] },
         { to: 'out.strikeout.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }] },
-        { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
+        { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
         { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
-        { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }] },
-        { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '외야 뜬공!', detail: '외야수가 타구를 처리합니다.' }] },
+        { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }], effects: [{ type: 'announce', title: '내야 뜬공 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
+        { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.' }] },
       ],
     },
     ...EMPTY_BASES_SINGLE_NODES,
@@ -131,7 +131,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       transition: { to: 'runner.route' },
     },
     'ground.infield.check': {
-      id: 'ground.infield.check', type: 'chance', view: 'batter', title: '내야 땅볼 수비 판정',
+      id: 'ground.infield.check', type: 'chance', view: 'batter', title: '내야 땅볼 수비 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.fieldingError' } },
         { id: 'throwingError', label: '내야수 송구 실책', weight: RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'ground.infield.throwingError' } },
@@ -190,14 +190,14 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       ],
     },
     'fly.outfield.check': {
-      id: 'fly.outfield.check', type: 'chance', view: 'batter', title: '외야수 포구 판정',
+      id: 'fly.outfield.check', type: 'chance', view: 'batter', title: '외야수 포구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'dropped', label: '외야수가 놓침', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.outfield.drop', effects: [{ type: 'record', message: '외야 뜬공, 외야수 포구 실책', showInCompletion: false }] } },
         { id: 'caught', label: '외야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
       ],
     },
     'fly.outfield.runnerSecond.check': {
-      id: 'fly.outfield.runnerSecond.check', type: 'chance', view: 'runner:second', title: '외야수 포구 판정',
+      id: 'fly.outfield.runnerSecond.check', type: 'chance', view: 'runner:second', title: '외야수 포구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.second.outfieldError.clear.decide', effects: [{ type: 'applyOutfieldDropWithSecondRunner' }, { type: 'record', message: '외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 완전히 뒤로 빠뜨렸습니다!', detail: '확실하게 진루할 수 있습니다.' }] } },
         { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.second.outfieldError.ambiguous.decide', effects: [{ type: 'applyOutfieldDropWithSecondRunner' }, { type: 'record', message: '외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 애매하게 뒤로 빠뜨렸습니다!', detail: '진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
@@ -233,7 +233,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       transition: { to: 'runner.route' },
     },
     'fly.infield.check': {
-      id: 'fly.infield.check', type: 'chance', view: 'batter', title: '내야수 포구 판정',
+      id: 'fly.infield.check', type: 'chance', view: 'batter', title: '내야수 포구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'dropped', label: '내야수가 놓침', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.infield.drop', effects: [{ type: 'record', message: '내야 뜬공, 내야수 포구 실책', showInCompletion: false }] } },
         { id: 'caught', label: '내야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.infieldFly.generic' } },
@@ -256,9 +256,9 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       effects: [{ type: 'addOuts', value: 1 }, { type: 'record', message: '삼진' }, { type: 'announce', title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' }],
       transition: { to: 'plate.complete' },
     },
-    'out.ground.generic': completeEvent('out.ground.generic', '내야 땅볼 아웃', [{ type: 'addOuts', value: 1 }]),
-    'out.infieldFly.generic': completeEvent('out.infieldFly.generic', '내야 뜬공', [{ type: 'addOuts', value: 1 }]),
-    'out.fly.generic': completeEvent('out.fly.generic', '외야 뜬공', [{ type: 'addOuts', value: 1 }]),
+    'out.ground.generic': completeEvent('out.ground.generic', '땅볼 처리 성공', [{ type: 'addOuts', value: 1 }]),
+    'out.infieldFly.generic': completeEvent('out.infieldFly.generic', '뜬공 처리 성공', [{ type: 'addOuts', value: 1 }]),
+    'out.fly.generic': completeEvent('out.fly.generic', '뜬공 처리 성공', [{ type: 'addOuts', value: 1 }]),
   },
 }
 

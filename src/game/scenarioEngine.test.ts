@@ -162,6 +162,18 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcement).toEqual({ title: '인필드 플라이 선언!', detail: '타자 아웃. 주자는 원래 베이스에 머뭅니다.' })
   })
 
+  it('keeps a two-out infield fly as one final announcement', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(2), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'infieldFly', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'caught', { manualChance: true })
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+    expect(result.context.announcementHistory[0].announcement.title).toBe('내야 뜬공 발생!')
+    expect(result.context.announcementHistory[0].announcement.detail).toBe('내야수가 타구를 처리하러 이동합니다.')
+    expect(result.context.announcementHistory).toHaveLength(1)
+  })
+
   it('treats a dropped fly ball as a single', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
@@ -171,6 +183,15 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 1 })
     expect(result.context.announcement).toEqual({ title: '외야수가 뜬공을 놓쳤습니다!', detail: '1루타가 되었습니다.' })
+  })
+
+  it('announces an outfield fly and then a successful catch as separate steps', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'caught', { manualChance: true })
+
+    expect(result.context.announcementHistory[0].announcement.title).toBe('외야 뜬공 발생!')
+    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '플레이가 완료되었습니다.' })
   })
 
   it('offers tag-up choices for a third-base runner on a fly ball with zero or one out', () => {
@@ -183,7 +204,7 @@ describe('offense core scenario pack', () => {
       expect(depth.nodeId).toBe('runner.third.sacrificeFly.ambiguous.decide')
       expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, depth).map((choice) => choice.id)).toEqual(['stayThird', 'tagUp'])
       expect(depth.context.announcementHistory).toHaveLength(1)
-      expect(depth.context.announcementHistory[0].announcement.title).toBe('외야 뜬공!')
+      expect(depth.context.announcementHistory[0].announcement.title).toBe('외야 뜬공 발생!')
       expect(depth.context.announcement).toEqual({ title: '애매한 외야 플라이!', detail: '3루 주자가 태그업을 시도하다가 아웃될 수도 있습니다.', tone: 'caution' })
 
       const stay = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'stayThird', { manualChance: true })
@@ -428,6 +449,44 @@ describe('offense core scenario pack', () => {
     expect(result.context).toMatchObject({ bases: [3], playerBase: 3 })
   })
 
+  it('offers a home-plate advance attempt for a third-base runner after a clean ground ball with zero or one out', () => {
+    for (const outs of [0, 1]) {
+      const initial = startScenario(OFFENSE_CORE_PACK, context(outs), { manualChance: true })
+      const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+      const firstRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+      const stealSecond = chooseScenarioOption(OFFENSE_CORE_PACK, firstRunner, 'stealSecond', { manualChance: true })
+      const secondRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealSecond, 'success', { manualChance: true })
+      const stealThird = chooseScenarioOption(OFFENSE_CORE_PACK, secondRunner, 'stealThird', { manualChance: true })
+      const thirdRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealThird, 'success', { manualChance: true })
+      const wait = chooseScenarioOption(OFFENSE_CORE_PACK, thirdRunner, 'waitForBatter', { manualChance: true })
+      const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
+      const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
+      const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+
+      expect(cleanPlay.nodeId).toBe('runner.third.groundOut.decide')
+      expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, cleanPlay).map((choice) => choice.id)).toEqual(['stayThird', 'advanceHome'])
+    }
+  })
+
+  it('scores a third-base runner who successfully advances home on a clean ground ball', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const firstRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const stealSecond = chooseScenarioOption(OFFENSE_CORE_PACK, firstRunner, 'stealSecond', { manualChance: true })
+    const secondRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealSecond, 'success', { manualChance: true })
+    const stealThird = chooseScenarioOption(OFFENSE_CORE_PACK, secondRunner, 'stealThird', { manualChance: true })
+    const thirdRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealThird, 'success', { manualChance: true })
+    const wait = chooseScenarioOption(OFFENSE_CORE_PACK, thirdRunner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null, runs: 1 })
+  })
+
   it('advances every runner one base after either follow-up ground-ball error', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
@@ -510,7 +569,7 @@ describe('offense core scenario pack', () => {
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'double', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousDrop', { manualChance: true })
 
-    expect(result.context.announcement).toEqual({ title: '후속타자의 2루타! 외야수가 타구를 뒤로 빠뜨렸습니다.', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' })
+    expect(result.context.announcement).toEqual({ title: '외야수가 타구를 뒤로 빠뜨렸습니다.', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' })
     expect(result.context.announcementHistory).toEqual([])
     expect(result.context.announcementCategory).toBe('surprise')
   })
@@ -556,8 +615,9 @@ describe('offense core scenario pack', () => {
     const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'flyOut', { manualChance: true })
 
     expect(result.nodeId).toBe('plate.complete')
-    expect(result.context.announcement).toEqual({ title: '후속타자의 외야 뜬공!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
-    expect(result.context.announcementHistory).toEqual([])
+    expect(result.context.announcement).toEqual({ title: '후속타자의 외야 뜬공 발생!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+    expect(result.context.announcementHistory).toHaveLength(1)
+    expect(result.context.announcementHistory[0].announcement.title).toBe('후속타자의 외야 뜬공 발생!')
   })
 
   it('moves the player from first to third on a follow-up double with runners on first and second', () => {
