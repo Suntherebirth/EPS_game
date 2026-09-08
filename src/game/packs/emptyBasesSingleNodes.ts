@@ -198,9 +198,21 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'fly.outfield.runnerThird.check': {
     id: 'fly.outfield.runnerThird.check', type: 'chance', view: 'runner:third', title: '외야수 포구 판정', tags: ['composite-event-step'],
     outcomes: [
-      { id: 'ambiguousFly', label: '애매한 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthAmbiguous, transition: { to: 'runner.third.sacrificeFly.ambiguous.decide', effects: [{ type: 'announce', title: '애매한 외야 플라이!', detail: '3루 주자가 태그업을 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
-      { id: 'deepFly', label: '명백하게 깊은 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthDeep, transition: { to: 'runner.third.sacrificeFly.deep.decide', effects: [{ type: 'announce', title: '명백하게 깊은 외야 플라이!', detail: '3루 주자가 안전하게 태그업할 수 있습니다.' }] } },
+      { id: 'ambiguousFly', label: '애매한 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthAmbiguous, transition: { to: 'runner.third.sacrificeFly.ambiguous.auto', effects: [{ type: 'announce', title: '애매한 외야 플라이!', detail: '3루 주자의 태그업 여부를 자동으로 판단합니다.', tone: 'caution' }] } },
+      { id: 'deepFly', label: '명백하게 깊은 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthDeep, transition: { to: 'runner.third.sacrificeFly.deep.auto', effects: [{ type: 'announce', title: '명백하게 깊은 외야 플라이!', detail: '3루 주자가 안전하게 태그업할 수 있습니다.' }] } },
     ],
+  },
+  'runner.third.sacrificeFly.ambiguous.auto': {
+    id: 'runner.third.sacrificeFly.ambiguous.auto', type: 'chance', view: 'runner:third', title: '애매한 외야 플라이', tags: ['composite-event-step'],
+    outcomes: [
+      { id: 'stayThird', label: '3루에 머무름', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'runner.route', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'announce', title: '애매한 외야 플라이, 3루에 머뭅니다.', detail: '태그업을 시도하지 않았습니다.' }] } },
+      { id: 'tagUp', label: '홈으로 태그업 시도', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'runner.third.sacrificeFly.ambiguous.advance', effects: [{ type: 'announce', title: '애매한 외야 플라이, 태그업을 시도합니다.', detail: `태그업 시도 확률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly * 100)}%` }] } },
+    ],
+  },
+  'runner.third.sacrificeFly.deep.auto': {
+    id: 'runner.third.sacrificeFly.deep.auto', type: 'event', view: 'runner:third', title: '명백하게 깊은 외야 플라이',
+    effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'positive' }],
+    transition: { to: 'plate.complete' },
   },
   'followUp.fly.outfield.check': {
     id: 'followUp.fly.outfield.check', type: 'chance', view: 'runner:second', title: '후속 외야수 포구 판정', tags: ['composite-event-step'],

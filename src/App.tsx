@@ -37,11 +37,11 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, videoUrl, imageUrl }: { situation: Situation; plateAppearance: number; playerBase: number | null; videoUrl?: string; imageUrl?: string }) {
+function MediaStage({ situation, plateAppearance, playerBase, viewLabel, isSurpriseEvent, videoUrl, imageUrl }: { situation: Situation; plateAppearance: number; playerBase: number | null; viewLabel?: string | null; isSurpriseEvent?: boolean; videoUrl?: string; imageUrl?: string }) {
   return <section className="media-stage" aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
     {!videoUrl && imageUrl && <img src={imageUrl} alt="" />}
-    <div className="broadcast-watermark"><strong>EPS</strong><span>LIVE</span></div>
+    {viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
     <div className="broadcast-bug">
       <div className="broadcast-plate"><span>공격</span><strong>{plateAppearance}<small>/3</small></strong></div>
       <div className="broadcast-runners"><BaseDiamond bases={situation.bases} playerBase={playerBase} /></div>
@@ -129,14 +129,18 @@ function App() {
 
   const node = OFFENSE_CORE_PACK.nodes[scenario.nodeId]
   const displayedSituation = { outs: scenario.context.outs, bases: scenario.context.bases as Base[] }
-  const currentViewBase = node.tags?.includes('player-position-view') ? scenario.context.playerBase : node.view.split(':')[1] === 'first' ? 1 : node.view.split(':')[1] === 'second' ? 2 : 3
+  const nodeViewBase = node.view === 'runner:first' ? 1 : node.view === 'runner:second' ? 2 : node.view === 'runner:third' ? 3 : null
+  const currentViewBase = node.tags?.includes('player-position-view') && nodeViewBase === 1 ? scenario.context.playerBase : nodeViewBase
+  const imageView = currentViewBase ? `runner:${currentViewBase === 1 ? 'first' : currentViewBase === 2 ? 'second' : 'third'}` : node.view
   const viewLabel = node.view.startsWith('runner:') && currentViewBase
     ? `${currentViewBase}루 주자 시점`
     : node.view === 'batter' ? '타석 시점' : null
   const isSurpriseEvent = node.tags?.includes('surprise-event')
   const highlightedViewLabel = isSurpriseEvent && viewLabel ? `${viewLabel} : 돌발 이벤트!` : viewLabel
   const availableChoices = getAvailableScenarioChoices(OFFENSE_CORE_PACK, scenario)
-  const choiceDescription = node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
+  const choiceDescription = node.type === 'choice' && isSurpriseEvent && currentViewBase
+    ? `${currentViewBase}루 주자: 돌발 상황 대처`
+    : node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
     ? node.description.startsWith(`${currentViewBase}루 주자:`) ? node.description : `${currentViewBase}루 주자: ${node.description}`
     : node.type === 'choice' ? node.description : undefined
   const announcementMessages = scenario.context.announcement
@@ -156,9 +160,8 @@ function App() {
   return <main className="app-shell">
     <header className="brand-bar"><div><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></div><div className="header-controls"><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className="game-grid">
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} imageUrl={VIEW_IMAGES[node.view]} />
-      <section className={`decision-panel ${isSurpriseEvent ? 'surprise-event-panel' : ''}`}>
-        {highlightedViewLabel && <div className="panel-heading"><span className={`view-chip ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{highlightedViewLabel}</span></div>}
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} imageUrl={VIEW_IMAGES[imageView]} />
+      <section className={`decision-panel ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${scenario.context.announcement ? 'has-announcement' : ''}`}>
         {scenario.context.announcement && <aside className={`result-notice ${scenario.context.announcement.tone ?? 'neutral'}`} aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}>
           <span>방금 일어난 일</span>
           <div className="message-flow">
@@ -172,9 +175,9 @@ function App() {
           </div>
         </aside>}
         {phase === 'playing' && actionInstruction && <p className="action-instruction">{actionInstruction}</p>}
-        {phase === 'playing' && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event, index) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
-        {phase === 'playing' && node.type === 'choice' && <div className="choices runner-choices">{availableChoices.map((choice, index) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
-        {phase === 'playing' && adminMode && node.type === 'chance' && <div className="admin-console"><span>관리자 콘솔 · 확률 결과 선택</span><div className="choices runner-choices">{node.outcomes.map((outcome, index) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
+        {phase === 'playing' && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
+        {phase === 'playing' && node.type === 'choice' && <div className="choices runner-choices">{availableChoices.map((choice) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
+        {phase === 'playing' && adminMode && node.type === 'chance' && <div className="admin-console"><span>관리자 콘솔 · 확률 결과 선택</span><div className="choices runner-choices">{node.outcomes.map((outcome) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
         {phase === 'between' && <div className="play-result"><p className="eyebrow">PLAY COMPLETE</p><h3>{records.at(-1)?.result}</h3><p>{plateAppearance === 3 ? '모든 타석이 끝났습니다.' : '다음 타석은 새로운 상황에서 시작합니다.'}</p><button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button></div>}
       </section>
     </div>

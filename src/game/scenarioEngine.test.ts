@@ -211,35 +211,15 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '플레이가 완료되었습니다.' })
   })
 
-  it('offers tag-up choices for a third-base runner on a fly ball with zero or one out', () => {
-    for (const outs of [0, 1]) {
-      const initial = startScenario(OFFENSE_CORE_PACK, context(outs, [3]), { manualChance: true })
-      const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
-      const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousFly', { manualChance: true })
-
-      expect(fielding.nodeId).toBe('fly.outfield.runnerThird.check')
-      expect(depth.nodeId).toBe('runner.third.sacrificeFly.ambiguous.decide')
-      expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, depth).map((choice) => choice.id)).toEqual(['stayThird', 'tagUp'])
-      expect(depth.context.announcementHistory).toHaveLength(1)
-      expect(depth.context.announcementHistory[0].announcement.title).toBe('외야 뜬공 발생!')
-      expect(depth.context.announcement).toEqual({ title: '애매한 외야 플라이!', detail: '3루 주자가 태그업을 시도하다가 아웃될 수도 있습니다.', tone: 'caution' })
-
-      const stay = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'stayThird', { manualChance: true })
-      expect(stay.context.announcement).toEqual({ title: '애매한 외야 플라이, 3루에 머뭅니다.', detail: '위험을 감수하지 않고 3루를 지켰습니다.' })
-    }
-  })
-
-  it('scores a third-base runner on a deep fly tag-up with a guaranteed success', () => {
+  it('automatically resolves tag-up for a third-base runner when the player bats', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(1, [3]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
     const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'deepFly', { manualChance: true })
-    const result = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'tagUp', { manualChance: true })
 
-    expect(result.nodeId).toBe('plate.complete')
-    expect(result.context).toMatchObject({ outs: 2, bases: [], runs: 1, playerBase: null })
-    expect(result.context.completionRecords).toContain('희생플라이')
-    expect(result.context.announcement).toEqual({ title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'positive' })
-    expect(result.context.announcementHistory).toEqual([])
+    expect(fielding.nodeId).toBe('fly.outfield.runnerThird.check')
+    expect(depth.nodeId).toBe('plate.complete')
+    expect(depth.context).toMatchObject({ outs: 2, bases: [], runs: 1, playerBase: null })
+    expect(depth.context.completionRecords).toContain('희생플라이')
   })
 
   it('keeps a third-base runner active after staying on an outfield fly with one out', () => {
