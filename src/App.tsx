@@ -12,7 +12,18 @@ import {
 import { OFFENSE_CORE_PACK } from './game/packs/offenseCorePack'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
 import type { ScenarioState } from './game/scenario'
+import viewBatter from './assets/scenes/view-batter.png'
+import viewRunnerFirst from './assets/scenes/view-runner-first.png'
+import viewRunnerSecond from './assets/scenes/view-runner-second.png'
+import viewRunnerThird from './assets/scenes/view-runner-third.png'
 import './App.css'
+
+const VIEW_IMAGES: Record<string, string> = {
+  batter: viewBatter,
+  'runner:first': viewRunnerFirst,
+  'runner:second': viewRunnerSecond,
+  'runner:third': viewRunnerThird,
+}
 
 type Phase = 'playing' | 'between' | 'finished'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
@@ -26,9 +37,10 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, videoUrl }: { situation: Situation; plateAppearance: number; playerBase: number | null; videoUrl?: string }) {
+function MediaStage({ situation, plateAppearance, playerBase, videoUrl, imageUrl }: { situation: Situation; plateAppearance: number; playerBase: number | null; videoUrl?: string; imageUrl?: string }) {
   return <section className="media-stage" aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
+    {!videoUrl && imageUrl && <img src={imageUrl} alt="" />}
     <div className="broadcast-watermark"><strong>EPS</strong><span>LIVE</span></div>
     <div className="broadcast-bug">
       <div className="broadcast-plate"><span>공격</span><strong>{plateAppearance}<small>/3</small></strong></div>
@@ -144,7 +156,7 @@ function App() {
   return <main className="app-shell">
     <header className="brand-bar"><div><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></div><div className="header-controls"><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className="game-grid">
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} />
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} imageUrl={VIEW_IMAGES[node.view]} />
       <section className={`decision-panel ${isSurpriseEvent ? 'surprise-event-panel' : ''}`}>
         {highlightedViewLabel && <div className="panel-heading"><span className={`view-chip ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{highlightedViewLabel}</span></div>}
         {scenario.context.announcement && <aside className={`result-notice ${scenario.context.announcement.tone ?? 'neutral'}`} aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}>
