@@ -140,6 +140,14 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     return applyScenarioEffect(next, { type: 'movePlayer', to: next.playerBase === 3 ? 'home' : next.playerBase + 1 })
   }
 
+  if (effect.type === 'advanceRunnersAheadOfPlayer' && next.playerBase !== null) {
+    const advancingRunners = next.bases.filter((base) => base > next.playerBase!)
+    next.bases = next.bases.filter((base) => base <= next.playerBase!)
+    const advancedBases = advancingRunners.map((base) => base + 1)
+    next.runs += advancedBases.filter((base) => base >= 4).length
+    next.bases.push(...advancedBases.filter((base) => base < 4))
+  }
+
   if (effect.type === 'applyFollowUpGroundOut') {
     const playerBase = next.playerBase
     const playerIsForced = playerBase !== null && Array.from({ length: playerBase }, (_, index) => index + 1).every((base) => next.bases.includes(base))

@@ -29,6 +29,7 @@ export type ScenarioEffect =
   | { type: 'setPlayerBase'; value: number | null }
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }
+  | { type: 'advanceRunnersAheadOfPlayer' }
   | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
   | { type: 'announceFollowUpOutfieldError'; clear: boolean }
   | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
