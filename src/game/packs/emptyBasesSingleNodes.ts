@@ -183,7 +183,23 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     eventIds: [...FOLLOW_UP_EVENTS],
     routes: [
       { to: 'followUp.ground.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
+      { to: 'followUp.fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
       { to: 'followUp.batting.apply', when: [{ field: 'battingEvent', operator: 'in', value: [...FOLLOW_UP_EVENTS] }] },
+    ],
+  },
+  'followUp.fly.outfield.route': {
+    id: 'followUp.fly.outfield.route', type: 'router', view: 'batter', title: '후속 외야 뜬공 주자 확인',
+    routes: [
+      { to: 'followUp.fly.outfield.check', when: [{ field: 'playerBase', operator: 'eq', value: 2 }, { field: 'bases', operator: 'excludes', value: [1] }] },
+      { to: 'followUp.batting.apply' },
+    ],
+  },
+  'followUp.fly.outfield.check': {
+    id: 'followUp.fly.outfield.check', type: 'chance', view: 'runner:second', title: '후속 외야수 포구 판정',
+    outcomes: [
+      { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.second.outfieldError.clear.decide', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '후속 타자 타구가 외야수 뒤로 완전히 빠졌습니다!', detail: '2루 주자는 확실하게 진루할 수 있습니다.' }] } },
+      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.second.outfieldError.ambiguous.decide', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '후속 타자 타구가 외야수 뒤로 애매하게 빠졌습니다!', detail: '2루 주자가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+      { id: 'caught', label: '외야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.batting.apply' } },
     ],
   },
   'followUp.ground.check': {

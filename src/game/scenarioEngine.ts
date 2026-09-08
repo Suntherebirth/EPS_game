@@ -34,9 +34,28 @@ const matchesCondition = (context: ScenarioContext, condition: ScenarioCondition
   return context.flags[condition.key] === condition.value
 }
 
-const applyTransition = (state: ScenarioState, transition: ScenarioTransition): ScenarioState => ({
-  nodeId: transition.to,
-  context: (transition.effects ?? []).reduce(applyScenarioEffect, state.context),
+const applyTransition = (pack: ScenarioPack, state: ScenarioState, transition: ScenarioTransition): ScenarioState => {
+  const sourceIsSurprise = pack.nodes[state.nodeId]?.tags?.includes('surprise-event') ?? false
+  const targetIsSurprise = pack.nodes[transition.to]?.tags?.includes('surprise-event') ?? false
+  const context = {
+    ...state.context,
+    flags: { ...state.context.flags, surpriseEvent: sourceIsSurprise || targetIsSurprise },
+  }
+  return {
+    nodeId: transition.to,
+    context: (transition.effects ?? []).reduce(applyScenarioEffect, context),
+  }
+}
+
+const beginUserAction = (state: ScenarioState): ScenarioState => ({
+  ...state,
+  context: {
+    ...state.context,
+    flags: { ...state.context.flags, surpriseEvent: false },
+    announcement: undefined,
+    announcementHistory: [],
+    announcementCategory: 'normal',
+  },
 })
 
 const pickWeighted = <T extends { weight: number }>(items: T[]): T => {
@@ -59,16 +78,16 @@ export const settleScenario = (pack: ScenarioPack, initialState: ScenarioState, 
     const node = pack.nodes[state.nodeId]
     if (!node) throw new Error(`시나리오 노드를 찾을 수 없습니다: ${state.nodeId}`)
     if (node.type === 'choice' || node.type === 'terminal' || (node.type === 'batting' && (node.mode === 'direct' || options.manualChance)) || (node.type === 'chance' && options.manualChance)) return state
-    if (node.type === 'event') state = applyTransition({ ...state, context: node.effects.reduce(applyScenarioEffect, state.context) }, node.transition)
-    if (node.type === 'chance') state = applyTransition(state, pickWeighted(node.outcomes).transition)
+    if (node.type === 'event') state = applyTransition(pack, { ...state, context: node.effects.reduce(applyScenarioEffect, state.context) }, node.transition)
+    if (node.type === 'chance') state = applyTransition(pack, state, pickWeighted(node.outcomes).transition)
     if (node.type === 'router') {
       const route = node.routes.find((item) => (item.when ?? []).every((condition) => matchesCondition(state.context, condition)))
       if (!route) throw new Error(`${node.id}에서 현재 상태를 처리할 경로가 없습니다.`)
-      state = applyTransition(state, route)
+      state = applyTransition(pack, state, route)
     }
     if (node.type === 'batting') {
       const resolved = resolveBattingNode(node, state.context)
-      state = applyTransition({ ...state, context: resolved.context }, resolved.route)
+      state = applyTransition(pack, { ...state, context: resolved.context }, resolved.route)
     }
   }
   throw new Error('시나리오가 100단계 안에 대기 또는 종료 노드에 도달하지 못했습니다.')
@@ -85,7 +104,7 @@ export const chooseScenarioOption = (pack: ScenarioPack, state: ScenarioState, c
   if (!(choice.when ?? []).every((condition) => matchesCondition(state.context, condition))) {
     throw new Error(`현재 상황에서 선택할 수 없습니다: ${choiceId}`)
   }
-  return settleScenario(pack, applyTransition(state, choice.transition), options)
+  return settleScenario(pack, applyTransition(pack, beginUserAction(state), choice.transition), options)
 }
 
 export const chooseScenarioChanceOutcome = (pack: ScenarioPack, state: ScenarioState, outcomeId: string, options?: ScenarioExecutionOptions): ScenarioState => {
@@ -93,7 +112,7 @@ export const chooseScenarioChanceOutcome = (pack: ScenarioPack, state: ScenarioS
   if (node?.type !== 'chance') throw new Error(`확률 노드가 아닙니다: ${state.nodeId}`)
   const outcome = node.outcomes.find((item) => item.id === outcomeId)
   if (!outcome) throw new Error(`확률 결과를 찾을 수 없습니다: ${outcomeId}`)
-  return settleScenario(pack, applyTransition(state, outcome.transition), options)
+  return settleScenario(pack, applyTransition(pack, beginUserAction(state), outcome.transition), options)
 }
 
 export const getAvailableScenarioChoices = (pack: ScenarioPack, state: ScenarioState) => {
@@ -108,8 +127,9 @@ export const selectScenarioBattingEvent = (pack: ScenarioPack, state: ScenarioSt
   if (!node.eventIds.includes(eventId as never)) throw new Error(`허용되지 않은 타격 이벤트입니다: ${eventId}`)
   const event = BATTING_EVENTS.find((item) => item.kind === eventId)
   if (!event) throw new Error(`타격 이벤트를 찾을 수 없습니다: ${eventId}`)
-  const context = { ...state.context, battingEvent: event.kind, selectedLabel: event.label }
+  const actionState = beginUserAction(state)
+  const context = { ...actionState.context, battingEvent: event.kind, selectedLabel: event.label }
   const route = node.routes.find((item) => (item.when ?? []).every((condition) => matchesCondition(context, condition)))
   if (!route) throw new Error(`${node.id}에 ${eventId} 결과를 처리할 경로가 없습니다.`)
-  return settleScenario(pack, applyTransition({ ...state, context }, route), options)
+  return settleScenario(pack, applyTransition(pack, { ...actionState, context }, route), options)
 }

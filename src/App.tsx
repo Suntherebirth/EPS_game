@@ -124,6 +124,12 @@ function App() {
   const isSurpriseEvent = node.tags?.includes('surprise-event')
   const highlightedViewLabel = isSurpriseEvent && viewLabel ? `${viewLabel} : 돌발 이벤트!` : viewLabel
   const availableChoices = getAvailableScenarioChoices(OFFENSE_CORE_PACK, scenario)
+  const announcementMessages = scenario.context.announcement
+    ? [
+        ...scenario.context.announcementHistory.map((entry) => ({ ...entry.announcement, category: entry.category })),
+        { ...scenario.context.announcement, category: scenario.context.announcementCategory },
+      ]
+    : []
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
     : node.type === 'choice'
@@ -136,9 +142,20 @@ function App() {
     <header className="brand-bar"><div><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></div><div className="header-controls"><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className="game-grid">
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} />
-      <section className="decision-panel">
+      <section className={`decision-panel ${isSurpriseEvent ? 'surprise-event-panel' : ''}`}>
         {highlightedViewLabel && <div className="panel-heading"><span className={`view-chip ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{highlightedViewLabel}</span></div>}
-        {scenario.context.announcement && <aside className={`result-notice ${scenario.context.announcement.tone ?? 'neutral'}`} aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}><span>방금 일어난 일</span><strong>{scenario.context.announcement.title}</strong><p>{scenario.context.announcement.detail}</p></aside>}
+        {scenario.context.announcement && <aside className={`result-notice ${scenario.context.announcement.tone ?? 'neutral'}`} aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}>
+          <span>방금 일어난 일</span>
+          <div className="message-flow">
+            {announcementMessages.map((message, index) => <div className="message-flow-entry" key={`${message.title}:${message.detail}:${index}`}>
+              {index > 0 && <span className="message-flow-connector">그리고</span>}
+              <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`}>
+                <strong>{message.title}</strong>
+                <p>{message.detail}</p>
+              </div>
+            </div>)}
+          </div>
+        </aside>}
         {phase === 'playing' && actionInstruction && <p className="action-instruction">{actionInstruction}</p>}
         {phase === 'playing' && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event, index) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
         {phase === 'playing' && node.type === 'choice' && <div className="choices runner-choices">{availableChoices.map((choice, index) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span className="choice-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}

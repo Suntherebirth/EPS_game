@@ -21,6 +21,10 @@ export type ScenarioEffect =
   | { type: 'scoreAll'; creditHit: boolean }
   | { type: 'applyBattingEvent' }
   | { type: 'applyFollowUpGroundOut' }
+  | { type: 'applyGroundForceOut' }
+  | { type: 'applyGroundDoublePlay' }
+  | { type: 'applyOutfieldDropWithSecondRunner' }
+  | { type: 'applyFollowUpOutfieldDropWithSecondRunner' }
   | { type: 'setPlayerBase'; value: number | null }
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }
@@ -28,6 +32,7 @@ export type ScenarioEffect =
   | { type: 'announceFollowUpOutfieldError'; clear: boolean }
   | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
+  | { type: 'advanceRunner'; from: number; to: number }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
   | { type: 'record'; message: string; showInCompletion?: boolean }
 
@@ -110,6 +115,8 @@ export type ScenarioContext = {
   completionRecords: string[]
   selectedLabel?: string
   playerBase: number | null
+  announcementHistory: ScenarioAnnouncementHistoryEntry[]
+  announcementCategory: 'normal' | 'surprise'
   announcement?: ScenarioAnnouncement
 }
 
@@ -117,6 +124,11 @@ export type ScenarioAnnouncement = {
   title: string
   detail: string
   tone?: 'positive' | 'negative' | 'caution' | 'neutral'
+}
+
+export type ScenarioAnnouncementHistoryEntry = {
+  announcement: ScenarioAnnouncement
+  category: 'normal' | 'surprise'
 }
 
 export type ScenarioState = {

@@ -41,7 +41,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
         { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
         { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }] },
-        { to: 'fly.outfield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
+        { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
       ],
     },
     ...EMPTY_BASES_SINGLE_NODES,
@@ -135,8 +135,41 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       outcomes: [
         { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.fieldingError' } },
         { id: 'throwingError', label: '내야수 송구 실책', weight: RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'ground.infield.throwingError' } },
-        { id: 'cleanPlay', label: '내야수 정상 수비', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError - RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'out.ground.generic' } },
+        { id: 'cleanPlay', label: '내야수 정상 수비', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError - RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'ground.infield.clean.route' } },
       ],
+    },
+    'ground.infield.clean.route': {
+      id: 'ground.infield.clean.route', type: 'router', view: 'batter', title: '내야 땅볼 정상 수비 처리',
+      routes: [
+        { to: 'out.ground.generic', when: [{ field: 'bases', operator: 'empty' }] },
+        { to: 'ground.infield.doublePlay.check', when: [{ field: 'bases', operator: 'includes', value: [1] }, { field: 'outs', operator: 'lt', value: 2 }] },
+        { to: 'ground.infield.forceOut', when: [{ field: 'bases', operator: 'includes', value: [1] }], effects: [{ type: 'applyGroundForceOut' }] },
+        { to: 'ground.infield.force.check' },
+      ],
+    },
+    'ground.infield.doublePlay.check': {
+      id: 'ground.infield.doublePlay.check', type: 'chance', view: 'batter', title: '내야 땅볼 병살 판정',
+      outcomes: [
+        { id: 'doublePlay', label: '병살', weight: RUNNING_CHANCES.infieldGroundDoublePlay, transition: { to: 'ground.infield.doublePlay', effects: [{ type: 'applyGroundDoublePlay' }] } },
+        { id: 'forceOut', label: '선행 주자만 아웃', weight: RUNNING_CHANCES.infieldGroundForceOut, transition: { to: 'ground.infield.forceOut', effects: [{ type: 'applyGroundForceOut' }] } },
+      ],
+    },
+    'ground.infield.doublePlay': {
+      id: 'ground.infield.doublePlay', type: 'event', view: 'result', title: '내야 땅볼 병살',
+      effects: [],
+      transition: { to: 'plate.complete' },
+    },
+    'ground.infield.force.check': {
+      id: 'ground.infield.force.check', type: 'chance', view: 'batter', title: '내야 땅볼 포스 아웃 판정',
+      outcomes: [
+        { id: 'batterOut', label: '타자 주자 아웃', weight: RUNNING_CHANCES.infieldGroundBatterOut, transition: { to: 'out.ground.generic' } },
+        { id: 'leadRunnerOut', label: '선행 주자 아웃', weight: RUNNING_CHANCES.infieldGroundLeadRunnerOut, transition: { to: 'ground.infield.forceOut', effects: [{ type: 'applyGroundForceOut' }] } },
+      ],
+    },
+    'ground.infield.forceOut': {
+      id: 'ground.infield.forceOut', type: 'event', view: 'runner:first', title: '내야 땅볼 선행 주자 포스 아웃',
+      effects: [],
+      transition: { to: 'runner.route' },
     },
     'ground.infield.fieldingError': {
       id: 'ground.infield.fieldingError', type: 'event', view: 'runner:first', title: '내야수 포구 실책',
@@ -148,11 +181,49 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '내야수의 1루 송구가 빗나가 실책으로 출루했습니다.' }],
       transition: { to: 'runner.route' },
     },
+    'fly.outfield.route': {
+      id: 'fly.outfield.route', type: 'router', view: 'batter', title: '외야 뜬공 주자 확인',
+      routes: [
+        { to: 'fly.outfield.runnerSecond.check', when: [{ field: 'bases', operator: 'includes', value: [2] }, { field: 'bases', operator: 'excludes', value: [1] }] },
+        { to: 'fly.outfield.check' },
+      ],
+    },
     'fly.outfield.check': {
       id: 'fly.outfield.check', type: 'chance', view: 'batter', title: '외야수 포구 판정',
       outcomes: [
         { id: 'dropped', label: '외야수가 놓침', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.outfield.drop', effects: [{ type: 'record', message: '외야 뜬공, 외야수 포구 실책', showInCompletion: false }] } },
         { id: 'caught', label: '외야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
+      ],
+    },
+    'fly.outfield.runnerSecond.check': {
+      id: 'fly.outfield.runnerSecond.check', type: 'chance', view: 'runner:second', title: '외야수 포구 판정',
+      outcomes: [
+        { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.second.outfieldError.clear.decide', effects: [{ type: 'applyOutfieldDropWithSecondRunner' }, { type: 'record', message: '외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 완전히 뒤로 빠뜨렸습니다!', detail: '확실하게 진루할 수 있습니다.' }] } },
+        { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.second.outfieldError.ambiguous.decide', effects: [{ type: 'applyOutfieldDropWithSecondRunner' }, { type: 'record', message: '외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 애매하게 뒤로 빠뜨렸습니다!', detail: '진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+        { id: 'caught', label: '외야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
+      ],
+    },
+    'runner.second.outfieldError.clear.decide': {
+      id: 'runner.second.outfieldError.clear.decide', type: 'choice', view: 'runner:second', title: '외야수 실책', tags: ['surprise-event'],
+      description: '2루 주자: 주루 방침을 선택하세요.',
+      choices: [
+        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '2루에 머물렀습니다.', tone: 'negative' }] } },
+        { id: 'advanceThird', label: '3루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '외야수 실책을 이용해 3루에 도착했습니다.' }] } },
+      ],
+    },
+    'runner.second.outfieldError.ambiguous.decide': {
+      id: 'runner.second.outfieldError.ambiguous.decide', type: 'choice', view: 'runner:second', title: '외야수 실책', tags: ['surprise-event'],
+      description: '2루 주자: 주루 방침을 선택하세요.',
+      choices: [
+        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 2루에 머물렀습니다.' }] } },
+        { id: 'advanceThird', label: '3루로 진루를 시도한다', description: `애매한 타구 · 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousDrop * 100)}%`, transition: { to: 'runner.second.outfieldError.ambiguous.advance' } },
+      ],
+    },
+    'runner.second.outfieldError.ambiguous.advance': {
+      id: 'runner.second.outfieldError.ambiguous.advance', type: 'chance', view: 'runner:second', title: '3루 진루',
+      outcomes: [
+        { id: 'success', label: '3루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루 성공', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '위험을 감수하고 3루에 도착했습니다.', tone: 'positive' }] } },
+        { id: 'out', label: '3루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: '외야 실책 이용, 3루 진루 실패', showInCompletion: false }, { type: 'announce', title: '3루 진루 실패', detail: '3루에서 아웃되었습니다.', tone: 'negative' }] } },
       ],
     },
     'fly.outfield.drop': {

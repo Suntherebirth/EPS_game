@@ -32,6 +32,8 @@ export const createScenarioContext = (situation: Situation): ScenarioContext => 
   records: [],
   completionRecords: [],
   playerBase: null,
+  announcementHistory: [],
+  announcementCategory: 'normal',
 })
 
 export const describeBases = (bases: Base[]): string =>
