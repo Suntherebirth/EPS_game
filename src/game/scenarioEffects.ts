@@ -161,6 +161,8 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     const forceOutBase = playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`
     setAnnouncement(next, playerIsForced
       ? { title: '내야 땅볼 포스 아웃!', detail: `후속 타자의 내야 땅볼로 인해 ${forceOutBase}에서 포스 아웃되었습니다.${next.outs >= 3 ? ' 3아웃 · 공수교대입니다.' : ''}`, tone: 'negative' }
+      : playerBase === 3 && next.outs < 3
+        ? { title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.' }
       : playerBase === 2
         ? { title: '후속타자의 내야 땅볼, 정상 수비!', detail: '내야수 송구 순간 3루 진루를 시도할 수 있습니다.' }
       : { title: '후속타자의 내야 땅볼 아웃!', detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : '현재 베이스에 머뭅니다.' })

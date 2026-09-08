@@ -37,12 +37,12 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, viewLabel, isSurpriseEvent, videoUrl, imageUrl }: { situation: Situation; plateAppearance: number; playerBase: number | null; viewLabel?: string | null; isSurpriseEvent?: boolean; videoUrl?: string; imageUrl?: string }) {
+function MediaStage({ situation, plateAppearance, playerBase, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, imageUrl }: { situation: Situation; plateAppearance: number; playerBase: number | null; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; imageUrl?: string }) {
   return <section className="media-stage" aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
     {!videoUrl && imageUrl && <img src={imageUrl} alt="" />}
     {viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
-    <div className="broadcast-bug">
+    <div className={`broadcast-bug ${isPlateEntry ? 'plate-entry-flash' : ''}`}>
       <div className="broadcast-plate"><span>공격</span><strong>{plateAppearance}<small>/3</small></strong></div>
       <div className="broadcast-runners"><BaseDiamond bases={situation.bases} playerBase={playerBase} /></div>
       <div className="broadcast-outs"><span>OUT</span><div>{[0, 1, 2].map((out) => <i className={out < situation.outs ? 'on' : ''} key={out} />)}</div></div>
@@ -73,7 +73,7 @@ function App() {
   }
 
   const completeScenario = (state: ScenarioState) => {
-    const result = state.context.completionRecords.join(' · ') || state.context.selectedLabel || '플레이 완료'
+    const result = state.context.completionRecords.join('\n') || state.context.selectedLabel || '플레이 완료'
     setStats((current) => ({
       runs: current.runs + state.context.runs,
       hits: current.hits + state.context.hits,
@@ -128,6 +128,7 @@ function App() {
   </main>
 
   const node = OFFENSE_CORE_PACK.nodes[scenario.nodeId]
+  const isPlateEntry = phase === 'playing' && node.type === 'batting'
   const displayedSituation = { outs: scenario.context.outs, bases: scenario.context.bases as Base[] }
   const nodeViewBase = node.view === 'runner:first' ? 1 : node.view === 'runner:second' ? 2 : node.view === 'runner:third' ? 3 : null
   const currentViewBase = node.tags?.includes('player-position-view') && nodeViewBase === 1 ? scenario.context.playerBase : nodeViewBase
@@ -149,6 +150,7 @@ function App() {
         { ...scenario.context.announcement, category: scenario.context.announcementCategory },
       ]
     : []
+  const announcementRenderKey = `${scenario.context.announcementHistory.length}:${scenario.context.announcement?.title ?? ''}:${scenario.context.announcement?.detail ?? ''}`
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
     : node.type === 'choice'
@@ -160,24 +162,24 @@ function App() {
   return <main className="app-shell">
     <header className="brand-bar"><div><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></div><div className="header-controls"><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className="game-grid">
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} imageUrl={VIEW_IMAGES[imageView]} />
-      <section className={`decision-panel ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${scenario.context.announcement ? 'has-announcement' : ''}`}>
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} imageUrl={VIEW_IMAGES[imageView]} />
+      <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${scenario.context.announcement ? 'has-announcement' : ''} ${announcementMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
         {scenario.context.announcement && <aside className={`result-notice ${scenario.context.announcement.tone ?? 'neutral'}`} aria-live="polite" key={`${scenario.context.announcement.title}:${scenario.context.announcement.detail}`}>
           <span>방금 일어난 일</span>
           <div className="message-flow">
             {announcementMessages.map((message, index) => <div className="message-flow-entry" key={`${message.title}:${message.detail}:${index}`}>
-              {index > 0 && <span className="message-flow-connector">그리고</span>}
-              <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`}>
+              {index > 0 && <span className="message-flow-connector" style={{ animationDelay: `${0.5 + (index - 1) * 0.68}s` }}>그리고</span>}
+              <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`} style={{ animationDelay: `${0.16 + index * 0.68}s` }}>
                 <strong>{message.title}</strong>
                 <p>{message.detail}</p>
               </div>
             </div>)}
           </div>
         </aside>}
-        {phase === 'playing' && actionInstruction && <p className="action-instruction">{actionInstruction}</p>}
-        {phase === 'playing' && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
-        {phase === 'playing' && node.type === 'choice' && <div className="choices runner-choices">{availableChoices.map((choice) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
-        {phase === 'playing' && adminMode && node.type === 'chance' && <div className="admin-console"><span>관리자 콘솔 · 확률 결과 선택</span><div className="choices runner-choices">{node.outcomes.map((outcome) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
+        {phase === 'playing' && actionInstruction && <p className={`action-instruction ${node.type === 'choice' ? 'choice-instruction' : ''}`} key={`${scenario.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
+        {phase === 'playing' && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${scenario.nodeId}:${announcementRenderKey}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
+        {phase === 'playing' && node.type === 'choice' && <div className={`choices runner-choices ${availableChoices.length === 1 ? 'single-choice' : ''}`} key={`choices:${scenario.nodeId}:${announcementRenderKey}`}>{availableChoices.map((choice) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
+        {phase === 'playing' && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${scenario.nodeId}:${announcementRenderKey}`}><span>관리자 콘솔 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
         {phase === 'between' && <div className="play-result"><p className="eyebrow">PLAY COMPLETE</p><h3>{records.at(-1)?.result}</h3><p>{plateAppearance === 3 ? '모든 타석이 끝났습니다.' : '다음 타석은 새로운 상황에서 시작합니다.'}</p><button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button></div>}
       </section>
     </div>
