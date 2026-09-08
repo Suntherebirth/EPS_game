@@ -145,7 +145,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'ground.infield.throwingError': {
       id: 'ground.infield.throwingError', type: 'event', view: 'runner:first', title: '내야수 송구 실책',
-      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'announce', title: '내야수의 1루 송구가 빗나갔습니다!', detail: '실책으로 1루에 출루했습니다.' }],
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '내야수의 1루 송구가 빗나가 실책으로 출루했습니다.' }],
       transition: { to: 'runner.route' },
     },
     'fly.outfield.check': {

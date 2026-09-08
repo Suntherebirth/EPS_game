@@ -95,7 +95,7 @@ describe('offense core scenario pack', () => {
     expect(fieldingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
     expect(fieldingError.context.announcement).toEqual({ title: '내야수가 땅볼 포구를 놓쳤습니다!', detail: '실책으로 1루에 출루했습니다.' })
     expect(throwingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
-    expect(throwingError.context.announcement).toEqual({ title: '내야수의 1루 송구가 빗나갔습니다!', detail: '실책으로 1루에 출루했습니다.' })
+    expect(throwingError.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '내야수의 1루 송구가 빗나가 실책으로 출루했습니다.' })
   })
 
   it('treats a dropped infield fly as a single', () => {
@@ -325,6 +325,7 @@ describe('offense core scenario pack', () => {
     expect(throwingError.nodeId).toBe('followUp.ground.throwingError.check')
     expect(clearMiss.nodeId).toBe('followUp.ground.throwingError.clear.decide')
     expect(clearMiss.context).toMatchObject({ bases: [1, 2], playerBase: 2, hits: 1 })
+    expect(clearMiss.context.announcement).toEqual({ title: '후속 타자: 내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.' })
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, clearMiss).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
   })
 
@@ -362,7 +363,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '1루수 뒤로 송구가 완전히 빠졌습니다!', detail: '홈에 들어왔습니다.' })
+    expect(result.context.announcement).toEqual({ title: '후속 타자: 내야 땅볼 송구 실책!', detail: '홈에 들어왔습니다.' })
   })
 
   it('offers the common outfield error choices after a follow-up hit advances the player', () => {
@@ -379,7 +380,7 @@ describe('offense core scenario pack', () => {
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, decision).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
     expect(result.nodeId).toBe('runner.third.decide')
     expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 3, hits: 2 })
-    expect(result.context.announcement).toEqual({ title: '추가 진루 성공!', detail: '외야수 실책을 이용해 다음 베이스에 도착했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '후속 타자 타구 외야수 실책 추가 진루 성공!', detail: '외야수 실책을 이용해 다음 베이스에 도착했습니다.' })
   })
 
   it('includes the follow-up hit in the outfield error announcement', () => {
@@ -406,7 +407,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [2], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '추가 진루 성공!', detail: '홈에 들어왔습니다.' })
+    expect(result.context.announcement).toEqual({ title: '후속 타자 타구 외야수 실책 추가 진루 성공!', detail: '홈에 들어왔습니다.' })
   })
 
   it('reports that the runner stayed put after a follow-up strikeout', () => {
