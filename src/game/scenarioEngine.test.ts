@@ -672,7 +672,7 @@ describe('offense core scenario pack', () => {
     const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'flyOut', { manualChance: true })
 
     expect(result.nodeId).toBe('plate.complete')
-    expect(result.context.announcement).toEqual({ title: '후속타자의 외야 뜬공 발생!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
     expect(result.context.announcementHistory).toHaveLength(1)
     expect(result.context.announcementHistory[0].announcement.title).toBe('후속타자의 외야 뜬공 발생!')
   })
@@ -775,6 +775,21 @@ describe('offense core scenario pack', () => {
     expect(drop.nodeId).toBe('runner.second.outfieldError.clear.decide')
     expect(drop.context).toMatchObject({ bases: [1, 2], playerBase: 2 })
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, drop).map((choice) => choice.id)).toEqual(['staySecond', 'advanceThird'])
+  })
+
+  it('announces a successful catch for a follow-up fly ball with a runner on second', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const firstRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const stealSecond = chooseScenarioOption(OFFENSE_CORE_PACK, firstRunner, 'stealSecond', { manualChance: true })
+    const secondRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealSecond, 'success', { manualChance: true })
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, secondRunner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'flyOut', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'caught', { manualChance: true })
+
+    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '2루에서 움직이지 못했습니다.' })
+    expect(result.context.announcement?.title).not.toContain('발생')
   })
 
   it('uses a 70 percent chance for an ambiguous outfield drop advance', () => {

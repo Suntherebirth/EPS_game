@@ -225,7 +225,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     if (!event) throw new Error(`적용할 타격 이벤트가 없습니다: ${next.battingEvent ?? 'undefined'}`)
     next.records.push(`후속 타자 ${event.label}`)
     const before = next.playerBase
-    const followUpTitle = event.kind === 'flyOut' ? `후속타자의 ${event.label} 발생!` : `후속타자의 ${event.label}!`
+    const followUpTitle = event.kind === 'flyOut' ? '뜬공 처리 성공!' : `후속타자의 ${event.label}!`
     const resolved = event.kind === 'homeRun'
       ? applyScenarioEffect(next, { type: 'scoreAll', creditHit: true })
       : event.kind === 'walk' || event.kind === 'hitByPitch'
