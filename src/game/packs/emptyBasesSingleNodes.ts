@@ -183,7 +183,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     eventIds: [...FOLLOW_UP_EVENTS],
     routes: [
       { to: 'followUp.ground.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
-      { to: 'followUp.fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
+      { to: 'followUp.fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '후속타자의 외야 뜬공!', detail: '외야수가 타구를 처리합니다.' }] },
       { to: 'followUp.batting.apply', when: [{ field: 'battingEvent', operator: 'in', value: [...FOLLOW_UP_EVENTS] }] },
     ],
   },
@@ -191,7 +191,15 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'followUp.fly.outfield.route', type: 'router', view: 'batter', title: '후속 외야 뜬공 주자 확인',
     routes: [
       { to: 'followUp.fly.outfield.check', when: [{ field: 'playerBase', operator: 'eq', value: 2 }, { field: 'bases', operator: 'excludes', value: [1] }] },
+      { to: 'followUp.fly.outfield.runnerThird.check', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'outs', operator: 'lt', value: 2 }] },
       { to: 'followUp.batting.apply' },
+    ],
+  },
+  'fly.outfield.runnerThird.check': {
+    id: 'fly.outfield.runnerThird.check', type: 'chance', view: 'runner:third', title: '외야수 포구 판정', tags: ['composite-event-step'],
+    outcomes: [
+      { id: 'ambiguousFly', label: '애매한 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthAmbiguous, transition: { to: 'runner.third.sacrificeFly.ambiguous.decide', effects: [{ type: 'announce', title: '애매한 외야 플라이!', detail: '3루 주자가 태그업을 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+      { id: 'deepFly', label: '명백하게 깊은 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthDeep, transition: { to: 'runner.third.sacrificeFly.deep.decide', effects: [{ type: 'announce', title: '명백하게 깊은 외야 플라이!', detail: '3루 주자가 안전하게 태그업할 수 있습니다.' }] } },
     ],
   },
   'followUp.fly.outfield.check': {
@@ -200,6 +208,36 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
       { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.second.outfieldError.clear.decide', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '후속 타자 타구가 외야수 뒤로 완전히 빠졌습니다!', detail: '2루 주자는 확실하게 진루할 수 있습니다.' }] } },
       { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.second.outfieldError.ambiguous.decide', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '후속 타자 타구가 외야수 뒤로 애매하게 빠졌습니다!', detail: '2루 주자가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
       { id: 'caught', label: '외야수 정상 포구', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.batting.apply' } },
+    ],
+  },
+  'followUp.fly.outfield.runnerThird.check': {
+    id: 'followUp.fly.outfield.runnerThird.check', type: 'chance', view: 'runner:third', title: '후속 외야수 포구 판정', tags: ['composite-event-step'],
+    outcomes: [
+      { id: 'ambiguousFly', label: '애매한 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthAmbiguous, transition: { to: 'runner.third.sacrificeFly.ambiguous.decide', effects: [{ type: 'announce', title: '애매한 외야 플라이!', detail: '3루 주자가 태그업을 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+      { id: 'deepFly', label: '명백하게 깊은 외야 플라이', weight: RUNNING_CHANCES.outfieldFlyDepthDeep, transition: { to: 'runner.third.sacrificeFly.deep.decide', effects: [{ type: 'announce', title: '명백하게 깊은 외야 플라이!', detail: '3루 주자가 안전하게 태그업할 수 있습니다.' }] } },
+    ],
+  },
+  'runner.third.sacrificeFly.ambiguous.decide': {
+    id: 'runner.third.sacrificeFly.ambiguous.decide', type: 'choice', view: 'runner:third', title: '애매한 외야 플라이', tags: ['player-position-view'],
+    description: '3루 주자: 태그업 여부를 선택하세요.',
+    choices: [
+      { id: 'stayThird', label: '3루에 머무른다', transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'announce', title: '애매한 외야 플라이, 3루에 머뭅니다.', detail: '위험을 감수하지 않고 3루를 지켰습니다.' }] } },
+      { id: 'tagUp', label: '홈으로 태그업 진루한다', description: `성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly * 100)}%`, transition: { to: 'runner.third.sacrificeFly.ambiguous.advance', effects: [{ type: 'announce', title: '위험을 감수하고 태그업을 시도합니다.', detail: `홈 태그업 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly * 100)}%` }] } },
+    ],
+  },
+  'runner.third.sacrificeFly.ambiguous.advance': {
+    id: 'runner.third.sacrificeFly.ambiguous.advance', type: 'chance', view: 'runner:third', title: '홈 태그업',
+    outcomes: [
+      { id: 'success', label: '홈 태그업 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '위험을 감수한 태그업 성공!', detail: '3루 주자가 홈에 들어왔습니다.', tone: 'positive' }] } },
+      { id: 'out', label: '홈 태그업 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'announce', title: '위험을 감수한 태그업 실패', detail: '3루 주자가 홈에서 아웃되었습니다.', tone: 'negative' }] } },
+    ],
+  },
+  'runner.third.sacrificeFly.deep.decide': {
+    id: 'runner.third.sacrificeFly.deep.decide', type: 'choice', view: 'runner:third', title: '명백하게 깊은 외야 플라이', tags: ['player-position-view'],
+    description: '3루 주자: 태그업 여부를 선택하세요.',
+    choices: [
+      { id: 'stayThird', label: '3루에 머무른다', transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 3루에 머뭅니다.', detail: '명백히 진루할 수 있는 타구였지만 태그업하지 않았습니다.', tone: 'caution' }] } },
+      { id: 'tagUp', label: '홈으로 태그업 진루한다', description: '성공률 100%', transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'positive' }] } },
     ],
   },
   'followUp.ground.check': {
@@ -266,8 +304,8 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'batter',
     title: '후속 내야 땅볼 1루 송구 판정',
     outcomes: [
-      { id: 'clearMiss', label: '명백히 1루수 뒤로 빠진 송구', weight: RUNNING_CHANCES.infieldGroundThrowingErrorClear, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', title: '후속 타자: 내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.' }] } },
-      { id: 'ambiguousMiss', label: '애매하게 1루수 뒤로 빠진 송구', weight: RUNNING_CHANCES.infieldGroundThrowingErrorAmbiguous, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', title: '후속 타자: 내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+      { id: 'clearMiss', label: '명백히 1루수 뒤로 빠진 송구', weight: RUNNING_CHANCES.infieldGroundThrowingErrorClear, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', title: '후속타자의 내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.' }] } },
+      { id: 'ambiguousMiss', label: '애매하게 1루수 뒤로 빠진 송구', weight: RUNNING_CHANCES.infieldGroundThrowingErrorAmbiguous, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', title: '후속타자의 내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
     ],
   },
   'followUp.ground.throwingError.route': {

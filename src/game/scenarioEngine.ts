@@ -47,14 +47,12 @@ const applyTransition = (pack: ScenarioPack, state: ScenarioState, transition: S
   }
 }
 
-const beginUserAction = (state: ScenarioState): ScenarioState => ({
+const beginUserAction = (state: ScenarioState, preserveAnnouncement = false): ScenarioState => ({
   ...state,
   context: {
     ...state.context,
     flags: { ...state.context.flags, surpriseEvent: false },
-    announcement: undefined,
-    announcementHistory: [],
-    announcementCategory: 'normal',
+    ...(preserveAnnouncement ? {} : { announcement: undefined, announcementHistory: [], announcementCategory: 'normal' as const }),
   },
 })
 
@@ -112,7 +110,8 @@ export const chooseScenarioChanceOutcome = (pack: ScenarioPack, state: ScenarioS
   if (node?.type !== 'chance') throw new Error(`확률 노드가 아닙니다: ${state.nodeId}`)
   const outcome = node.outcomes.find((item) => item.id === outcomeId)
   if (!outcome) throw new Error(`확률 결과를 찾을 수 없습니다: ${outcomeId}`)
-  return settleScenario(pack, applyTransition(pack, beginUserAction(state), outcome.transition), options)
+  const preserveAnnouncement = node.tags?.includes('composite-event-step') ?? false
+  return settleScenario(pack, applyTransition(pack, beginUserAction(state, preserveAnnouncement), outcome.transition), options)
 }
 
 export const getAvailableScenarioChoices = (pack: ScenarioPack, state: ScenarioState) => {

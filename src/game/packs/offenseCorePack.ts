@@ -41,7 +41,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
         { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
         { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }] },
-        { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }] },
+        { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '외야 뜬공!', detail: '외야수가 타구를 처리합니다.' }] },
       ],
     },
     ...EMPTY_BASES_SINGLE_NODES,
@@ -184,6 +184,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'fly.outfield.route': {
       id: 'fly.outfield.route', type: 'router', view: 'batter', title: '외야 뜬공 주자 확인',
       routes: [
+        { to: 'fly.outfield.runnerThird.check', when: [{ field: 'bases', operator: 'includes', value: [3] }, { field: 'outs', operator: 'lt', value: 2 }] },
         { to: 'fly.outfield.runnerSecond.check', when: [{ field: 'bases', operator: 'includes', value: [2] }, { field: 'bases', operator: 'excludes', value: [1] }] },
         { to: 'fly.outfield.check' },
       ],

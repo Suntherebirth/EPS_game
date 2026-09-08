@@ -25,6 +25,7 @@ export type ScenarioEffect =
   | { type: 'applyGroundDoublePlay' }
   | { type: 'applyOutfieldDropWithSecondRunner' }
   | { type: 'applyFollowUpOutfieldDropWithSecondRunner' }
+  | { type: 'applySacrificeFlyOut'; score: boolean }
   | { type: 'setPlayerBase'; value: number | null }
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }

@@ -124,6 +124,9 @@ function App() {
   const isSurpriseEvent = node.tags?.includes('surprise-event')
   const highlightedViewLabel = isSurpriseEvent && viewLabel ? `${viewLabel} : 돌발 이벤트!` : viewLabel
   const availableChoices = getAvailableScenarioChoices(OFFENSE_CORE_PACK, scenario)
+  const choiceDescription = node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
+    ? node.description.startsWith(`${currentViewBase}루 주자:`) ? node.description : `${currentViewBase}루 주자: ${node.description}`
+    : node.type === 'choice' ? node.description : undefined
   const announcementMessages = scenario.context.announcement
     ? [
         ...scenario.context.announcementHistory.map((entry) => ({ ...entry.announcement, category: entry.category })),
@@ -133,7 +136,7 @@ function App() {
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
     : node.type === 'choice'
-      ? node.description ?? '주루 방침을 선택해주세요.'
+      ? choiceDescription ?? '주루 방침을 선택해주세요.'
       : node.type === 'chance' && adminMode
         ? '관리자: 확률 결과를 지정하세요.'
       : ''

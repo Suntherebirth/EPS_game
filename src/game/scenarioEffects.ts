@@ -49,7 +49,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'announceFollowUpOutfieldError') {
     const event = BATTING_EVENTS.find((item) => item.kind === next.battingEvent)
     setAnnouncement(next, {
-      title: `후속 타자: ${event?.label ?? '타구'}! 외야수가 타구를 뒤로 빠뜨렸습니다.`,
+      title: `후속타자의 ${event?.label ?? '타구'}! 외야수가 타구를 뒤로 빠뜨렸습니다.`,
       detail: effect.clear ? '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' : '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.',
       ...(!effect.clear ? { tone: 'caution' as const } : {}),
     })
@@ -151,11 +151,12 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       next.bases = next.bases.filter((base) => base !== playerBase)
       next.playerBase = null
     }
+    const forceOutBase = playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`
     setAnnouncement(next, playerIsForced
-      ? { title: '내야 땅볼 포스 아웃!', detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : '선행 주자가 아웃되었습니다.', tone: 'negative' }
+      ? { title: '내야 땅볼 포스 아웃!', detail: `후속 타자의 내야 땅볼로 인해 ${forceOutBase}에서 포스 아웃되었습니다.${next.outs >= 3 ? ' 3아웃 · 공수교대입니다.' : ''}`, tone: 'negative' }
       : playerBase === 2
-        ? { title: '후속 타자: 내야 땅볼, 정상 수비!', detail: '내야수 송구 순간 3루 진루를 시도할 수 있습니다.' }
-      : { title: '후속 타자: 내야 땅볼 아웃!', detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : '현재 베이스에 머뭅니다.' })
+        ? { title: '후속타자의 내야 땅볼, 정상 수비!', detail: '내야수 송구 순간 3루 진루를 시도할 수 있습니다.' }
+      : { title: '후속타자의 내야 땅볼 아웃!', detail: next.outs >= 3 ? '3아웃 · 공수교대입니다.' : '현재 베이스에 머뭅니다.' })
   }
 
   if (effect.type === 'applyGroundForceOut') {
@@ -200,6 +201,18 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.bases.push(1)
   }
 
+  if (effect.type === 'applySacrificeFlyOut') {
+    next.outs = Math.min(3, next.outs + 1)
+    next.records.push(effect.score ? '외야 뜬공, 3루 주자 태그업 득점' : '외야 뜬공, 3루 주자 진루하지 않음')
+    next.completionRecords.push(effect.score ? '희생플라이' : '외야 뜬공 아웃')
+    if (effect.score) {
+      const runnerIndex = next.bases.indexOf(3)
+      if (runnerIndex >= 0) next.bases.splice(runnerIndex, 1)
+      next.runs += 1
+      if (next.playerBase === 3) next.playerBase = null
+    }
+  }
+
   if (effect.type === 'applyBattingEvent') {
     const event = BATTING_EVENTS.find((item) => item.kind === next.battingEvent)
     if (!event) throw new Error(`적용할 타격 이벤트가 없습니다: ${next.battingEvent ?? 'undefined'}`)
@@ -212,9 +225,10 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
         : event.advance > 0
           ? applyScenarioEffect(next, { type: 'applyHit', batterTo: event.advance, creditHit: event.hit })
           : applyScenarioEffect(next, { type: 'addOuts', value: event.outs })
+    resolved.announcement = undefined
     resolved.flags.advancedByFollowUpHit = event.hit && before !== null && resolved.playerBase !== null && resolved.playerBase > before
     if (resolved.outs >= 3) {
-      setAnnouncement(resolved, { title: `후속 타자: ${event.label}!`, detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+      setAnnouncement(resolved, { title: `후속타자의 ${event.label}!`, detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
       return resolved
     }
     const destination = resolved.playerBase === null
@@ -223,7 +237,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
         ? `${before}루에서 움직이지 못했습니다.`
         : `${resolved.playerBase}루에 도착했습니다.`
     setAnnouncement(resolved, {
-      title: `후속 타자: ${event.label}!`,
+      title: `후속타자의 ${event.label}!`,
       detail: before === null ? '홈에 들어왔습니다.' : destination,
       ...(resolved.playerBase === null ? { tone: 'positive' as const } : {}),
     })
