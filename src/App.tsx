@@ -289,6 +289,14 @@ function App() {
     setHighlightedAuditCaseId(item.id)
   }
 
+  const completeReplayAudit = (status: AnnouncementAuditStatus) => {
+    if (!highlightedAuditCaseId) return
+    setAnnouncementCaseStatus(highlightedAuditCaseId, status)
+    setReplay(null)
+    setAnnouncementAuditTab('pending')
+    setAppMode('announcementCheck')
+  }
+
   const continueGame = () => {
     setReplay(null)
     if (plateAppearance === 3) {
@@ -374,7 +382,7 @@ function App() {
         <button type="button" onClick={() => setReplay((current) => current && { ...current, playing: false, index: Math.max(0, current.index - 1) })} disabled={replay.index === 0}><SkipBack size={16} /> 이전 단계</button>
         <button className={replay.playing ? 'replay-auto-on' : ''} type="button" onClick={() => setReplay((current) => current && { ...current, playing: !current.playing })}>{replay.playing ? <Pause size={16} /> : <Play size={16} />} {replay.playing ? '자동 재생 중' : '자동 재생'}</button>
         <button type="button" onClick={() => setReplay((current) => current && { ...current, playing: false, index: Math.min(current.frames.length - 1, current.index + 1) })} disabled={replayAtEnd}>다음 단계 <SkipForward size={16} /></button>
-        <button type="button" onClick={() => setReplay(null)}>재생 종료</button>
+        {replayAtEnd ? <><button className="replay-review-button" type="button" onClick={() => completeReplayAudit('needsReview')}>검토 필요</button><button className="replay-ok-button" type="button" onClick={() => completeReplayAudit('ok')}><CheckCircle2 size={16} /> 문제 없음</button></> : <button type="button" onClick={() => setReplay(null)}>재생 종료</button>}
       </div>
     </div>}
     <footer className="progress-strip">{[1, 2, 3].map((item) => <div className={item < plateAppearance || phase === 'between' && item === plateAppearance ? 'complete' : item === plateAppearance ? 'active' : ''} key={item}><span>0{item}</span><i /><p>{records[item - 1]?.result ?? (item === plateAppearance ? '진행 중' : '대기')}</p></div>)}</footer>

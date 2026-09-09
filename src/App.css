@@ -65,13 +65,13 @@ button { font: inherit; }
 .result-notice { margin: 0 0 18px; padding: 16px 18px; border-left: 3px solid #f05a43; background: rgba(7,14,11,.88); animation: announce-play .42s cubic-bezier(.2, .8, .2, 1); }
 .result-notice > span { display: block; margin-bottom: 8px; color: #ff947f; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
 .result-notice strong { display: block; color: #fff; font-size: 23px; line-height: 1.35; }
-.result-notice p { margin: 8px 0 0; color: rgba(255,255,255,.76); font-size: 14px; }
+.result-notice p { margin: 8px 0 0; color: rgba(255,255,255,.76); font-size: 14px; white-space: pre-line; }
 .message-flow { display: flex; flex-direction: column; gap: 10px; }
 .message-flow-entry { display: contents; }
 .message-flow-connector { display: block; color: rgba(255,255,255,.52); font-size: 12px; font-weight: 800; text-align: center; animation: announcement-step-in .38s cubic-bezier(.2, .8, .2, 1) both; }
 .message-flow-message strong { display: block; color: #fff; font-size: 23px; line-height: 1.35; }
 .message-flow-message { animation: announcement-step-in .42s cubic-bezier(.2, .8, .2, 1) both; }
-.message-flow-message p { margin: 8px 0 0; color: rgba(255,255,255,.76); font-size: 14px; }
+.message-flow-message p { margin: 8px 0 0; color: rgba(255,255,255,.76); font-size: 14px; white-space: pre-line; }
 .message-flow-message.surprise-message strong { color: #ffe49a; }
 .message-flow-message.surprise-message p { color: #ffd875; font-weight: 800; }
 .message-flow-message.normal-message.positive p { color: #76e0b4; font-weight: 800; }
@@ -287,6 +287,10 @@ button { font: inherit; }
 .replay-buttons button:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
 .replay-buttons button:disabled { opacity: .35; cursor: default; }
 .replay-buttons button.replay-auto-on { color: white; border-color: var(--green); background: var(--green); }
+.replay-buttons button.replay-review-button { border-color: var(--red); color: white; background: var(--red); }
+.replay-buttons button.replay-review-button:hover { border-color: #9d2d1b; color: white; background: #9d2d1b; }
+.replay-buttons button.replay-ok-button { border-color: var(--green); color: white; background: var(--green); }
+.replay-buttons button.replay-ok-button:hover { border-color: #0d3022; color: white; background: #0d3022; }
 .decision-panel > .replay-choices { position: absolute; top: 63%; left: 50%; width: min(760px, calc(100% - 48px)); max-height: 26%; overflow-y: auto; transform: translateX(-50%); pointer-events: none; animation: overlay-choice-in .42s cubic-bezier(.2, .8, .2, 1) both; }
 .replay-choices button { animation: none; cursor: default; opacity: .55; }
 .replay-choices button.chosen { opacity: 1; border-color: rgba(255,249,194,1); background: rgba(55,42,12,.9); box-shadow: 0 0 0 4px rgba(255,219,94,.42), 0 0 30px rgba(255,219,94,.68); }
