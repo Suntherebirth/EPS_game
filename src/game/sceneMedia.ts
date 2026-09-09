@@ -4,11 +4,22 @@ import viewRunnerFirst from '../assets/scenes/view-runner-first.png'
 import viewRunnerSecond from '../assets/scenes/view-runner-second.png'
 import viewRunnerThird from '../assets/scenes/view-runner-third.png'
 
+type AnnouncementStageMessage = Pick<ScenarioAnnouncement, 'title' | 'scene'> & { category?: 'normal' | 'surprise' }
+
+export const SCENE_FRAME_INTERVAL_MS = 680
+
 const VIEW_IMAGES: Partial<Record<ScenarioView, string>> = {
   batter: viewBatter,
   'runner:first': viewRunnerFirst,
   'runner:second': viewRunnerSecond,
   'runner:third': viewRunnerThird,
+}
+
+const VIEW_IMAGE_FILENAMES: Partial<Record<ScenarioView, string>> = {
+  batter: 'view-batter.png',
+  'runner:first': 'view-runner-first.png',
+  'runner:second': 'view-runner-second.png',
+  'runner:third': 'view-runner-third.png',
 }
 
 /** src/assets/scenes/events/<sceneId>.png 를 넣으면 코드 수정 없이 자동 등록된다. */
@@ -88,7 +99,16 @@ export const resolveSceneImage = (announcement: Pick<ScenarioAnnouncement, 'titl
   return (playerBase ? EVENT_IMAGES[`${sceneId}@${playerBase}`] : undefined) ?? EVENT_IMAGES[sceneId]
 }
 
+export const resolveSceneImageFilename = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, playerBase: number | null): string | undefined => {
+  const sceneId = resolveSceneId(announcement)
+  if (!sceneId) return undefined
+  if (playerBase) return `${sceneId}@${playerBase}.png`
+  return `${sceneId}.png`
+}
+
 export const resolveViewImage = (view: ScenarioView): string | undefined => VIEW_IMAGES[view]
+
+export const resolveViewImageFilename = (view: ScenarioView): string | undefined => VIEW_IMAGE_FILENAMES[view]
 
 /**
  * 아나운스별로 탭 진행 중 배경에 깔릴 이미지를 만든다. 해당 아나운스에 연출 이미지가 없으면
@@ -105,4 +125,16 @@ export const buildAnnouncementImageTrail = (
     if (imageUrl) last = imageUrl
     return last ?? ''
   })
+}
+
+export const shouldUseViewImageForAnnouncementStep = (announcement: AnnouncementStageMessage | undefined, isSurpriseScene: boolean): boolean =>
+  isSurpriseScene && announcement?.category === 'surprise'
+
+export const resolveAnnouncementStepMissingImageName = (
+  announcement: AnnouncementStageMessage | undefined,
+  playerBase: number | null,
+  isSurpriseScene: boolean,
+): string | undefined => {
+  if (!announcement || shouldUseViewImageForAnnouncementStep(announcement, isSurpriseScene)) return undefined
+  return resolveSceneImage(announcement, playerBase) ? undefined : resolveSceneImageFilename(announcement, playerBase)
 }
