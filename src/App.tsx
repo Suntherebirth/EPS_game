@@ -1,5 +1,6 @@
-import { ChevronRight, RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { Bug, CheckCircle2, ChevronRight, RotateCcw, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
+import { createAnnouncementAuditCases, type AnnouncementAuditCase } from './game/announcementAudit'
 import { BATTING_EVENTS, type BattingEventId } from './game/battingEvents'
 import {
   createRandomSituation,
@@ -26,8 +27,63 @@ const VIEW_IMAGES: Record<string, string> = {
 }
 
 type Phase = 'playing' | 'between' | 'finished'
+type AppMode = 'game' | 'announcementCheck'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
 type Stats = { runs: number; hits: number; outs: number }
+
+const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
+
+const loadCompletedAnnouncementCases = () => {
+  try {
+    const value = localStorage.getItem(ANNOUNCEMENT_AUDIT_STORAGE_KEY)
+    const parsed = value ? JSON.parse(value) : []
+    return new Set<string>(Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [])
+  } catch {
+    return new Set<string>()
+  }
+}
+
+const saveCompletedAnnouncementCases = (completed: Set<string>) => {
+  localStorage.setItem(ANNOUNCEMENT_AUDIT_STORAGE_KEY, JSON.stringify([...completed]))
+}
+
+const copyTextToClipboard = async (text: string) => {
+  if (navigator.clipboard) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.append(textarea)
+  textarea.select()
+  document.execCommand('copy')
+  textarea.remove()
+}
+
+const formatAnnouncementBugReport = (item: AnnouncementAuditCase) => {
+  const messages = item.messages.map((message, index) => [
+    `${index + 1}. ${message.title}`,
+    `   detail: ${message.detail}`,
+    `   tone: ${message.tone ?? 'neutral'}, category: ${message.category}`,
+  ].join('\n')).join('\n')
+
+  return [
+    'EPS Baseball Sim 아나운스 텍스트 버그 리포트',
+    '',
+    `상황: ${item.situation}`,
+    `표시 시점: ${item.viewLabel}${item.isSurprise ? ' / 돌발 이벤트' : ''}`,
+    `플레이 흐름: ${item.actionLabel}`,
+    `주자 상태: outs=${item.outs}, bases=[${item.bases.join(', ')}], playerBase=${item.playerBase ?? 'none'}`,
+    '',
+    '현재 화면에 이렇게 표시됩니다:',
+    messages,
+    '',
+    '이 상황에 맞게 더 자연스러운 한국어 아나운스 문구로 수정하려고 합니다.',
+    '관련 코드는 위 title/detail 문구를 기준으로 src/game/announcementMessages.ts, src/game/scenarioEffects.ts, src/game/packs/offenseCorePack.ts, src/game/packs/emptyBasesSingleNodes.ts 쪽에서 찾으면 됩니다.',
+  ].join('\n')
+}
 
 function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number | null }) {
   return <div className="diamond" aria-label={describeBases(bases)}>
@@ -50,8 +106,51 @@ function MediaStage({ situation, plateAppearance, playerBase, viewLabel, isSurpr
   </section>
 }
 
+function AnnouncementCheckMode({ cases, completedCases, hideCompleted, onToggleHideCompleted, onToggleCompleted, onBack }: { cases: AnnouncementAuditCase[]; completedCases: Set<string>; hideCompleted: boolean; onToggleHideCompleted: () => void; onToggleCompleted: (id: string, completed: boolean) => void; onBack: () => void }) {
+  const [copiedReportId, setCopiedReportId] = useState<string | null>(null)
+  const visibleCases = hideCompleted ? cases.filter((item) => !completedCases.has(item.id)) : cases
+  const completedCount = cases.filter((item) => completedCases.has(item.id)).length
+
+  const copyBugReport = async (item: AnnouncementAuditCase) => {
+    await copyTextToClipboard(formatAnnouncementBugReport(item))
+    setCopiedReportId(item.id)
+    window.setTimeout(() => setCopiedReportId((current) => current === item.id ? null : current), 1600)
+  }
+
+  return <main className="app-shell audit-page">
+    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><button className="secondary-button" type="button" onClick={onToggleHideCompleted}>{hideCompleted ? '완료 숨김' : '전체 보기'}</button><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
+    <section className="audit-summary">
+      <p className="eyebrow">ANNOUNCEMENT CHECK</p>
+      <h1>아나운스 텍스트 체크</h1>
+      <p>같은 표시 상황과 같은 메시지 흐름은 하나로 묶었습니다.</p>
+      <div className="audit-metrics"><div><strong>{cases.length}</strong><span>전체</span></div><div><strong>{cases.length - completedCount}</strong><span>남음</span></div><div><strong>{completedCount}</strong><span>완료</span></div></div>
+    </section>
+    <section className="audit-list" aria-label="아나운스 체크 목록">
+      {visibleCases.map((item) => {
+        const completed = completedCases.has(item.id)
+        return <article className={`audit-card ${completed ? 'completed' : ''} ${item.isSurprise ? 'surprise' : ''}`} key={item.id}>
+          <div className="audit-card-meta"><span>{item.situation}</span><span>{item.viewLabel}</span>{item.isSurprise && <b>돌발 이벤트</b>}</div>
+          <div className="audit-message-flow">
+            {item.messages.map((message, index) => <div className={`audit-message ${message.category === 'surprise' ? 'surprise-message' : ''} ${message.tone ?? 'neutral'}`} key={`${message.title}:${message.detail}:${index}`}>
+              {index > 0 && <span>그리고</span>}
+              <strong>{message.title}</strong>
+              <p>{message.detail}</p>
+            </div>)}
+          </div>
+          <div className="audit-card-footer"><small>{item.actionLabel}</small><div className="audit-card-actions"><button className="secondary-button" type="button" onClick={() => void copyBugReport(item)}><Bug size={16} /> {copiedReportId === item.id ? '복사됨' : '버그 리포트'}</button><button className={completed ? 'secondary-button' : 'primary-button'} type="button" onClick={() => onToggleCompleted(item.id, !completed)}>{completed ? '완료 해제' : <><CheckCircle2 size={17} /> 문제 없음</>}</button></div></div>
+        </article>
+      })}
+      {visibleCases.length === 0 && <div className="audit-empty"><strong>확인할 아나운스가 없습니다.</strong><p>완료 숨김을 끄면 전체 목록을 다시 볼 수 있습니다.</p></div>}
+    </section>
+  </main>
+}
+
 function App() {
+  const [appMode, setAppMode] = useState<AppMode>('game')
   const [adminMode, setAdminMode] = useState(false)
+  const [announcementAuditCases] = useState(() => createAnnouncementAuditCases())
+  const [completedAnnouncementCases, setCompletedAnnouncementCases] = useState(() => loadCompletedAnnouncementCases())
+  const [hideCompletedAnnouncements, setHideCompletedAnnouncements] = useState(true)
   const [plateAppearance, setPlateAppearance] = useState(1)
   const [phase, setPhase] = useState<Phase>('playing')
   const [situation, setSituation] = useState<Situation>(() => createRandomSituation())
@@ -107,6 +206,16 @@ function App() {
     }
   }
 
+  const toggleCompletedAnnouncementCase = (id: string, completed: boolean) => {
+    setCompletedAnnouncementCases((current) => {
+      const next = new Set(current)
+      if (completed) next.add(id)
+      else next.delete(id)
+      saveCompletedAnnouncementCases(next)
+      return next
+    })
+  }
+
   const continueGame = () => {
     if (plateAppearance === 3) {
       setPhase('finished')
@@ -115,6 +224,8 @@ function App() {
     setPlateAppearance((current) => current + 1)
     restartAt(createRandomSituation())
   }
+
+  if (appMode === 'announcementCheck') return <AnnouncementCheckMode cases={announcementAuditCases} completedCases={completedAnnouncementCases} hideCompleted={hideCompletedAnnouncements} onToggleHideCompleted={() => setHideCompletedAnnouncements((current) => !current)} onToggleCompleted={toggleCompletedAnnouncementCase} onBack={() => setAppMode('game')} />
 
   if (phase === 'finished') return <main className="app-shell result-page">
     <header className="brand-bar"><span><b className="brand-mark">EPS</b> BASEBALL SIM</span></header>
@@ -160,7 +271,7 @@ function App() {
       : ''
 
   return <main className="app-shell">
-    <header className="brand-bar"><div><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></div><div className="header-controls"><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
+    <header className="brand-bar"><button className={`brand-title ${adminMode ? 'audit-entry-enabled' : ''}`} type="button" onClick={() => adminMode && setAppMode('announcementCheck')} aria-label={adminMode ? '아나운스 텍스트 체크 모드 열기' : 'EPS Baseball Sim'}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className="game-grid">
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={scenario.context.playerBase} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} imageUrl={VIEW_IMAGES[imageView]} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${scenario.context.announcement ? 'has-announcement' : ''} ${announcementMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
