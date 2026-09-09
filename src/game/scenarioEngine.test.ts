@@ -109,6 +109,7 @@ describe('offense core scenario pack', () => {
     expect(fieldingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
     expect(fieldingError.context.announcement).toEqual({ title: '내야수가 땅볼 포구를 놓쳤습니다!', detail: '실책으로 1루에 출루했습니다.' })
     expect(throwingError.nodeId).toBe('ground.infield.throwingError.check')
+    expect(throwingError.context.announcement).toEqual(ANNOUNCEMENTS.groundFieldingSuccess)
     expect(throwingErrorClear.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
     expect(throwingErrorClear.context.announcement).toEqual(ANNOUNCEMENTS.groundThrowingErrorClear)
   })
@@ -465,6 +466,7 @@ describe('offense core scenario pack', () => {
 
     expect(fielding.nodeId).toBe('followUp.ground.check')
     expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
+    expect(throwCheck.context.announcement).toEqual(ANNOUNCEMENTS.groundFieldingSuccess)
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
     expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'negative' })

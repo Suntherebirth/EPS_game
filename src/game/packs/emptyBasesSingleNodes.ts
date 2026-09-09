@@ -1,3 +1,4 @@
+import { ANNOUNCEMENTS } from '../announcementMessages'
 import { RUNNING_CHANCES } from '../probabilities'
 import type { ScenarioNode } from '../scenario'
 
@@ -270,7 +271,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '후속 내야 땅볼 수비 판정',
     outcomes: [
       { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'followUp.ground.fieldingError' } },
-      { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'followUp.ground.advanceOpportunity.route' } },
+      { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'followUp.ground.advanceOpportunity.route', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundFieldingSuccess }] } },
     ],
   },
   'followUp.ground.advanceOpportunity.route': {

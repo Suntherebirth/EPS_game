@@ -139,7 +139,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'ground.infield.check', type: 'chance', view: 'batter', title: '내야 땅볼 수비 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.fieldingError' } },
-        { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.throwingError.check' } },
+        { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.throwingError.check', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundFieldingSuccess }] } },
       ],
     },
     'ground.infield.clean.route': {
