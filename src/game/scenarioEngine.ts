@@ -34,6 +34,22 @@ const matchesCondition = (context: ScenarioContext, condition: ScenarioCondition
   return context.flags[condition.key] === condition.value
 }
 
+const getNodeViewLabel = (pack: ScenarioPack, nodeId: string, context: ScenarioContext) => {
+  const node = pack.nodes[nodeId]
+  if (!node) return undefined
+  if (node.tags?.includes('player-position-view') && context.playerBase) return `${context.playerBase}루 주자 시점`
+  if (node.view === 'runner:first') return '1루 주자 시점'
+  if (node.view === 'runner:second') return '2루 주자 시점'
+  if (node.view === 'runner:third') return '3루 주자 시점'
+  if (node.view === 'batter') return '타석 시점'
+  return '결과 화면'
+}
+
+const applyEffects = (pack: ScenarioPack, state: ScenarioState, effects: ScenarioTransition['effects'] = []) => {
+  const viewLabel = getNodeViewLabel(pack, state.nodeId, state.context)
+  return effects.reduce((context, effect) => applyScenarioEffect(context, effect, viewLabel), state.context)
+}
+
 const applyTransition = (pack: ScenarioPack, state: ScenarioState, transition: ScenarioTransition): ScenarioState => {
   const sourceIsSurprise = pack.nodes[state.nodeId]?.tags?.includes('surprise-event') ?? false
   const targetIsSurprise = pack.nodes[transition.to]?.tags?.includes('surprise-event') ?? false
@@ -43,7 +59,7 @@ const applyTransition = (pack: ScenarioPack, state: ScenarioState, transition: S
   }
   return {
     nodeId: transition.to,
-    context: (transition.effects ?? []).reduce(applyScenarioEffect, context),
+    context: applyEffects(pack, { ...state, context }, transition.effects),
   }
 }
 
@@ -76,7 +92,7 @@ export const settleScenario = (pack: ScenarioPack, initialState: ScenarioState, 
     const node = pack.nodes[state.nodeId]
     if (!node) throw new Error(`시나리오 노드를 찾을 수 없습니다: ${state.nodeId}`)
     if (node.type === 'choice' || node.type === 'terminal' || (node.type === 'batting' && (node.mode === 'direct' || options.manualChance)) || (node.type === 'chance' && options.manualChance)) return state
-    if (node.type === 'event') state = applyTransition(pack, { ...state, context: node.effects.reduce(applyScenarioEffect, state.context) }, node.transition)
+    if (node.type === 'event') state = applyTransition(pack, { ...state, context: applyEffects(pack, state, node.effects) }, node.transition)
     if (node.type === 'chance') state = applyTransition(pack, state, pickWeighted(node.outcomes).transition)
     if (node.type === 'router') {
       const route = node.routes.find((item) => (item.when ?? []).every((condition) => matchesCondition(state.context, condition)))

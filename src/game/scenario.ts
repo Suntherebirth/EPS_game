@@ -119,6 +119,7 @@ export type ScenarioContext = {
   playerBase: number | null
   announcementHistory: ScenarioAnnouncementHistoryEntry[]
   announcementCategory: 'normal' | 'surprise'
+  announcementViewLabel?: string
   announcement?: ScenarioAnnouncement
 }
 
@@ -131,6 +132,7 @@ export type ScenarioAnnouncement = {
 export type ScenarioAnnouncementHistoryEntry = {
   announcement: ScenarioAnnouncement
   category: 'normal' | 'surprise'
+  viewLabel?: string
 }
 
 export type ScenarioState = {

@@ -88,7 +88,8 @@ const formatAnnouncementBugReport = (item: AnnouncementAuditCase) => {
   return [
     'EPS Baseball Sim 아나운스 텍스트 버그 리포트',
     '',
-    `상황: ${item.situation}`,
+    `시작 상황: ${describeSituation(item.start)}`,
+    `결과 상태: ${item.situation}`,
     `표시 시점: ${item.viewLabel}${item.isSurprise ? ' / 돌발 이벤트' : ''}`,
     `플레이 흐름: ${item.actionLabel}`,
     `주자 상태: outs=${item.outs}, bases=[${item.bases.join(', ')}], playerBase=${item.playerBase ?? 'none'}`,
@@ -158,7 +159,7 @@ function AnnouncementCheckMode({ cases, caseStatuses, activeTab, highlightedCase
       {visibleCases.map((item) => {
         const status = caseStatuses[item.id]
         return <article className={`audit-card ${status ?? ''} ${item.isSurprise ? 'surprise' : ''} ${highlightedCaseId === item.id ? 'highlighted' : ''}`} key={item.id} id={`audit-card:${item.id}`}>
-          <div className="audit-card-meta"><span>{item.situation}</span><span>{item.viewLabel}</span>{item.isSurprise && <b>돌발 이벤트</b>}{status === 'needsReview' && <b className="review-chip">검토 필요</b>}{status === 'ok' && <b className="ok-chip">문제 없음</b>}</div>
+          <div className="audit-card-meta"><span>시작: {describeSituation(item.start)}</span><span>결과: {item.situation}</span><span>{item.viewLabel}</span>{item.isSurprise && <b>돌발 이벤트</b>}{status === 'needsReview' && <b className="review-chip">검토 필요</b>}{status === 'ok' && <b className="ok-chip">문제 없음</b>}</div>
           <div className="audit-message-flow">
             {item.messages.map((message, index) => <div className={`audit-message ${message.category === 'surprise' ? 'surprise-message' : ''} ${message.tone ?? 'neutral'}`} key={`${message.title}:${message.detail}:${index}`}>
               {index > 0 && <span>그리고</span>}

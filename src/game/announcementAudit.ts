@@ -6,6 +6,7 @@ import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenario
 
 export type AnnouncementAuditMessage = ScenarioAnnouncement & {
   category: ScenarioAnnouncementHistoryEntry['category']
+  viewLabel?: string
 }
 
 export type AnnouncementAuditStep = {
@@ -60,8 +61,8 @@ const getViewLabel = (state: ScenarioState) => {
 const getMessages = (state: ScenarioState): AnnouncementAuditMessage[] => {
   if (!state.context.announcement) return []
   return [
-    ...state.context.announcementHistory.map((entry) => ({ ...entry.announcement, category: entry.category })),
-    { ...state.context.announcement, category: state.context.announcementCategory },
+    ...state.context.announcementHistory.map((entry) => ({ ...entry.announcement, category: entry.category, viewLabel: entry.viewLabel })),
+    { ...state.context.announcement, category: state.context.announcementCategory, viewLabel: state.context.announcementViewLabel },
   ]
 }
 
@@ -79,7 +80,7 @@ const stateKey = (state: ScenarioState) => [
 
 const caseKey = (state: ScenarioState, messages: AnnouncementAuditMessage[]) => [
   messages.map((message) => [message.title, message.detail, message.tone ?? 'neutral', message.category].join('~')).join('>'),
-  getViewLabel(state),
+  messages.at(-1)?.viewLabel ?? getViewLabel(state),
   state.context.outs >= 3 ? 'three-outs' : `${state.context.outs}-outs`,
   state.context.playerBase ?? 'none',
   toBases(state.context.bases).join(','),
@@ -95,7 +96,7 @@ const collectCase = ({ state, actionLabel, start, steps }: QueueItem): Announcem
     id: caseKey(state, messages),
     messages,
     situation: describeSituation(situation),
-    viewLabel: getViewLabel(state),
+    viewLabel: messages.at(-1)?.viewLabel ?? getViewLabel(state),
     nodeId: state.nodeId,
     nodeTitle: node?.title ?? state.nodeId,
     actionLabel,

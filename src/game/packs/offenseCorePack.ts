@@ -130,7 +130,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       ],
     },
     'strikeout.reachFirst': {
-      id: 'strikeout.reachFirst', type: 'event', view: 'runner:first', title: '낫아웃 1루 진루',
+      id: 'strikeout.reachFirst', type: 'event', view: 'batter', title: '낫아웃 1루 진루',
       effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '낫아웃 1루 진루' }, { type: 'announce', title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', tone: 'positive' }],
       transition: { to: 'runner.route' },
     },

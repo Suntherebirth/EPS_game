@@ -29,4 +29,13 @@ describe('announcement audit cases', () => {
       expect(messages.map((message) => [message.title, message.detail])).toEqual(item.messages.map((message) => [message.title, message.detail]))
     }
   })
+
+  it('uses the view that produced each announcement instead of the next waiting node', () => {
+    const cases = createAnnouncementAuditCases()
+    const droppedStrike = cases.find((item) => item.messages.at(-1)?.title === '낫아웃 1루 진루 성공!')
+    const stayAtThird = cases.find((item) => item.messages.at(-1)?.title === '3루에 머무릅니다.')
+
+    expect(droppedStrike?.viewLabel).toBe('타석 시점')
+    expect(stayAtThird?.viewLabel).toBe('3루 주자 시점')
+  })
 })

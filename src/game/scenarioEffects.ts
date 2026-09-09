@@ -12,10 +12,11 @@ const cloneContext = (context: ScenarioContext): ScenarioContext => ({
   announcementCategory: context.announcementCategory,
 })
 
-const setAnnouncement = (context: ScenarioContext, announcement: ScenarioContext['announcement']) => {
-  if (context.announcement && context.announcement.title !== '플레이 종료') context.announcementHistory.push({ announcement: context.announcement, category: context.announcementCategory })
+const setAnnouncement = (context: ScenarioContext, announcement: ScenarioContext['announcement'], viewLabel?: string) => {
+  if (context.announcement && context.announcement.title !== '플레이 종료') context.announcementHistory.push({ announcement: context.announcement, category: context.announcementCategory, viewLabel: context.announcementViewLabel })
   context.announcement = announcement
   context.announcementCategory = context.flags.surpriseEvent === true ? 'surprise' : 'normal'
+  context.announcementViewLabel = viewLabel
 }
 
 const makeRoomForRunner = (bases: number[], base: number): { bases: number[]; runs: number } => {
@@ -26,7 +27,7 @@ const makeRoomForRunner = (bases: number[], base: number): { bases: number[]; ru
   return { bases: [...advanced.bases, base + 1], runs: advanced.runs }
 }
 
-export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEffect): ScenarioContext => {
+export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEffect, viewLabel?: string): ScenarioContext => {
   const next = cloneContext(context)
 
   if (effect.type === 'addOuts') next.outs = Math.min(3, next.outs + effect.value)
@@ -45,17 +46,17 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : effect.detail,
       ...(effect.tone ? { tone: effect.tone } : next.outs >= 3 ? { tone: 'negative' as const } : {}),
-    })
+    }, viewLabel)
   }
   if (effect.type === 'announceFollowUpOutfieldError') {
-    setAnnouncement(next, ANNOUNCEMENTS.followUpOutfieldError(effect.clear))
+    setAnnouncement(next, ANNOUNCEMENTS.followUpOutfieldError(effect.clear), viewLabel)
   }
   if (effect.type === 'announcePlayerAdvance') {
     setAnnouncement(next, {
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : effect.detail,
       ...(effect.tone ? { tone: effect.tone } : {}),
-    })
+    }, viewLabel)
   }
 
   if (effect.type === 'applyHit') {
