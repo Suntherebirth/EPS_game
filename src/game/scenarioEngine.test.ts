@@ -148,6 +148,17 @@ describe('offense core scenario pack', () => {
     expect(miss.context.announcement).toEqual(ANNOUNCEMENTS.groundThrowingErrorAmbiguous)
   })
 
+  it('ends a follow-up ground throwing error when the tracked third-base runner is forced home', () => {
+    const loadedThirdRunner = { ...context(0, [1, 2, 3]), playerBase: 3 }
+    const fielding = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, { nodeId: 'followUp.ground.check', context: loadedThirdRunner }, 'cleanPlay', { manualChance: true })
+    const miss = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousMiss', { manualChance: true })
+
+    expect(fielding.nodeId).toBe('followUp.ground.throwingError.check')
+    expect(miss.nodeId).toBe('plate.complete')
+    expect(miss.context).toMatchObject({ bases: [1, 2, 3], playerBase: null, runs: 1 })
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, miss)).toEqual([])
+  })
+
   it('lets a clean ground ball without a first-base runner choose between the batter and lead runner', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2, 3]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })

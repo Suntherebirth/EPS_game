@@ -91,6 +91,10 @@ export const settleScenario = (pack: ScenarioPack, initialState: ScenarioState, 
   for (let step = 0; step < 100; step += 1) {
     const node = pack.nodes[state.nodeId]
     if (!node) throw new Error(`시나리오 노드를 찾을 수 없습니다: ${state.nodeId}`)
+    if ((node.type === 'choice' || node.type === 'chance') && node.tags?.includes('player-position-view') && state.context.playerBase === null && pack.nodes['runner.route']) {
+      state = { ...state, nodeId: 'runner.route' }
+      continue
+    }
     if (node.type === 'choice' || node.type === 'terminal' || (node.type === 'batting' && (node.mode === 'direct' || options.manualChance)) || (node.type === 'chance' && options.manualChance)) return state
     if (node.type === 'event') state = applyTransition(pack, { ...state, context: applyEffects(pack, state, node.effects) }, node.transition)
     if (node.type === 'chance') state = applyTransition(pack, state, pickWeighted(node.outcomes).transition)

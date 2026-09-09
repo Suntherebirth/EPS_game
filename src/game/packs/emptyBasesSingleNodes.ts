@@ -381,12 +381,12 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'followUp.ground.throw.error.clear': {
     id: 'followUp.ground.throw.error.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
     effects: [{ type: 'forceWalk' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.', tone: 'positive' }],
-    transition: { to: 'followUp.ground.throw.extra.clear.decide' },
+    transition: { to: 'followUp.ground.throw.extra.clear.route' },
   },
   'followUp.ground.throw.error.ambiguous': {
     id: 'followUp.ground.throw.error.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
     effects: [{ type: 'forceWalk' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도할 수 있습니다.', tone: 'caution' }],
-    transition: { to: 'followUp.ground.throw.extra.ambiguous.decide' },
+    transition: { to: 'followUp.ground.throw.extra.ambiguous.route' },
   },
   'followUp.ground.throw.error.attempt.clear': {
     id: 'followUp.ground.throw.error.attempt.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루',
