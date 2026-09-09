@@ -1,11 +1,12 @@
-import type { ScenarioAnnouncement } from './scenario'
+import type { SceneId, ScenarioAnnouncement } from './scenario'
 
 type AnnouncementTone = ScenarioAnnouncement['tone']
 
-const message = (title: string, detail: string, tone?: AnnouncementTone): ScenarioAnnouncement => ({
+const message = (title: string, detail: string, tone?: AnnouncementTone, scene?: SceneId): ScenarioAnnouncement => ({
   title,
   detail,
   ...(tone ? { tone } : {}),
+  ...(scene ? { scene } : {}),
 })
 
 export const ANNOUNCEMENTS = {
@@ -18,6 +19,7 @@ export const ANNOUNCEMENTS = {
     clear ? 'positive' : 'caution',
   ),
   groundFieldingSuccess: message('내야수가 땅볼을 포구했습니다!', '1루 송구를 준비합니다.'),
+  groundThrowSuccess: message('내야수가 1루 송구를 성공했습니다!', '타자 주자를 1루에서 처리합니다.'),
   followUpGroundOut: (playerBase: number | null, outs: number, playerIsForced: boolean) => {
     const forceOutBase = playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`
     if (playerIsForced) {

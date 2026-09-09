@@ -205,7 +205,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.throwingError.check': {
       id: 'ground.infield.throwingError.check', type: 'chance', view: 'batter', title: '내야 땅볼 1루 송구 판정', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'throwSuccess', label: '송구 성공', weight: GROUND_THROW_SUCCESS_AFTER_FIELDING, transition: { to: 'ground.infield.clean.route' } },
+        { id: 'throwSuccess', label: '송구 성공', weight: GROUND_THROW_SUCCESS_AFTER_FIELDING, transition: { to: 'ground.infield.clean.route', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccess, scene: 'ground-throw-ready' }] } },
         { id: 'clearMiss', label: '명백히 1루수 뒤로 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorClear, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorClear }] } },
         { id: 'ambiguousMiss', label: '1루수 뒤로 애매하게 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorAmbiguous, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorAmbiguous }] } },
       ],

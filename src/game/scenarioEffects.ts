@@ -47,16 +47,18 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : effect.detail,
       ...(effect.tone ? { tone: effect.tone } : next.outs >= 3 ? { tone: 'negative' as const } : {}),
+      ...(effect.scene ? { scene: effect.scene } : {}),
     }, viewLabel, effect.category)
   }
   if (effect.type === 'announceFollowUpOutfieldError') {
-    setAnnouncement(next, ANNOUNCEMENTS.followUpOutfieldError(effect.clear), viewLabel)
+    setAnnouncement(next, { ...ANNOUNCEMENTS.followUpOutfieldError(effect.clear), ...(effect.scene ? { scene: effect.scene } : {}) }, viewLabel)
   }
   if (effect.type === 'announcePlayerAdvance') {
     setAnnouncement(next, {
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : effect.detail,
       ...(effect.tone ? { tone: effect.tone } : {}),
+      ...(effect.scene ? { scene: effect.scene } : {}),
     }, viewLabel, effect.category)
   }
 

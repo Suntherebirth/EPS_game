@@ -12,19 +12,9 @@ import {
 } from './game/gameSetup'
 import { OFFENSE_CORE_PACK } from './game/packs/offenseCorePack'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
-import type { ScenarioState } from './game/scenario'
-import viewBatter from './assets/scenes/view-batter.png'
-import viewRunnerFirst from './assets/scenes/view-runner-first.png'
-import viewRunnerSecond from './assets/scenes/view-runner-second.png'
-import viewRunnerThird from './assets/scenes/view-runner-third.png'
+import type { ScenarioState, ScenarioView } from './game/scenario'
+import { buildAnnouncementImageTrail, resolveViewImage } from './game/sceneMedia'
 import './App.css'
-
-const VIEW_IMAGES: Record<string, string> = {
-  batter: viewBatter,
-  'runner:first': viewRunnerFirst,
-  'runner:second': viewRunnerSecond,
-  'runner:third': viewRunnerThird,
-}
 
 type Phase = 'playing' | 'between' | 'finished'
 type AppMode = 'game' | 'announcementCheck'
@@ -110,11 +100,12 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, imageUrl }: { situation: Situation; plateAppearance: number; playerBase: number | null; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; imageUrl?: string }) {
+function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, showTapHint }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; showTapHint: boolean }) {
   return <section className="media-stage" aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
-    {!videoUrl && imageUrl && <img src={imageUrl} alt="" />}
-    {viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
+    {!videoUrl && imageUrl && <img src={imageUrl} alt="" key={imageUrl} />}
+    {!showTapHint && viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
+    {showTapHint && <div className="media-view-label tap-hint-chip">탭하여 계속</div>}
     <div className={`broadcast-bug ${isPlateEntry ? 'plate-entry-flash' : ''}`}>
       <div className="broadcast-plate"><span>공격</span><strong>{plateAppearance}<small>/3</small></strong></div>
       <div className="broadcast-runners"><BaseDiamond bases={situation.bases} playerBase={playerBase} /></div>
@@ -192,6 +183,29 @@ function App() {
 
   const replayFrame = replay ? replay.frames[replay.index] : null
   const displayedState = replayFrame?.state ?? scenario
+  const sceneNode = OFFENSE_CORE_PACK.nodes[displayedState.nodeId]
+  const sceneNodeViewBase = sceneNode.view === 'runner:first' ? 1 : sceneNode.view === 'runner:second' ? 2 : sceneNode.view === 'runner:third' ? 3 : null
+  const sceneCurrentViewBase = sceneNode.tags?.includes('player-position-view') && sceneNodeViewBase === 1 ? displayedState.context.playerBase : sceneNodeViewBase
+  const sceneImageView: ScenarioView = sceneCurrentViewBase ? `runner:${sceneCurrentViewBase === 1 ? 'first' : sceneCurrentViewBase === 2 ? 'second' : 'third'}` : sceneNode.view
+  const sceneAnnouncements = getAnnouncementMessages(displayedState)
+  const sceneImageTrail = buildAnnouncementImageTrail(sceneAnnouncements, sceneImageView, displayedState.context.playerBase)
+  const sceneViewImageUrl = resolveViewImage(sceneImageView)
+  const sceneAnnouncementCount = sceneAnnouncements.length
+  // 이미지 (탭) 아나운스, 이미지 (탭) 아나운스 순서로 진행하되 아나운스는 지금까지 쌓인 걸 '그리고'로 이어 보여준다.
+  const sceneTotalTapSteps = sceneAnnouncementCount === 0 ? 1 : sceneAnnouncementCount * 2 + 1
+  const sceneSequenceKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}:${sceneImageView}:${displayedState.context.playerBase ?? 'none'}`
+  const [tapProgress, setTapProgress] = useState({ key: '', step: 0 })
+  const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
+  const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
+  const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : Math.min(Math.floor(sceneStep / 2), sceneAnnouncementCount - 1)
+  // 아나운스는 한 번 등장하면 다음 이미지가 넘어가는 동안에도 화면에 계속 쌓인 채로 남아있는다.
+  const sceneRevealedCount = sceneIsFinalStep ? 0 : Math.floor((sceneStep + 1) / 2)
+  const sceneImageUrl = sceneIsFinalStep ? sceneViewImageUrl : sceneImageTrail[sceneEventIndex]
+  const advanceScene = () => {
+    if (sceneIsFinalStep) return
+    setTapProgress({ key: sceneSequenceKey, step: sceneStep + 1 })
+  }
+
 
   useEffect(() => {
     if (!replay?.playing || replay.index >= replay.frames.length - 1) return
@@ -320,14 +334,12 @@ function App() {
     <button className="primary-button restart" type="button" onClick={resetGame}><RotateCcw size={18} /> 새 경기</button>
   </main>
 
-  const node = OFFENSE_CORE_PACK.nodes[displayedState.nodeId]
+  const node = sceneNode
   const replaying = replay !== null
   const replayAtEnd = replay ? replay.index === replay.frames.length - 1 : false
   const isPlateEntry = phase === 'playing' && node.type === 'batting' && !replaying
   const displayedSituation = { outs: displayedState.context.outs, bases: displayedState.context.bases as Base[] }
-  const nodeViewBase = node.view === 'runner:first' ? 1 : node.view === 'runner:second' ? 2 : node.view === 'runner:third' ? 3 : null
-  const currentViewBase = node.tags?.includes('player-position-view') && nodeViewBase === 1 ? displayedState.context.playerBase : nodeViewBase
-  const imageView = currentViewBase ? `runner:${currentViewBase === 1 ? 'first' : currentViewBase === 2 ? 'second' : 'third'}` : node.view
+  const currentViewBase = sceneCurrentViewBase
   const viewLabel = node.view.startsWith('runner:') && currentViewBase
     ? `${currentViewBase}루 주자 시점`
     : node.view === 'batter' ? '타석 시점' : null
@@ -341,8 +353,10 @@ function App() {
     : node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
     ? node.description.startsWith(`${currentViewBase}루 주자:`) ? node.description : `${currentViewBase}루 주자: ${node.description}`
     : node.type === 'choice' ? node.description : undefined
-  const announcementMessages = getAnnouncementMessages(displayedState)
+  const announcementMessages = sceneAnnouncements
+  const overlayMessages = replaying ? announcementMessages : announcementMessages.slice(0, sceneRevealedCount)
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
+  const canAct = phase === 'playing' && sceneIsFinalStep
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
     : node.type === 'choice'
@@ -350,16 +364,27 @@ function App() {
       : node.type === 'chance' && adminMode
         ? '관리자: 확률 결과를 지정하세요.'
       : ''
+  const sceneTapProps = sceneIsFinalStep ? {} : {
+    onClick: advanceScene,
+    role: 'button' as const,
+    tabIndex: 0,
+    'aria-label': '탭하여 다음 장면 보기',
+    onKeyDown: (event: React.KeyboardEvent) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      advanceScene()
+    },
+  }
 
   return <main className="app-shell">
     <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
-    <div className="game-grid">
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedState.context.playerBase} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} imageUrl={VIEW_IMAGES[imageView]} />
-      <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${displayedState.context.announcement ? 'has-announcement' : ''} ${announcementMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
-        {displayedState.context.announcement && <aside className={`result-notice ${displayedState.context.announcement.tone ?? 'neutral'}`} aria-live="polite" key={`${displayedState.context.announcement.title}:${displayedState.context.announcement.detail}:${replayFrame?.stepIndex ?? 'live'}`}>
+    <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'}`} {...sceneTapProps}>
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedState.context.playerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} showTapHint={!sceneIsFinalStep} />
+      <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
+        {overlayMessages.length > 0 && <aside className={`result-notice ${overlayMessages.at(-1)?.tone ?? 'neutral'}`} aria-live="polite" key={replaying ? `replay:${replayFrame?.stepIndex ?? 'live'}` : sceneSequenceKey}>
           <span>{replaying ? '아나운스 재생' : '방금 일어난 일'}</span>
           <div className="message-flow">
-            {announcementMessages.map((message, index) => <div className="message-flow-entry" key={`${message.title}:${message.detail}:${index}`}>
+            {overlayMessages.map((message, index) => <div className="message-flow-entry" key={`${message.title}:${message.detail}:${index}`}>
               {index > 0 && <span className="message-flow-connector" style={{ animationDelay: `${0.5 + (index - 1) * 0.68}s` }}>그리고</span>}
               <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`} style={{ animationDelay: `${0.16 + index * 0.68}s` }}>
                 <strong>{message.title}</strong>
@@ -368,12 +393,12 @@ function App() {
             </div>)}
           </div>
         </aside>}
-        {phase === 'playing' && actionInstruction && <p className={`action-instruction ${node.type === 'choice' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
+        {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
         {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
-        {phase === 'playing' && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
-        {phase === 'playing' && !replaying && node.type === 'choice' && <div className={`choices runner-choices ${availableChoices.length === 1 ? 'single-choice' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{availableChoices.map((choice) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
-        {phase === 'playing' && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}><span>관리자 콘솔 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
-        {phase === 'between' && <div className="play-result"><p className="eyebrow">PLAY COMPLETE</p><h3>{records.at(-1)?.result}</h3><p>{plateAppearance === 3 ? '모든 타석이 끝났습니다.' : '다음 타석은 새로운 상황에서 시작합니다.'}</p><button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button></div>}
+        {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
+        {canAct && !replaying && node.type === 'choice' && <div className={`choices runner-choices ${availableChoices.length === 1 ? 'single-choice' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{availableChoices.map((choice) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
+        {canAct && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}><span>관리자 콘솔 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
+        {phase === 'between' && sceneIsFinalStep && <div className="play-result"><p className="eyebrow">PLAY COMPLETE</p><h3>{records.at(-1)?.result}</h3><p>{plateAppearance === 3 ? '모든 타석이 끝났습니다.' : '다음 타석은 새로운 상황에서 시작합니다.'}</p><button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button></div>}
       </section>
     </div>
     {replay && <div className="replay-controls" role="group" aria-label="아나운스 재생 컨트롤">

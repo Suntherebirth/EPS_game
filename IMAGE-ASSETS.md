@@ -41,9 +41,44 @@
 
 세부 규칙은 기본 세트 적용 후 확정합니다.
 
+## 이벤트 연출 이미지 (아나운스 단위)
+
+시점 이미지 사이에 끼워 넣는 **사건 이미지**입니다. 아나운스 하나가 이미지 한 장에 대응하며, 아나운스가 연달아 나오면 이미지도 그 순서대로 재생된 뒤 마지막에 시점 이미지로 정지합니다.
+
+예: 타석 시점 → `hit-single.png` → 1루 주자 시점
+
+### 업로드 방법
+
+`src/assets/scenes/events/<sceneId>.png` 로 저장하면 **코드 수정 없이 자동 등록**됩니다. (`sceneMedia.ts`가 폴더를 통째로 읽습니다.)
+
+- 파일명이 곧 scene ID입니다. 소문자와 하이픈만 사용합니다.
+- 주자 베이스별로 다른 그림이 필요할 때만 `<sceneId>@2.png` 처럼 추가합니다. 없으면 공용 파일로 대체됩니다.
+- 아직 없는 scene ID는 자동으로 건너뛰므로, 한 장씩 채워 넣어도 화면이 깨지지 않습니다.
+
+### scene ID 목록
+
+전체 매핑은 [src/game/sceneMedia.ts](src/game/sceneMedia.ts)의 `SCENE_BY_ANNOUNCEMENT_TITLE` 한 곳에서 관리합니다. 대표 ID는 다음과 같습니다.
+
+| 분류 | scene ID |
+| --- | --- |
+| 타격 | `hit-single`, `hit-double`, `hit-triple`, `hit-home-run`, `hit-infield`, `walk`, `hit-by-pitch` |
+| 타구 | `ball-ground-infield`, `ball-fly-infield`, `ball-fly-outfield`, `ball-fly-outfield-deep`, `ball-fly-outfield-shallow`, `ground-fielded`, `ground-throw-ready` |
+| 아웃 | `out-strikeout`, `out-infield-fly`, `out-ground`, `out-fly`, `out-ground-double-play`, `out-ground-force` |
+| 실책 | `error-infield-fielding`, `error-infield-throwing`, `error-infield-fly-drop`, `error-outfield-drop`, `error-outfield-through` |
+| 주루 | `steal-second-safe`, `steal-second-out`, `steal-third-safe`, `steal-third-out`, `advance-second-safe`, `advance-second-out`, `advance-third-safe`, `advance-third-out`, `wild-pitch-advance-safe`, `wild-pitch-advance-out`, `sacrifice-fly-safe`, `sacrifice-fly-out`, `dropped-third-strike-safe` |
+| 기타 | `play-end` |
+
+### 문구가 겹치는 경우
+
+같은 title을 쓰는 아나운스를 서로 다른 이미지로 나누려면, 해당 `announce` 이펙트에 `scene`을 직접 지정합니다. 이 값이 title 매핑보다 우선합니다.
+
+```ts
+{ type: 'announce', title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '...', scene: 'dropped-third-strike' }
+```
+
 ## 참고: 코드 연결 방식
 
-현재 `MediaStage`(`src/App.tsx`)는 `videoUrl`이 있을 때만 영상을 재생하며, 정적 이미지 렌더링은 아직 연결되어 있지 않습니다. 이미지가 준비되면 `node.view` 값에 따라 위 파일을 매핑하는 로직을 `App.tsx`에 추가할 예정입니다.
+`MediaStage`(`src/App.tsx`)는 `videoUrl`이 있을 때만 영상을 재생하고, 그 외에는 `src/game/sceneMedia.ts`가 만든 이미지 시퀀스를 순서대로 표시합니다. 시점 이미지·이벤트 이미지 매핑은 모두 `sceneMedia.ts` 한 파일에서 관리하며, `App.tsx`에는 야구 규칙 분기를 두지 않습니다.
 
 ## 기존 에셋 현황
 

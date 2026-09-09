@@ -3,6 +3,9 @@ import type { BattingEventId, BattingMode } from './battingEvents'
 export type ScenarioNodeId = string
 export type ScenarioView = 'batter' | 'runner:first' | 'runner:second' | 'runner:third' | 'result'
 
+/** 연출 이미지 식별자. 실제 파일 매핑은 sceneMedia.ts가 단독으로 관리한다. */
+export type SceneId = string
+
 export type ScenarioCondition =
   | { field: 'outs'; operator: 'eq' | 'lt' | 'gte'; value: number }
   | { field: 'bases'; operator: 'empty' | 'includes' | 'excludes' | 'equals'; value?: number[] }
@@ -30,9 +33,9 @@ export type ScenarioEffect =
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }
   | { type: 'advanceRunnersAheadOfPlayer' }
-  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise' }
-  | { type: 'announceFollowUpOutfieldError'; clear: boolean }
-  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise' }
+  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId }
+  | { type: 'announceFollowUpOutfieldError'; clear: boolean; scene?: SceneId }
+  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'advanceRunner'; from: number; to: number }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
@@ -127,6 +130,7 @@ export type ScenarioAnnouncement = {
   title: string
   detail: string
   tone?: 'positive' | 'negative' | 'caution' | 'neutral'
+  scene?: SceneId
 }
 
 export type ScenarioAnnouncementHistoryEntry = {

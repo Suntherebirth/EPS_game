@@ -1,0 +1,108 @@
+import type { SceneId, ScenarioAnnouncement, ScenarioView } from './scenario'
+import viewBatter from '../assets/scenes/view-batter.png'
+import viewRunnerFirst from '../assets/scenes/view-runner-first.png'
+import viewRunnerSecond from '../assets/scenes/view-runner-second.png'
+import viewRunnerThird from '../assets/scenes/view-runner-third.png'
+
+const VIEW_IMAGES: Partial<Record<ScenarioView, string>> = {
+  batter: viewBatter,
+  'runner:first': viewRunnerFirst,
+  'runner:second': viewRunnerSecond,
+  'runner:third': viewRunnerThird,
+}
+
+/** src/assets/scenes/events/<sceneId>.png 를 넣으면 코드 수정 없이 자동 등록된다. */
+const EVENT_IMAGES = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>('../assets/scenes/events/*.{png,jpg,jpeg,webp}', { eager: true, import: 'default' }),
+  ).map(([path, url]) => [path.split('/').pop()!.replace(/\.[^.]+$/, ''), url]),
+)
+
+/**
+ * 아나운스 문구 → 연출 이미지 ID.
+ * 이펙트에 `scene`을 직접 지정하면 이 표보다 우선한다. 같은 문구를 다른 연출로 나눠야 하면 `scene`을 쓴다.
+ */
+const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
+  '1루타 성공!': 'hit-single',
+  '2루타 성공!': 'hit-double',
+  '3루타 성공!': 'hit-triple',
+  '홈런!': 'hit-home-run',
+  '내야안타!': 'hit-infield',
+  '볼넷!': 'walk',
+  '사구!': 'hit-by-pitch',
+
+  '내야 땅볼 발생!': 'ball-ground-infield',
+  '후속타자의 내야 땅볼 발생!': 'ball-ground-infield',
+  '내야 뜬공 발생!': 'ball-fly-infield',
+  '외야 뜬공 발생!': 'ball-fly-outfield',
+  '후속타자의 외야 뜬공 발생!': 'ball-fly-outfield',
+  '애매한 외야 플라이!': 'ball-fly-outfield-shallow',
+  '명백하게 깊은 외야 플라이!': 'ball-fly-outfield-deep',
+  '내야수가 땅볼을 포구했습니다!': 'ground-fielded',
+  '내야수가 1루 송구를 성공했습니다!': 'ground-throw-ready',
+  '상대 내야수, 1루 송구 준비 완료!': 'ground-throw-ready',
+
+  '삼진 아웃되었습니다.': 'out-strikeout',
+  '인필드 플라이 선언!': 'out-infield-fly',
+  '땅볼 처리 성공!': 'out-ground',
+  '뜬공 처리 성공!': 'out-fly',
+  '내야 땅볼 병살!': 'out-ground-double-play',
+  '내야 땅볼 포스 아웃!': 'out-ground-force',
+  '내야 땅볼 선행 주자 아웃!': 'out-ground-force',
+
+  '내야수가 땅볼 포구를 놓쳤습니다!': 'error-infield-fielding',
+  '내야수 땅볼 실책!': 'error-infield-fielding',
+  '내야수가 땅볼을 포구 실책했습니다!': 'error-infield-fielding',
+  '내야 땅볼 송구 실책!': 'error-infield-throwing',
+  '내야수가 뜬공을 놓쳤습니다!': 'error-infield-fly-drop',
+  '외야수가 뜬공을 놓쳤습니다!': 'error-outfield-drop',
+  '외야수가 타구를 뒤로 빠뜨렸습니다!': 'error-outfield-through',
+  '외야수가 타구를 완전히 뒤로 빠뜨렸습니다!': 'error-outfield-through',
+  '외야수가 타구를 애매하게 뒤로 빠뜨렸습니다!': 'error-outfield-through',
+
+  '낫아웃 1루 진루 성공!': 'dropped-third-strike-safe',
+  '2루 도루 성공!': 'steal-second-safe',
+  '2루 도루 실패': 'steal-second-out',
+  '3루 도루 성공!': 'steal-third-safe',
+  '3루 도루 실패': 'steal-third-out',
+  '2루 진루 성공!': 'advance-second-safe',
+  '2루 진루 실패': 'advance-second-out',
+  '3루 진루 성공!': 'advance-third-safe',
+  '3루 진루 실패': 'advance-third-out',
+  '폭투 진루 성공!': 'wild-pitch-advance-safe',
+  '폭투 진루 실패': 'wild-pitch-advance-out',
+  '명백하게 깊은 외야 플라이, 태그업 성공!': 'sacrifice-fly-safe',
+  '위험을 감수한 태그업 성공!': 'sacrifice-fly-safe',
+  '위험을 감수한 태그업 실패': 'sacrifice-fly-out',
+
+  '플레이 종료': 'play-end',
+}
+
+export const resolveSceneId = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>): SceneId | undefined =>
+  announcement.scene ?? SCENE_BY_ANNOUNCEMENT_TITLE[announcement.title]
+
+/** 베이스별 그림이 필요한 연출만 `<sceneId>@2.png` 처럼 추가하면 되고, 없으면 공용 이미지로 떨어진다. */
+export const resolveSceneImage = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, playerBase: number | null): string | undefined => {
+  const sceneId = resolveSceneId(announcement)
+  if (!sceneId) return undefined
+  return (playerBase ? EVENT_IMAGES[`${sceneId}@${playerBase}`] : undefined) ?? EVENT_IMAGES[sceneId]
+}
+
+export const resolveViewImage = (view: ScenarioView): string | undefined => VIEW_IMAGES[view]
+
+/**
+ * 아나운스별로 탭 진행 중 배경에 깔릴 이미지를 만든다. 해당 아나운스에 연출 이미지가 없으면
+ * 직전 이미지(없으면 시점 이미지)를 그대로 물려받아 화면이 비지 않게 한다.
+ */
+export const buildAnnouncementImageTrail = (
+  announcements: Array<Pick<ScenarioAnnouncement, 'title' | 'scene'>>,
+  view: ScenarioView,
+  playerBase: number | null,
+): string[] => {
+  let last = resolveViewImage(view)
+  return announcements.map((announcement) => {
+    const imageUrl = resolveSceneImage(announcement, playerBase)
+    if (imageUrl) last = imageUrl
+    return last ?? ''
+  })
+}
