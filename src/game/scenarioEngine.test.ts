@@ -87,6 +87,16 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcement).toEqual({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' })
   })
 
+  it('does not offer a dropped third strike when first base is occupied with fewer than two outs', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const initial = startScenario(OFFENSE_CORE_PACK, context(0, [1, 2, 3]))
+    const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'strikeout')
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 1, bases: [1, 2, 3], playerBase: null })
+    expect(result.context.announcement).toEqual({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' })
+  })
+
   it('offers distinct fielding and throwing errors for an infield ground ball', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })

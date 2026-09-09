@@ -39,7 +39,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'error.infield.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldError' }] },
         { to: 'walk.resolve', when: [{ field: 'battingEvent', operator: 'eq', value: 'walk' }] },
         { to: 'hitByPitch.resolve', when: [{ field: 'battingEvent', operator: 'eq', value: 'hitByPitch' }] },
-        { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'bases', operator: 'excludes', value: [1] }] },
+        { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'excludes', value: [1] }] },
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'eq', value: 2 }] },
         { to: 'out.strikeout.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }] },
         { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
