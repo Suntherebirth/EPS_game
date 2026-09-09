@@ -12,10 +12,10 @@ const cloneContext = (context: ScenarioContext): ScenarioContext => ({
   announcementCategory: context.announcementCategory,
 })
 
-const setAnnouncement = (context: ScenarioContext, announcement: ScenarioContext['announcement'], viewLabel?: string) => {
+const setAnnouncement = (context: ScenarioContext, announcement: ScenarioContext['announcement'], viewLabel?: string, category?: ScenarioContext['announcementCategory']) => {
   if (context.announcement && context.announcement.title !== '플레이 종료') context.announcementHistory.push({ announcement: context.announcement, category: context.announcementCategory, viewLabel: context.announcementViewLabel })
   context.announcement = announcement
-  context.announcementCategory = context.flags.surpriseEvent === true ? 'surprise' : 'normal'
+  context.announcementCategory = category ?? (context.flags.surpriseEvent === true ? 'surprise' : 'normal')
   context.announcementViewLabel = viewLabel
 }
 
@@ -46,7 +46,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : effect.detail,
       ...(effect.tone ? { tone: effect.tone } : next.outs >= 3 ? { tone: 'negative' as const } : {}),
-    }, viewLabel)
+    }, viewLabel, effect.category)
   }
   if (effect.type === 'announceFollowUpOutfieldError') {
     setAnnouncement(next, ANNOUNCEMENTS.followUpOutfieldError(effect.clear), viewLabel)
@@ -56,7 +56,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : effect.detail,
       ...(effect.tone ? { tone: effect.tone } : {}),
-    }, viewLabel)
+    }, viewLabel, effect.category)
   }
 
   if (effect.type === 'applyHit') {

@@ -793,6 +793,7 @@ describe('offense core scenario pack', () => {
     expect(drop.nodeId).toBe('runner.first.clearDrop.decide')
     expect(advance.context).toMatchObject({ bases: [2], playerBase: 2 })
     expect(advance.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '외야수 실책을 이용해 2루에 도착했습니다.' })
+    expect(advance.context.announcementCategory).toBe('normal')
   })
 
   it('pauses at a steal result node in manual chance mode', () => {

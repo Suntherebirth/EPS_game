@@ -30,9 +30,9 @@ export type ScenarioEffect =
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }
   | { type: 'advanceRunnersAheadOfPlayer' }
-  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
+  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise' }
   | { type: 'announceFollowUpOutfieldError'; clear: boolean }
-  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral' }
+  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise' }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'advanceRunner'; from: number; to: number }
   | { type: 'setFlag'; key: string; value: boolean | number | string }

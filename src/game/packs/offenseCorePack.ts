@@ -228,7 +228,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       description: '2루 주자: 주루 방침을 선택하세요.',
       choices: [
         { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '2루에 머물렀습니다.', tone: 'negative' }] } },
-        { id: 'advanceThird', label: '3루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '외야수 실책을 이용해 3루에 도착했습니다.' }] } },
+        { id: 'advanceThird', label: '3루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '외야수 실책을 이용해 3루에 도착했습니다.', category: 'normal' }] } },
       ],
     },
     'runner.second.outfieldError.ambiguous.decide': {
