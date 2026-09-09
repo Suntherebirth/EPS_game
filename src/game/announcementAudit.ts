@@ -8,6 +8,12 @@ export type AnnouncementAuditMessage = ScenarioAnnouncement & {
   category: ScenarioAnnouncementHistoryEntry['category']
 }
 
+export type AnnouncementAuditStep = {
+  type: 'batting' | 'choice' | 'chance'
+  id: string
+  label: string
+}
+
 export type AnnouncementAuditCase = {
   id: string
   messages: AnnouncementAuditMessage[]
@@ -20,11 +26,15 @@ export type AnnouncementAuditCase = {
   bases: Base[]
   playerBase: number | null
   isSurprise: boolean
+  start: Situation
+  steps: AnnouncementAuditStep[]
 }
 
 type QueueItem = {
   state: ScenarioState
   actionLabel: string
+  start: Situation
+  steps: AnnouncementAuditStep[]
 }
 
 const toBases = (bases: number[]): Base[] => bases.filter((base): base is Base => base === 1 || base === 2 || base === 3).sort((a, b) => a - b)
@@ -75,7 +85,7 @@ const caseKey = (state: ScenarioState, messages: AnnouncementAuditMessage[]) => 
   toBases(state.context.bases).join(','),
 ].join('|')
 
-const collectCase = (state: ScenarioState, actionLabel: string): AnnouncementAuditCase | null => {
+const collectCase = ({ state, actionLabel, start, steps }: QueueItem): AnnouncementAuditCase | null => {
   const messages = getMessages(state)
   if (messages.length === 0) return null
   const node = OFFENSE_CORE_PACK.nodes[state.nodeId]
@@ -93,10 +103,13 @@ const collectCase = (state: ScenarioState, actionLabel: string): AnnouncementAud
     bases,
     playerBase: state.context.playerBase,
     isSurprise: messages.some((message) => message.category === 'surprise'),
+    start,
+    steps,
   }
 }
 
-const getNextItems = ({ state }: QueueItem): QueueItem[] => {
+const getNextItems = (item: QueueItem): QueueItem[] => {
+  const { state, start, steps } = item
   const node = OFFENSE_CORE_PACK.nodes[state.nodeId]
   if (!node || node.type === 'terminal') return []
   if (node.type === 'batting') {
@@ -105,21 +118,78 @@ const getNextItems = ({ state }: QueueItem): QueueItem[] => {
       .map((event) => ({
         actionLabel: `${node.title} · ${event.label}`,
         state: selectScenarioBattingEvent(OFFENSE_CORE_PACK, state, event.kind, { manualChance: true }),
+        start,
+        steps: [...steps, { type: 'batting' as const, id: event.kind, label: `${node.title} · ${event.label}` }],
       }))
   }
   if (node.type === 'choice') {
     return getAvailableScenarioChoices(OFFENSE_CORE_PACK, state).map((choice) => ({
       actionLabel: `${node.title} · ${choice.label}`,
       state: chooseScenarioOption(OFFENSE_CORE_PACK, state, choice.id, { manualChance: true }),
+      start,
+      steps: [...steps, { type: 'choice' as const, id: choice.id, label: `${node.title} · ${choice.label}` }],
     }))
   }
   if (node.type === 'chance') {
     return node.outcomes.map((outcome) => ({
       actionLabel: `${node.title} · ${outcome.label ?? outcome.id}`,
       state: chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, state, outcome.id, { manualChance: true }),
+      start,
+      steps: [...steps, { type: 'chance' as const, id: outcome.id, label: `${node.title} · ${outcome.label ?? outcome.id}` }],
     }))
   }
   return []
+}
+
+export type AnnouncementReplayOption = {
+  id: string
+  label: string
+  description?: string
+  kind: 'batting' | 'choice' | 'chance'
+  chosen: boolean
+}
+
+export type AnnouncementReplayFrame = {
+  stepIndex: number
+  label: string
+  state: ScenarioState
+  options: AnnouncementReplayOption[]
+}
+
+const getReplayOptions = (state: ScenarioState, chosen?: AnnouncementAuditStep): AnnouncementReplayOption[] => {
+  const node = OFFENSE_CORE_PACK.nodes[state.nodeId]
+  if (!node) return []
+  if (node.type === 'batting') {
+    return BATTING_EVENTS
+      .filter((event) => node.eventIds.includes(event.kind))
+      .map((event) => ({ id: event.kind, label: event.label, description: event.description, kind: 'batting' as const, chosen: chosen?.type === 'batting' && chosen.id === event.kind }))
+  }
+  if (node.type === 'choice') {
+    return getAvailableScenarioChoices(OFFENSE_CORE_PACK, state).map((choice) => ({ id: choice.id, label: choice.label, ...(choice.description ? { description: choice.description } : {}), kind: 'choice' as const, chosen: chosen?.type === 'choice' && chosen.id === choice.id }))
+  }
+  if (node.type === 'chance') {
+    return node.outcomes.map((outcome) => ({ id: outcome.id, label: outcome.label ?? outcome.id, description: `확률 ${Math.round(outcome.weight * 100)}%`, kind: 'chance' as const, chosen: chosen?.type === 'chance' && chosen.id === outcome.id }))
+  }
+  return []
+}
+
+export const replayAnnouncementCase = (item: AnnouncementAuditCase): AnnouncementReplayFrame[] => {
+  const frames: AnnouncementReplayFrame[] = []
+  let state = startScenario(OFFENSE_CORE_PACK, createScenarioContext(item.start), { manualChance: true })
+  frames.push({ stepIndex: 0, label: `시작 · ${describeSituation(item.start)}`, state, options: getReplayOptions(state, item.steps[0]) })
+  item.steps.forEach((step, index) => {
+    if (step.type === 'batting') state = selectScenarioBattingEvent(OFFENSE_CORE_PACK, state, step.id as never, { manualChance: true })
+    else if (step.type === 'choice') state = chooseScenarioOption(OFFENSE_CORE_PACK, state, step.id, { manualChance: true })
+    else state = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, state, step.id, { manualChance: true })
+    frames.push({ stepIndex: index + 1, label: step.label, state, options: getReplayOptions(state, item.steps[index + 1]) })
+  })
+  return frames
+}
+
+export const findMatchingCaseId = (state: ScenarioState): string | null => {
+  const messages = getMessages(state)
+  if (messages.length === 0) return null
+  return caseKey(state, messages)
 }
 
 export const createAnnouncementAuditCases = (): AnnouncementAuditCase[] => {
@@ -133,13 +203,15 @@ export const createAnnouncementAuditCases = (): AnnouncementAuditCase[] => {
       queue.push({
         state: startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: true }),
         actionLabel: describeSituation(situation),
+        start: situation,
+        steps: [],
       })
     }
   }
 
   while (queue.length > 0) {
     const item = queue.shift()!
-    const auditCase = collectCase(item.state, item.actionLabel)
+    const auditCase = collectCase(item)
     if (auditCase && !cases.has(auditCase.id)) cases.set(auditCase.id, auditCase)
 
     const key = stateKey(item.state)

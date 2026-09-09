@@ -237,13 +237,13 @@ button { font: inherit; }
 .audit-summary .eyebrow { margin-top: 0; }
 .audit-summary h1 { margin: 0 0 8px; color: var(--ink); font-size: clamp(34px, 5vw, 56px); line-height: 1; }
 .audit-summary > p:not(.eyebrow) { margin: 0; color: var(--muted); font-size: 14px; }
-.audit-metrics { width: min(520px, 100%); margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); }
+.audit-metrics { width: min(680px, 100%); margin-top: 24px; display: grid; grid-template-columns: repeat(4, 1fr); border-block: 1px solid var(--line); }
 .audit-metrics div { padding: 14px 18px; border-right: 1px solid var(--line); }
 .audit-metrics div:last-child { border-right: 0; }
 .audit-metrics strong, .audit-metrics span { display: block; }
 .audit-metrics strong { color: var(--red); font: 34px/1 'Bebas Neue', sans-serif; }
 .audit-metrics span { margin-top: 4px; color: var(--muted); font-size: 11px; font-weight: 800; }
-.audit-tabs { margin-top: 18px; display: inline-grid; grid-template-columns: repeat(3, minmax(92px, 1fr)); border: 1px solid var(--line); background: #f8f7f1; }
+.audit-tabs { margin-top: 18px; display: inline-grid; grid-template-columns: repeat(4, minmax(92px, 1fr)); border: 1px solid var(--line); background: #f8f7f1; }
 .audit-tabs button { min-height: 40px; padding: 0 14px; border: 0; border-right: 1px solid var(--line); color: var(--muted); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
 .audit-tabs button:last-child { border-right: 0; }
 .audit-tabs button:hover { color: var(--red); }
@@ -251,6 +251,7 @@ button { font: inherit; }
 .audit-list { display: grid; gap: 14px; padding: 22px 0 42px; }
 .audit-card { padding: 18px; border: 1px solid var(--line); border-left: 4px solid var(--green); background: #fffefb; }
 .audit-card.surprise { border-left-color: var(--gold); background: #fffaf0; }
+.audit-card.highlighted { border-color: var(--red); box-shadow: 0 0 0 3px rgba(217,71,46,.25), 0 10px 26px rgba(217,71,46,.18); }
 .audit-card.ok { opacity: .62; }
 .audit-card.needsReview { border-left-color: var(--red); background: #fff8f6; }
 .audit-card-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
@@ -278,6 +279,18 @@ button { font: inherit; }
 .audit-card-actions .review-button.primary-button { margin-top: 0; background: var(--red); }
 .audit-card-actions .ok-button.primary-button { margin-top: 0; background: var(--green); }
 .audit-card-actions .ok-button.primary-button:hover { background: #0d3022; }
+.replay-controls { position: static; width: auto; margin: 0; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line); border-top: 0; border-left: 3px solid var(--gold); background: #fffaf0; color: var(--ink); box-shadow: none; }
+.replay-step-label { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--ink); font-size: 13px; font-weight: 800; line-height: 1.5; }
+.replay-step-label b { flex: 0 0 auto; color: var(--red); font: 20px/1 'Bebas Neue', sans-serif; }
+.replay-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.replay-buttons button { min-height: 38px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #dcddd7; border-radius: 4px; color: var(--ink); background: #faf9f5; font-size: 12px; font-weight: 800; cursor: pointer; }
+.replay-buttons button:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+.replay-buttons button:disabled { opacity: .35; cursor: default; }
+.replay-buttons button.replay-auto-on { color: white; border-color: var(--green); background: var(--green); }
+.decision-panel > .replay-choices { position: absolute; top: 63%; left: 50%; width: min(760px, calc(100% - 48px)); max-height: 26%; overflow-y: auto; transform: translateX(-50%); pointer-events: none; animation: overlay-choice-in .42s cubic-bezier(.2, .8, .2, 1) both; }
+.replay-choices button { animation: none; cursor: default; opacity: .55; }
+.replay-choices button.chosen { opacity: 1; border-color: rgba(255,249,194,1); background: rgba(55,42,12,.9); box-shadow: 0 0 0 4px rgba(255,219,94,.42), 0 0 30px rgba(255,219,94,.68); }
+.replay-choices button.chosen strong::after { content: '선택됨'; margin-left: auto; padding: 2px 7px; border-radius: 3px; color: #1d1405; background: var(--gold); font-size: 10px; font-weight: 800; }
 .audit-empty { padding: 42px 18px; border: 1px dashed var(--line); text-align: center; }
 .audit-empty strong { display: block; color: var(--ink); font-size: 20px; }
 .audit-empty p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
@@ -322,6 +335,11 @@ button { font: inherit; }
   .audit-card-footer small { white-space: normal; }
   .audit-card-actions { justify-content: stretch; }
   .audit-card-actions button { flex: 1 1 150px; }
+  .replay-controls { flex-direction: column; align-items: stretch; }
+  .replay-buttons { justify-content: stretch; }
+  .replay-buttons button { flex: 1 1 44%; }
+  .decision-panel > .replay-choices { position: static; width: auto; max-height: none; transform: none; }
+  .replay-choices button.chosen { border-color: var(--gold); background: #fff4cf; box-shadow: none; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
