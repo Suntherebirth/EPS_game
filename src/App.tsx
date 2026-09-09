@@ -1,6 +1,6 @@
 import { Bug, CheckCircle2, ChevronRight, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { createAnnouncementAuditCases, findMatchingCaseId, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
+import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
 import { BATTING_EVENTS, type BattingEventId } from './game/battingEvents'
 import {
   createRandomSituation,
@@ -333,12 +333,7 @@ function App() {
     : node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
     ? node.description.startsWith(`${currentViewBase}루 주자:`) ? node.description : `${currentViewBase}루 주자: ${node.description}`
     : node.type === 'choice' ? node.description : undefined
-  const announcementMessages = displayedState.context.announcement
-    ? [
-        ...displayedState.context.announcementHistory.map((entry) => ({ ...entry.announcement, category: entry.category })),
-        { ...displayedState.context.announcement, category: displayedState.context.announcementCategory },
-      ]
-    : []
+  const announcementMessages = getAnnouncementMessages(displayedState)
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'

@@ -59,11 +59,7 @@ const getViewLabel = (state: ScenarioState) => {
 }
 
 const getMessages = (state: ScenarioState): AnnouncementAuditMessage[] => {
-  if (!state.context.announcement) return []
-  return [
-    ...state.context.announcementHistory.map((entry) => ({ ...entry.announcement, category: entry.category, viewLabel: entry.viewLabel })),
-    { ...state.context.announcement, category: state.context.announcementCategory, viewLabel: state.context.announcementViewLabel },
-  ]
+  return getAnnouncementMessages(state)
 }
 
 const stateKey = (state: ScenarioState) => [
@@ -155,6 +151,14 @@ export type AnnouncementReplayFrame = {
   label: string
   state: ScenarioState
   options: AnnouncementReplayOption[]
+}
+
+export const getAnnouncementMessages = (state: ScenarioState): AnnouncementAuditMessage[] => {
+  if (!state.context.announcement) return []
+  return [
+    ...state.context.announcementHistory.map((entry) => ({ ...entry.announcement, category: entry.category, viewLabel: entry.viewLabel })),
+    { ...state.context.announcement, category: state.context.announcementCategory, viewLabel: state.context.announcementViewLabel },
+  ]
 }
 
 const getReplayOptions = (state: ScenarioState, chosen?: AnnouncementAuditStep): AnnouncementReplayOption[] => {

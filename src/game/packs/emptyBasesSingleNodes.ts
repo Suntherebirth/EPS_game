@@ -27,6 +27,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     type: 'chance',
     view: 'runner:first',
     title: '외야 수비 판정',
+    tags: ['composite-event-step'],
     outcomes: [
       { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.first.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' }] } },
       { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
