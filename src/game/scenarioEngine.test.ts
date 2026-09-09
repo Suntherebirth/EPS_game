@@ -4,6 +4,7 @@ import { RUNNING_CHANCES } from './probabilities'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, startScenario } from './scenarioEngine'
 import { applyScenarioEffect } from './scenarioEffects'
 import { validateScenarioPack, type ScenarioContext } from './scenario'
+import { ANNOUNCEMENTS } from './announcementMessages'
 
 const context = (outs = 0, bases: number[] = []): ScenarioContext => ({
   outs,
@@ -109,7 +110,7 @@ describe('offense core scenario pack', () => {
     expect(fieldingError.context.announcement).toEqual({ title: '내야수가 땅볼 포구를 놓쳤습니다!', detail: '실책으로 1루에 출루했습니다.' })
     expect(throwingError.nodeId).toBe('ground.infield.throwingError.check')
     expect(throwingErrorClear.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
-    expect(throwingErrorClear.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.', tone: 'positive' })
+    expect(throwingErrorClear.context.announcement).toEqual(ANNOUNCEMENTS.groundThrowingErrorClear)
   })
 
   it('offers stay or advance after an ambiguous infield ground throwing error at the plate', () => {
@@ -121,7 +122,7 @@ describe('offense core scenario pack', () => {
     expect(miss.nodeId).toBe('followUp.ground.throwingError.ambiguous.decide')
     expect(miss.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, miss).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
-    expect(miss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' })
+    expect(miss.context.announcement).toEqual(ANNOUNCEMENTS.groundThrowingErrorAmbiguous)
   })
 
   it('lets a clean ground ball without a first-base runner choose between the batter and lead runner', () => {
