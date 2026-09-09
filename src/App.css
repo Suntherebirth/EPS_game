@@ -243,13 +243,21 @@ button { font: inherit; }
 .audit-metrics strong, .audit-metrics span { display: block; }
 .audit-metrics strong { color: var(--red); font: 34px/1 'Bebas Neue', sans-serif; }
 .audit-metrics span { margin-top: 4px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.audit-tabs { margin-top: 18px; display: inline-grid; grid-template-columns: repeat(3, minmax(92px, 1fr)); border: 1px solid var(--line); background: #f8f7f1; }
+.audit-tabs button { min-height: 40px; padding: 0 14px; border: 0; border-right: 1px solid var(--line); color: var(--muted); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
+.audit-tabs button:last-child { border-right: 0; }
+.audit-tabs button:hover { color: var(--red); }
+.audit-tabs button.active { color: white; background: var(--green); }
 .audit-list { display: grid; gap: 14px; padding: 22px 0 42px; }
 .audit-card { padding: 18px; border: 1px solid var(--line); border-left: 4px solid var(--green); background: #fffefb; }
 .audit-card.surprise { border-left-color: var(--gold); background: #fffaf0; }
-.audit-card.completed { opacity: .58; }
+.audit-card.ok { opacity: .62; }
+.audit-card.needsReview { border-left-color: var(--red); background: #fff8f6; }
 .audit-card-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .audit-card-meta span, .audit-card-meta b { display: inline-flex; min-height: 26px; align-items: center; padding: 0 9px; border: 1px solid var(--line); color: var(--muted); background: white; font-size: 11px; font-weight: 800; }
 .audit-card-meta b { border-color: #e2bd54; color: #7b5a14; background: #fff2c8; }
+.audit-card-meta b.review-chip { border-color: #eaa293; color: #9d2d1b; background: #fff0ed; }
+.audit-card-meta b.ok-chip { border-color: #99ccb8; color: #236c50; background: #eefaf4; }
 .audit-message-flow { display: grid; gap: 10px; }
 .audit-message { padding: 14px 16px; border: 1px solid rgba(21,32,27,.13); border-left: 3px solid var(--green); background: #f8f7f1; }
 .audit-message.surprise-message { border-left-color: var(--gold); background: #fff4cf; }
@@ -267,6 +275,9 @@ button { font: inherit; }
 .audit-card-footer .primary-button { min-height: 40px; margin-top: 0; white-space: nowrap; }
 .audit-card-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .audit-card-actions .secondary-button { min-height: 40px; white-space: nowrap; }
+.audit-card-actions .review-button.primary-button { margin-top: 0; background: var(--red); }
+.audit-card-actions .ok-button.primary-button { margin-top: 0; background: var(--green); }
+.audit-card-actions .ok-button.primary-button:hover { background: #0d3022; }
 .audit-empty { padding: 42px 18px; border: 1px dashed var(--line); text-align: center; }
 .audit-empty strong { display: block; color: var(--ink); font-size: 20px; }
 .audit-empty p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }

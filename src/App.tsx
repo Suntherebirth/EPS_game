@@ -28,23 +28,29 @@ const VIEW_IMAGES: Record<string, string> = {
 
 type Phase = 'playing' | 'between' | 'finished'
 type AppMode = 'game' | 'announcementCheck'
+type AnnouncementAuditStatus = 'needsReview' | 'ok'
+type AnnouncementAuditTab = 'all' | 'needsReview' | 'ok'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
 type Stats = { runs: number; hits: number; outs: number }
 
 const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
 
-const loadCompletedAnnouncementCases = () => {
+const loadAnnouncementCaseStatuses = () => {
   try {
     const value = localStorage.getItem(ANNOUNCEMENT_AUDIT_STORAGE_KEY)
-    const parsed = value ? JSON.parse(value) : []
-    return new Set<string>(Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [])
+    const parsed = value ? JSON.parse(value) : {}
+    if (Array.isArray(parsed)) {
+      return Object.fromEntries(parsed.filter((item): item is string => typeof item === 'string').map((id) => [id, 'ok' as const]))
+    }
+    if (!parsed || typeof parsed !== 'object') return {}
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, AnnouncementAuditStatus] => entry[1] === 'needsReview' || entry[1] === 'ok'))
   } catch {
-    return new Set<string>()
+    return {}
   }
 }
 
-const saveCompletedAnnouncementCases = (completed: Set<string>) => {
-  localStorage.setItem(ANNOUNCEMENT_AUDIT_STORAGE_KEY, JSON.stringify([...completed]))
+const saveAnnouncementCaseStatuses = (statuses: Record<string, AnnouncementAuditStatus>) => {
+  localStorage.setItem(ANNOUNCEMENT_AUDIT_STORAGE_KEY, JSON.stringify(statuses))
 }
 
 const copyTextToClipboard = async (text: string) => {
@@ -106,10 +112,11 @@ function MediaStage({ situation, plateAppearance, playerBase, viewLabel, isSurpr
   </section>
 }
 
-function AnnouncementCheckMode({ cases, completedCases, hideCompleted, onToggleHideCompleted, onToggleCompleted, onBack }: { cases: AnnouncementAuditCase[]; completedCases: Set<string>; hideCompleted: boolean; onToggleHideCompleted: () => void; onToggleCompleted: (id: string, completed: boolean) => void; onBack: () => void }) {
+function AnnouncementCheckMode({ cases, caseStatuses, activeTab, onChangeTab, onSetStatus, onBack }: { cases: AnnouncementAuditCase[]; caseStatuses: Record<string, AnnouncementAuditStatus>; activeTab: AnnouncementAuditTab; onChangeTab: (tab: AnnouncementAuditTab) => void; onSetStatus: (id: string, status: AnnouncementAuditStatus | null) => void; onBack: () => void }) {
   const [copiedReportId, setCopiedReportId] = useState<string | null>(null)
-  const visibleCases = hideCompleted ? cases.filter((item) => !completedCases.has(item.id)) : cases
-  const completedCount = cases.filter((item) => completedCases.has(item.id)).length
+  const visibleCases = activeTab === 'all' ? cases : cases.filter((item) => caseStatuses[item.id] === activeTab)
+  const needsReviewCount = cases.filter((item) => caseStatuses[item.id] === 'needsReview').length
+  const okCount = cases.filter((item) => caseStatuses[item.id] === 'ok').length
 
   const copyBugReport = async (item: AnnouncementAuditCase) => {
     await copyTextToClipboard(formatAnnouncementBugReport(item))
@@ -118,18 +125,23 @@ function AnnouncementCheckMode({ cases, completedCases, hideCompleted, onToggleH
   }
 
   return <main className="app-shell audit-page">
-    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><button className="secondary-button" type="button" onClick={onToggleHideCompleted}>{hideCompleted ? '완료 숨김' : '전체 보기'}</button><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
+    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
     <section className="audit-summary">
       <p className="eyebrow">ANNOUNCEMENT CHECK</p>
       <h1>아나운스 텍스트 체크</h1>
       <p>같은 표시 상황과 같은 메시지 흐름은 하나로 묶었습니다.</p>
-      <div className="audit-metrics"><div><strong>{cases.length}</strong><span>전체</span></div><div><strong>{cases.length - completedCount}</strong><span>남음</span></div><div><strong>{completedCount}</strong><span>완료</span></div></div>
+      <div className="audit-metrics"><div><strong>{cases.length}</strong><span>전체</span></div><div><strong>{needsReviewCount}</strong><span>검토 필요</span></div><div><strong>{okCount}</strong><span>문제 없음</span></div></div>
+      <div className="audit-tabs" role="tablist" aria-label="아나운스 체크 필터">
+        <button className={activeTab === 'all' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'all'} onClick={() => onChangeTab('all')}>전체보기</button>
+        <button className={activeTab === 'needsReview' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'needsReview'} onClick={() => onChangeTab('needsReview')}>검토필요</button>
+        <button className={activeTab === 'ok' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'ok'} onClick={() => onChangeTab('ok')}>문제없음</button>
+      </div>
     </section>
     <section className="audit-list" aria-label="아나운스 체크 목록">
       {visibleCases.map((item) => {
-        const completed = completedCases.has(item.id)
-        return <article className={`audit-card ${completed ? 'completed' : ''} ${item.isSurprise ? 'surprise' : ''}`} key={item.id}>
-          <div className="audit-card-meta"><span>{item.situation}</span><span>{item.viewLabel}</span>{item.isSurprise && <b>돌발 이벤트</b>}</div>
+        const status = caseStatuses[item.id]
+        return <article className={`audit-card ${status ?? ''} ${item.isSurprise ? 'surprise' : ''}`} key={item.id}>
+          <div className="audit-card-meta"><span>{item.situation}</span><span>{item.viewLabel}</span>{item.isSurprise && <b>돌발 이벤트</b>}{status === 'needsReview' && <b className="review-chip">검토 필요</b>}{status === 'ok' && <b className="ok-chip">문제 없음</b>}</div>
           <div className="audit-message-flow">
             {item.messages.map((message, index) => <div className={`audit-message ${message.category === 'surprise' ? 'surprise-message' : ''} ${message.tone ?? 'neutral'}`} key={`${message.title}:${message.detail}:${index}`}>
               {index > 0 && <span>그리고</span>}
@@ -137,10 +149,10 @@ function AnnouncementCheckMode({ cases, completedCases, hideCompleted, onToggleH
               <p>{message.detail}</p>
             </div>)}
           </div>
-          <div className="audit-card-footer"><small>{item.actionLabel}</small><div className="audit-card-actions"><button className="secondary-button" type="button" onClick={() => void copyBugReport(item)}><Bug size={16} /> {copiedReportId === item.id ? '복사됨' : '버그 리포트'}</button><button className={completed ? 'secondary-button' : 'primary-button'} type="button" onClick={() => onToggleCompleted(item.id, !completed)}>{completed ? '완료 해제' : <><CheckCircle2 size={17} /> 문제 없음</>}</button></div></div>
+          <div className="audit-card-footer"><small>{item.actionLabel}</small><div className="audit-card-actions"><button className="secondary-button" type="button" onClick={() => void copyBugReport(item)}><Bug size={16} /> {copiedReportId === item.id ? '복사됨' : '버그 리포트'}</button><button className={status === 'needsReview' ? 'primary-button review-button' : 'secondary-button review-button'} type="button" onClick={() => onSetStatus(item.id, status === 'needsReview' ? null : 'needsReview')}>검토 필요</button><button className={status === 'ok' ? 'primary-button ok-button' : 'secondary-button ok-button'} type="button" onClick={() => onSetStatus(item.id, status === 'ok' ? null : 'ok')}>{status === 'ok' ? '문제 없음 해제' : <><CheckCircle2 size={17} /> 문제 없음</>}</button></div></div>
         </article>
       })}
-      {visibleCases.length === 0 && <div className="audit-empty"><strong>확인할 아나운스가 없습니다.</strong><p>완료 숨김을 끄면 전체 목록을 다시 볼 수 있습니다.</p></div>}
+      {visibleCases.length === 0 && <div className="audit-empty"><strong>해당 탭에 아나운스가 없습니다.</strong><p>전체보기에서 항목을 검토 필요 또는 문제 없음으로 표시할 수 있습니다.</p></div>}
     </section>
   </main>
 }
@@ -149,8 +161,8 @@ function App() {
   const [appMode, setAppMode] = useState<AppMode>('game')
   const [adminMode, setAdminMode] = useState(false)
   const [announcementAuditCases] = useState(() => createAnnouncementAuditCases())
-  const [completedAnnouncementCases, setCompletedAnnouncementCases] = useState(() => loadCompletedAnnouncementCases())
-  const [hideCompletedAnnouncements, setHideCompletedAnnouncements] = useState(true)
+  const [announcementCaseStatuses, setAnnouncementCaseStatuses] = useState<Record<string, AnnouncementAuditStatus>>(() => loadAnnouncementCaseStatuses())
+  const [announcementAuditTab, setAnnouncementAuditTab] = useState<AnnouncementAuditTab>('all')
   const [plateAppearance, setPlateAppearance] = useState(1)
   const [phase, setPhase] = useState<Phase>('playing')
   const [situation, setSituation] = useState<Situation>(() => createRandomSituation())
@@ -206,12 +218,12 @@ function App() {
     }
   }
 
-  const toggleCompletedAnnouncementCase = (id: string, completed: boolean) => {
-    setCompletedAnnouncementCases((current) => {
-      const next = new Set(current)
-      if (completed) next.add(id)
-      else next.delete(id)
-      saveCompletedAnnouncementCases(next)
+  const setAnnouncementCaseStatus = (id: string, status: AnnouncementAuditStatus | null) => {
+    setAnnouncementCaseStatuses((current) => {
+      const next = { ...current }
+      if (status) next[id] = status
+      else delete next[id]
+      saveAnnouncementCaseStatuses(next)
       return next
     })
   }
@@ -225,7 +237,7 @@ function App() {
     restartAt(createRandomSituation())
   }
 
-  if (appMode === 'announcementCheck') return <AnnouncementCheckMode cases={announcementAuditCases} completedCases={completedAnnouncementCases} hideCompleted={hideCompletedAnnouncements} onToggleHideCompleted={() => setHideCompletedAnnouncements((current) => !current)} onToggleCompleted={toggleCompletedAnnouncementCase} onBack={() => setAppMode('game')} />
+  if (appMode === 'announcementCheck') return <AnnouncementCheckMode cases={announcementAuditCases} caseStatuses={announcementCaseStatuses} activeTab={announcementAuditTab} onChangeTab={setAnnouncementAuditTab} onSetStatus={setAnnouncementCaseStatus} onBack={() => setAppMode('game')} />
 
   if (phase === 'finished') return <main className="app-shell result-page">
     <header className="brand-bar"><span><b className="brand-mark">EPS</b> BASEBALL SIM</span></header>
