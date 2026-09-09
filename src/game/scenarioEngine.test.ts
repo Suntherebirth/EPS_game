@@ -109,7 +109,7 @@ describe('offense core scenario pack', () => {
     expect(fieldingError.context.announcement).toEqual({ title: '내야수가 땅볼 포구를 놓쳤습니다!', detail: '실책으로 1루에 출루했습니다.' })
     expect(throwingError.nodeId).toBe('ground.infield.throwingError.check')
     expect(throwingErrorClear.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
-    expect(throwingErrorClear.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.' })
+    expect(throwingErrorClear.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.', tone: 'positive' })
   })
 
   it('offers stay or advance after an ambiguous infield ground throwing error at the plate', () => {
@@ -215,7 +215,7 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.first.clearDrop.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 1 })
     expect(result.context.announcementHistory.at(-1)?.announcement).toEqual({ title: '외야수가 뜬공을 놓쳤습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
-    expect(result.context.announcement).toEqual({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' })
+    expect(result.context.announcement).toEqual({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive' })
   })
 
   it('announces an outfield fly and then a successful catch as separate steps', () => {
@@ -341,7 +341,7 @@ describe('offense core scenario pack', () => {
     const clear = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'clearDrop', { manualChance: true })
     const ambiguous = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'ambiguousDrop', { manualChance: true })
 
-    expect(clear.context.announcement).toEqual({ title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.' })
+    expect(clear.context.announcement).toEqual({ title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.', tone: 'positive' })
     expect(ambiguous.context.announcement).toEqual({ title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 열심히 뛴다면 살 수 있을지도 모릅니다.' })
     expect(RUNNING_CHANCES).toMatchObject({
       runHardOnClearDroppedStrike: 1,
@@ -583,7 +583,7 @@ describe('offense core scenario pack', () => {
     expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
     expect(clearMiss.nodeId).toBe('followUp.ground.throw.extra.clear.decide')
     expect(clearMiss.context).toMatchObject({ bases: [1, 2], playerBase: 2, hits: 1 })
-    expect(clearMiss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.' })
+    expect(clearMiss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.', tone: 'positive' })
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, clearMiss).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
     const clearAdvance = chooseScenarioOption(OFFENSE_CORE_PACK, clearMiss, 'advance', { manualChance: true })
     const clearAdvanceNode = OFFENSE_CORE_PACK.nodes[clearAdvance.nodeId]

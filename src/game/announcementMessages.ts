@@ -15,7 +15,7 @@ export const ANNOUNCEMENTS = {
   followUpOutfieldError: (clear: boolean) => message(
     '외야수가 타구를 뒤로 빠뜨렸습니다.',
     clear ? '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' : '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.',
-    clear ? undefined : 'caution',
+    clear ? 'positive' : 'caution',
   ),
   followUpGroundOut: (playerBase: number | null, outs: number, playerIsForced: boolean) => {
     const forceOutBase = playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`

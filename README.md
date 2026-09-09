@@ -27,4 +27,17 @@ npm run dev
 
 단일 실행 팩 `src/game/packs/offenseCorePack.ts`가 전체 공격 흐름을 소유합니다. `emptyBasesSingleNodes.ts`는 주자 없는 1루타 흐름을 제공하는 노드 조각이며 독립 실행되지 않습니다. 공통 실행기는 `src/game/scenarioEngine.ts`, 상태 효과는 `src/game/scenarioEffects.ts`, 초기 상황은 `src/game/gameSetup.ts`에서 관리합니다.
 
+## 아나운스 톤
+
+아나운스의 `tone`은 `src/game/scenario.ts`의 `ScenarioAnnouncement`과 `announce` 계열 효과에서 지정합니다. 디버깅과 문구 검토에서는 아래 한국어 명칭과 의미를 기준으로 사용합니다.
+
+| tone 값 | 한국어 명칭 | 적용 상황 |
+| --- | --- | --- |
+| `positive` | 긍정 | 성공, 득점, 진루 성공 등 좋은 결과 |
+| `negative` | 부정 | 아웃, 실패, 기회 상실 등 나쁜 결과 |
+| `caution` | 주의(선택필요) | 위험, 불확실성, 플레이어 판단이 필요한 상황 |
+| `neutral` 또는 미지정 | 중립 | 일반 진행 안내와 결과 판단이 없는 상황 |
+
+현재 UI는 긍정을 초록, 부정을 빨강, 주의(선택필요)를 금색 계열로 표현합니다. 돌발 이벤트(`surprise`)는 별도 금색 테마이며 톤과 독립적인 표시 분류입니다.
+
 프로덕션 빌드는 `npm run build`, 코드 검사는 `npm run lint`로 실행합니다.
