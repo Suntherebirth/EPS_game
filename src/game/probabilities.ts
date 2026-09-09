@@ -25,7 +25,7 @@ export const RUNNING_CHANCES = {
   infieldGroundThrowingErrorAmbiguous: 0.6,
 
   // 주루 시도 성공률
-  // 후속 내야 땅볼 송구 순간 2루 주자의 3루 진루 또는 3루 주자의 홈 쇄도 성공률
+  // 내야 땅볼 송구 순간 2루 주자의 3루 진루 또는 3루 주자의 홈 쇄도 성공률
   advanceOnGroundBallToThird: 0.7,
   // 애매한 외야 플라이에서 태그업 성공률
   advanceOnAmbiguousSacrificeFly: 0.6,

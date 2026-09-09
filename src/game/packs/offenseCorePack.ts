@@ -145,17 +145,25 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.clean.route': {
       id: 'ground.infield.clean.route', type: 'router', view: 'batter', title: '내야 땅볼 정상 수비 처리',
       routes: [
+        { to: 'ground.infield.runnerThird.advance.check', when: [{ field: 'bases', operator: 'includes', value: [3] }, { field: 'bases', operator: 'excludes', value: [1] }, { field: 'outs', operator: 'lt', value: 2 }] },
         { to: 'out.ground.generic', when: [{ field: 'bases', operator: 'empty' }] },
         { to: 'ground.infield.doublePlay.check', when: [{ field: 'bases', operator: 'includes', value: [1] }, { field: 'outs', operator: 'lt', value: 2 }] },
         { to: 'ground.infield.forceOut', when: [{ field: 'bases', operator: 'includes', value: [1] }], effects: [{ type: 'applyGroundForceOut' }] },
         { to: 'ground.infield.force.check' },
       ],
     },
+    'ground.infield.runnerThird.advance.check': {
+      id: 'ground.infield.runnerThird.advance.check', type: 'chance', view: 'batter', title: '3루 주자 홈 쇄도 판정',
+      outcomes: [
+        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'addOuts', value: 1 }, { type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', title: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 성공!', detail: '타자 주자는 1루에서 아웃됐지만 3루 주자가 홈에 들어왔습니다.', tone: 'positive' }] } },
+        { id: 'stayThird', label: '3루 주자 잔류', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'out.ground.generic' } },
+      ],
+    },
     'ground.infield.doublePlay.check': {
       id: 'ground.infield.doublePlay.check', type: 'chance', view: 'batter', title: '내야 땅볼 병살 판정',
       outcomes: [
         { id: 'doublePlay', label: '병살', weight: RUNNING_CHANCES.infieldGroundDoublePlay, transition: { to: 'ground.infield.doublePlay', effects: [{ type: 'applyGroundDoublePlay' }] } },
-        { id: 'forceOut', label: '선행 주자만 아웃', weight: RUNNING_CHANCES.infieldGroundForceOut, transition: { to: 'ground.infield.forceOut', effects: [{ type: 'applyGroundForceOut' }] } },
+        { id: 'forceOut', label: '선행 주자만 아웃', weight: RUNNING_CHANCES.infieldGroundForceOut, transition: { to: 'ground.infield.forceOut.runnerThird.check', effects: [{ type: 'applyGroundForceOut' }] } },
       ],
     },
     'ground.infield.doublePlay': {
@@ -174,6 +182,20 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'ground.infield.forceOut', type: 'event', view: 'runner:first', title: '내야 땅볼 선행 주자 아웃',
       effects: [],
       transition: { to: 'runner.route' },
+    },
+    'ground.infield.forceOut.runnerThird.check': {
+      id: 'ground.infield.forceOut.runnerThird.check', type: 'router', view: 'result', title: '선행 주자 아웃 후 3루 주자 확인',
+      routes: [
+        { to: 'ground.infield.forceOut.runnerThird.advance.check', when: [{ field: 'bases', operator: 'includes', value: [3] }] },
+        { to: 'runner.route' },
+      ],
+    },
+    'ground.infield.forceOut.runnerThird.advance.check': {
+      id: 'ground.infield.forceOut.runnerThird.advance.check', type: 'chance', view: 'batter', title: '3루 주자 홈 쇄도 판정',
+      outcomes: [
+        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', title: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 성공!', detail: '1루 주자가 아웃된 사이 3루 주자가 홈에 들어왔습니다.', tone: 'positive' }] } },
+        { id: 'stayThird', label: '3루 주자 잔류', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route' } },
+      ],
     },
     'ground.infield.fieldingError': {
       id: 'ground.infield.fieldingError', type: 'event', view: 'runner:first', title: '내야수 포구 실책',

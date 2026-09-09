@@ -159,25 +159,23 @@ describe('offense core scenario pack', () => {
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, miss)).toEqual([])
   })
 
-  it('lets a clean ground ball without a first-base runner choose between the batter and lead runner', () => {
+  it('checks whether a third-base runner rushes home on a clean ground ball without a first-base runner', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2, 3]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
     const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
     const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwSuccess', { manualChance: true })
 
     expect(throwing.nodeId).toBe('ground.infield.throwingError.check')
-    expect(cleanPlay.nodeId).toBe('ground.infield.force.check')
+    expect(cleanPlay.nodeId).toBe('ground.infield.runnerThird.advance.check')
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, cleanPlay)).toEqual([])
 
-    const batterOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, cleanPlay, 'batterOut', { manualChance: true })
-    const leadRunnerOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, cleanPlay, 'leadRunnerOut', { manualChance: true })
+    const advanceHome = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
+    const stayThird = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, cleanPlay, 'stayThird', { manualChance: true })
 
-    expect(batterOut.nodeId).toBe('plate.complete')
-    expect(batterOut.context).toMatchObject({ outs: 1, bases: [2, 3], playerBase: null })
-    expect(leadRunnerOut.nodeId).toBe('runner.first.decide')
-    expect(leadRunnerOut.context).toMatchObject({ outs: 1, bases: [1, 3], playerBase: 1 })
-    expect(leadRunnerOut.context.records).toContain('내야 땅볼, 선행 주자 아웃')
-    expect(leadRunnerOut.context.announcement?.title).toBe('내야 땅볼 선행 주자 아웃!')
+    expect(advanceHome.nodeId).toBe('plate.complete')
+    expect(advanceHome.context).toMatchObject({ outs: 1, bases: [2], playerBase: null, runs: 1 })
+    expect(stayThird.nodeId).toBe('plate.complete')
+    expect(stayThird.context).toMatchObject({ outs: 1, bases: [2, 3], playerBase: null, runs: 0 })
   })
 
   it('announces lead runner out instead of force out when runner is on second base only', () => {
@@ -200,8 +198,32 @@ describe('offense core scenario pack', () => {
 
     expect(throwing.nodeId).toBe('ground.infield.throwingError.check')
     expect(decision.nodeId).toBe('ground.infield.doublePlay.check')
-    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.nodeId).toBe('ground.infield.forceOut.runnerThird.advance.check')
     expect(result.context).toMatchObject({ outs: 2, bases: [1, 3], playerBase: 1 })
+  })
+
+  it('scores the third-base runner after a force out at second with runners on first and third', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(0, [1, 3]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+    const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwSuccess', { manualChance: true })
+    const forceOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, decision, 'forceOut', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, forceOut, 'advanceHome', { manualChance: true })
+
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ outs: 1, bases: [1], playerBase: 1, runs: 1 })
+  })
+
+  it('scores the third-base runner after a force out at second with the bases loaded', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(0, [1, 2, 3]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+    const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwSuccess', { manualChance: true })
+    const forceOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, decision, 'forceOut', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, forceOut, 'advanceHome', { manualChance: true })
+
+    expect(result.nodeId).toBe('runner.first.decide')
+    expect(result.context).toMatchObject({ outs: 1, bases: [1, 2], playerBase: 1, runs: 1 })
   })
 
   it('offers a double play on a clean ground ball with first base occupied before two outs', () => {
@@ -526,6 +548,29 @@ describe('offense core scenario pack', () => {
     expect(first.announcement).toMatchObject({ detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.' })
     expect(second.announcement).toMatchObject({ detail: '후속 타자의 내야 땅볼로 인해 3루에서 포스 아웃되었습니다.' })
     expect(third.announcement).toMatchObject({ detail: '후속 타자의 내야 땅볼로 인해 홈에서 포스 아웃되었습니다.' })
+  })
+
+  it('allows a third-base runner to score while the batter is retired on a clean ground ball', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(0, [3]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+    const throwCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const advanceCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advanceCheck, 'advanceHome', { manualChance: true })
+
+    expect(advanceCheck.nodeId).toBe('ground.infield.runnerThird.advance.check')
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null, runs: 1 })
+  })
+
+  it('checks the third-base home advance in one-out regular at-bats with runners on second and third', () => {
+    const oneOutInitial = startScenario(OFFENSE_CORE_PACK, context(1, [2, 3]), { manualChance: true })
+    const oneOutFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, oneOutInitial, 'groundOut', { manualChance: true })
+    const oneOutThrowCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, oneOutFielding, 'cleanPlay', { manualChance: true })
+    const advanceCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, oneOutThrowCheck, 'throwSuccess', { manualChance: true })
+
+    expect(advanceCheck.nodeId).toBe('ground.infield.runnerThird.advance.check')
+    const advanceNode = OFFENSE_CORE_PACK.nodes[advanceCheck.nodeId]
+    expect(advanceNode).toMatchObject({ outcomes: [{ id: 'advanceHome', weight: RUNNING_CHANCES.advanceOnGroundBallToThird }, { id: 'stayThird' }] })
   })
 
   it('offers a 70 percent third-base advance attempt after a second-base runner stays safe on a ground ball', () => {
