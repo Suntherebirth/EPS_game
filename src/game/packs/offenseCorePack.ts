@@ -1,7 +1,11 @@
-import { BATTING_EVENTS, RUNNING_CHANCES } from '../battingEvents'
+import { BATTING_EVENTS } from '../battingEvents'
+import { RUNNING_CHANCES } from '../probabilities'
 import type { ScenarioEffect, ScenarioPack } from '../scenario'
 import { validateScenarioPack } from '../scenario'
 import { EMPTY_BASES_SINGLE_NODES } from './emptyBasesSingleNodes'
+
+const GROUND_THROWING_ERROR_AFTER_FIELDING = RUNNING_CHANCES.infieldGroundThrowingError / (1 - RUNNING_CHANCES.infieldGroundFieldingError)
+const GROUND_THROW_SUCCESS_AFTER_FIELDING = 1 - GROUND_THROWING_ERROR_AFTER_FIELDING
 
 const completeEvent = (id: string, title: string, effects: ScenarioEffect[]) => ({
   id,
@@ -134,8 +138,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'ground.infield.check', type: 'chance', view: 'batter', title: '내야 땅볼 수비 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.fieldingError' } },
-        { id: 'throwingError', label: '내야수 송구 실책', weight: RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'ground.infield.throwingError.check' } },
-        { id: 'cleanPlay', label: '내야수 정상 수비', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError - RUNNING_CHANCES.infieldGroundThrowingError, transition: { to: 'ground.infield.clean.route' } },
+        { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundFieldingError, transition: { to: 'ground.infield.throwingError.check' } },
       ],
     },
     'ground.infield.clean.route': {
@@ -177,10 +180,11 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       transition: { to: 'runner.route' },
     },
     'ground.infield.throwingError.check': {
-      id: 'ground.infield.throwingError.check', type: 'chance', view: 'batter', title: '내야 땅볼 1루 송구 판정', tags: ['surprise-event', 'composite-event-step'],
+      id: 'ground.infield.throwingError.check', type: 'chance', view: 'batter', title: '내야 땅볼 1루 송구 판정', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'clearMiss', label: '명백히 1루수 뒤로 빠진 송구', weight: RUNNING_CHANCES.infieldGroundThrowingErrorClear, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.' }] } },
-        { id: 'ambiguousMiss', label: '1루수 뒤로 애매하게 빠진 송구', weight: RUNNING_CHANCES.infieldGroundThrowingErrorAmbiguous, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
+        { id: 'throwSuccess', label: '송구 성공', weight: GROUND_THROW_SUCCESS_AFTER_FIELDING, transition: { to: 'ground.infield.clean.route' } },
+        { id: 'clearMiss', label: '명백히 1루수 뒤로 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorClear, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.' }] } },
+        { id: 'ambiguousMiss', label: '1루수 뒤로 애매하게 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorAmbiguous, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution' }] } },
       ],
     },
     'fly.outfield.route': {

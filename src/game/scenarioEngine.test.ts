@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OFFENSE_CORE_PACK } from './packs/offenseCorePack'
-import { RUNNING_CHANCES } from './battingEvents'
+import { RUNNING_CHANCES } from './probabilities'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, startScenario } from './scenarioEngine'
 import { applyScenarioEffect } from './scenarioEffects'
 import { validateScenarioPack, type ScenarioContext } from './scenario'
@@ -91,7 +91,7 @@ describe('offense core scenario pack', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
     const fieldingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'fieldingError', { manualChance: true })
-    const throwingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'throwingError', { manualChance: true })
+    const throwingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
     const throwingErrorClear = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwingError, 'clearMiss', { manualChance: true })
 
     expect(fielding.nodeId).toBe('ground.infield.check')
@@ -105,7 +105,7 @@ describe('offense core scenario pack', () => {
   it('offers stay or advance after an ambiguous infield ground throwing error at the plate', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
-    const throwingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'throwingError', { manualChance: true })
+    const throwingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
     const miss = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwingError, 'ambiguousMiss', { manualChance: true })
 
     expect(miss.nodeId).toBe('followUp.ground.throwingError.ambiguous.decide')
@@ -117,8 +117,10 @@ describe('offense core scenario pack', () => {
   it('lets a clean ground ball without a first-base runner choose between the batter and lead runner', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2, 3]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
-    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwSuccess', { manualChance: true })
 
+    expect(throwing.nodeId).toBe('ground.infield.throwingError.check')
     expect(cleanPlay.nodeId).toBe('ground.infield.force.check')
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, cleanPlay)).toEqual([])
 
@@ -135,9 +137,11 @@ describe('offense core scenario pack', () => {
   it('prioritizes the first-base runner on a ground ball with runners on first and third', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(1, [1, 3]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
-    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwSuccess', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, decision, 'forceOut', { manualChance: true })
 
+    expect(throwing.nodeId).toBe('ground.infield.throwingError.check')
     expect(decision.nodeId).toBe('ground.infield.doublePlay.check')
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ outs: 2, bases: [1, 3], playerBase: 1 })
@@ -146,9 +150,11 @@ describe('offense core scenario pack', () => {
   it('offers a double play on a clean ground ball with first base occupied before two outs', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(1, [1, 3]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
-    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwSuccess', { manualChance: true })
     const doublePlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, decision, 'doublePlay', { manualChance: true })
 
+    expect(throwing.nodeId).toBe('ground.infield.throwingError.check')
     expect(decision.nodeId).toBe('ground.infield.doublePlay.check')
     expect(doublePlay.nodeId).toBe('plate.complete')
     expect(doublePlay.context).toMatchObject({ outs: 3, bases: [], playerBase: null })
@@ -443,9 +449,11 @@ describe('offense core scenario pack', () => {
     const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, runner, 'waitForBatter', { manualChance: true })
     const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
-    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
 
     expect(fielding.nodeId).toBe('followUp.ground.check')
+    expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
     expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'negative' })
@@ -472,16 +480,18 @@ describe('offense core scenario pack', () => {
     const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
     const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
-    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'advanceThird', { manualChance: true })
+    const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'advanceThird', { manualChance: true })
+    const advance = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
 
     expect(decision.nodeId).toBe('runner.second.groundOut.decide')
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, decision).map((choice) => choice.id)).toEqual(['staySecond', 'advanceThird'])
-    expect(decision.context.announcement).toEqual({ title: '후속타자의 내야 땅볼, 정상 수비!', detail: '내야수 송구 순간 3루 진루를 시도할 수 있습니다.' })
+    expect(decision.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '2루 주자는 송구 시점에 맞춰 3루 진루를 시도할 수 있습니다.' })
+    expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
     expect(advance.nodeId).toBe('runner.second.groundOut.advance')
     const advanceNode = OFFENSE_CORE_PACK.nodes[advance.nodeId]
-    expect(advanceNode).toMatchObject({ outcomes: [{ id: 'success', weight: 0.7 }, { id: 'out' }] })
-    if (advanceNode.type === 'chance') expect(advanceNode.outcomes[1].weight).toBeCloseTo(0.3)
+    expect(advanceNode).toMatchObject({ outcomes: [{ id: 'success', weight: RUNNING_CHANCES.advanceOnGroundBallToThird }, { id: 'out' }] })
+    if (advanceNode.type === 'chance') expect(advanceNode.outcomes[1].weight).toBeCloseTo(1 - RUNNING_CHANCES.advanceOnGroundBallToThird)
     expect(result.nodeId).toBe('runner.third.decide')
     expect(result.context).toMatchObject({ bases: [3], playerBase: 3 })
   })
@@ -505,6 +515,27 @@ describe('offense core scenario pack', () => {
     }
   })
 
+  it('does not offer an advance attempt after a two-out follow-up ground ball', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const firstRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const stealSecond = chooseScenarioOption(OFFENSE_CORE_PACK, firstRunner, 'stealSecond', { manualChance: true })
+    const secondRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealSecond, 'success', { manualChance: true })
+    const wait = chooseScenarioOption(OFFENSE_CORE_PACK, secondRunner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
+    const strikeout = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'strikeout', { manualChance: true })
+    const nextWait = chooseScenarioOption(OFFENSE_CORE_PACK, strikeout, 'waitForBatter', { manualChance: true })
+    const nextFollowUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, nextWait, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, nextFollowUp, 'groundOut', { manualChance: true })
+    const throwCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
+
+    expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, throwCheck)).toEqual([])
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 3, bases: [], playerBase: null })
+  })
+
   it('scores a third-base runner who successfully advances home on a clean ground ball', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
@@ -518,14 +549,15 @@ describe('offense core scenario pack', () => {
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
     const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
     expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.' })
-    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
+    const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
+    const advance = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null, runs: 1 })
   })
 
-  it('advances every runner one base after either follow-up ground-ball error', () => {
+  it('offers clear or ambiguous extra-advance choices after a follow-up ground-ball throwing error', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
     const runner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
@@ -533,15 +565,52 @@ describe('offense core scenario pack', () => {
     const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
     const fieldingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'fieldingError', { manualChance: true })
-    const throwingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'throwingError', { manualChance: true })
-    const clearMiss = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwingError, 'clearMiss', { manualChance: true })
+    const throwCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const clearMiss = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'clearMiss', { manualChance: true })
+    const ambiguousMiss = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'ambiguousMiss', { manualChance: true })
 
     expect(fieldingError.context).toMatchObject({ bases: [1, 2], playerBase: 2, hits: 1 })
-    expect(throwingError.nodeId).toBe('followUp.ground.throwingError.check')
-    expect(clearMiss.nodeId).toBe('followUp.ground.throwingError.clear.decide')
+    expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
+    expect(clearMiss.nodeId).toBe('followUp.ground.throw.extra.clear.decide')
     expect(clearMiss.context).toMatchObject({ bases: [1, 2], playerBase: 2, hits: 1 })
-    expect(clearMiss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 확실하게 추가 진루할 수 있습니다.' })
+    expect(clearMiss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.' })
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, clearMiss).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
+    const clearAdvance = chooseScenarioOption(OFFENSE_CORE_PACK, clearMiss, 'advance', { manualChance: true })
+    const clearAdvanceNode = OFFENSE_CORE_PACK.nodes[clearAdvance.nodeId]
+    expect(clearAdvanceNode).toMatchObject({ outcomes: [{ id: 'success', weight: RUNNING_CHANCES.followUpGroundThrowClearExtraAdvance }, { id: 'out' }] })
+    if (clearAdvanceNode.type === 'chance') expect(clearAdvanceNode.outcomes[1].weight).toBeCloseTo(1 - RUNNING_CHANCES.followUpGroundThrowClearExtraAdvance)
+
+    expect(ambiguousMiss.nodeId).toBe('followUp.ground.throw.extra.ambiguous.decide')
+    expect(ambiguousMiss.context).toMatchObject({ bases: [1, 2], playerBase: 2, hits: 1 })
+    expect(ambiguousMiss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도할 수 있습니다.', tone: 'caution' })
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, ambiguousMiss).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
+    const ambiguousAdvance = chooseScenarioOption(OFFENSE_CORE_PACK, ambiguousMiss, 'advance', { manualChance: true })
+    const ambiguousAdvanceNode = OFFENSE_CORE_PACK.nodes[ambiguousAdvance.nodeId]
+    expect(ambiguousAdvanceNode).toMatchObject({ outcomes: [{ id: 'success', weight: RUNNING_CHANCES.followUpGroundThrowAmbiguousExtraAdvance }, { id: 'out' }] })
+    if (ambiguousAdvanceNode.type === 'chance') expect(ambiguousAdvanceNode.outcomes[1].weight).toBeCloseTo(1 - RUNNING_CHANCES.followUpGroundThrowAmbiguousExtraAdvance)
+  })
+
+  it('asks for another extra-advance decision after a runner started on the throw and the throw misses', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const firstRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const stealSecond = chooseScenarioOption(OFFENSE_CORE_PACK, firstRunner, 'stealSecond', { manualChance: true })
+    const secondRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealSecond, 'success', { manualChance: true })
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, secondRunner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
+    const decision = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'advanceThird', { manualChance: true })
+    const extra = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'clearMiss', { manualChance: true })
+
+    expect(extra.nodeId).toBe('followUp.ground.throw.extra.clear.decide')
+    expect(extra.context).toMatchObject({ bases: [1, 3], playerBase: 3 })
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, extra).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, extra, 'advance', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
   })
 
   it('announces a home score and completes the play after a fielding error advances a third-base runner', () => {
@@ -573,12 +642,13 @@ describe('offense core scenario pack', () => {
     const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, thirdRunner, 'waitForBatter', { manualChance: true })
     const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
-    const throwingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'throwingError', { manualChance: true })
-    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwingError, 'clearMiss', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'ambiguousMiss', { manualChance: true })
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '홈에 들어왔습니다.' })
+    expect(result.context.announcement).toEqual({ title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 홈에 들어왔습니다.', tone: 'positive' })
   })
 
   it('offers the common outfield error choices after a follow-up hit advances the player', () => {
