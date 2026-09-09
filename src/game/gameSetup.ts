@@ -41,3 +41,14 @@ export const describeBases = (bases: Base[]): string =>
 
 export const describeSituation = (situation: Situation): string =>
   `${situation.outs}아웃 · ${describeBases(situation.bases)}`
+
+/**
+ * 주어진 베이스 조합(bases)에서 해당 주자(base)가 강제 진루(Forced) 상태인지 판정합니다.
+ * 타자 주자가 1루로 진루하므로, 1부터 (base - 1)까지의 모든 베이스에 주자가 차 있어야 포스 상태가 됩니다.
+ */
+export const isRunnerForced = (bases: number[], base: number): boolean => {
+  for (let b = 1; b < base; b++) {
+    if (!bases.includes(b)) return false
+  }
+  return true
+}

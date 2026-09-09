@@ -164,14 +164,14 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       transition: { to: 'plate.complete' },
     },
     'ground.infield.force.check': {
-      id: 'ground.infield.force.check', type: 'chance', view: 'batter', title: '내야 땅볼 포스 아웃 판정',
+      id: 'ground.infield.force.check', type: 'chance', view: 'batter', title: '내야 땅볼 선행 주자 아웃 판정',
       outcomes: [
         { id: 'batterOut', label: '타자 주자 아웃', weight: RUNNING_CHANCES.infieldGroundBatterOut, transition: { to: 'out.ground.generic' } },
         { id: 'leadRunnerOut', label: '선행 주자 아웃', weight: RUNNING_CHANCES.infieldGroundLeadRunnerOut, transition: { to: 'ground.infield.forceOut', effects: [{ type: 'applyGroundForceOut' }] } },
       ],
     },
     'ground.infield.forceOut': {
-      id: 'ground.infield.forceOut', type: 'event', view: 'runner:first', title: '내야 땅볼 선행 주자 포스 아웃',
+      id: 'ground.infield.forceOut', type: 'event', view: 'runner:first', title: '내야 땅볼 선행 주자 아웃',
       effects: [],
       transition: { to: 'runner.route' },
     },

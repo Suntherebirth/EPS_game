@@ -5,6 +5,7 @@ import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenario
 import { applyScenarioEffect } from './scenarioEffects'
 import { validateScenarioPack, type ScenarioContext } from './scenario'
 import { ANNOUNCEMENTS } from './announcementMessages'
+import { isRunnerForced } from './gameSetup'
 
 const context = (outs = 0, bases: number[] = []): ScenarioContext => ({
   outs,
@@ -20,6 +21,27 @@ const context = (outs = 0, bases: number[] = []): ScenarioContext => ({
 })
 
 afterEach(() => vi.restoreAllMocks())
+
+describe('isRunnerForced', () => {
+  it('correctly identifies forced status across all base runner combinations', () => {
+    // 1루 주자: 타자가 1루로 진루하므로 무조건 포스 상태
+    expect(isRunnerForced([1], 1)).toBe(true)
+    expect(isRunnerForced([1, 2], 1)).toBe(true)
+    expect(isRunnerForced([1, 3], 1)).toBe(true)
+
+    // 2루 주자: 1루 주자가 있을 때만 포스 상태
+    expect(isRunnerForced([2], 2)).toBe(false)
+    expect(isRunnerForced([2, 3], 2)).toBe(false)
+    expect(isRunnerForced([1, 2], 2)).toBe(true)
+    expect(isRunnerForced([1, 2, 3], 2)).toBe(true)
+
+    // 3루 주자: 1루, 2루 주자가 모두 있을 때만 포스 상태 (만루)
+    expect(isRunnerForced([3], 3)).toBe(false)
+    expect(isRunnerForced([1, 3], 3)).toBe(false)
+    expect(isRunnerForced([2, 3], 3)).toBe(false)
+    expect(isRunnerForced([1, 2, 3], 3)).toBe(true)
+  })
+})
 
 describe('offense core scenario pack', () => {
   it('has valid and reachable node references', () => {
@@ -143,7 +165,19 @@ describe('offense core scenario pack', () => {
     expect(batterOut.context).toMatchObject({ outs: 1, bases: [2, 3], playerBase: null })
     expect(leadRunnerOut.nodeId).toBe('runner.first.decide')
     expect(leadRunnerOut.context).toMatchObject({ outs: 1, bases: [1, 3], playerBase: 1 })
-    expect(leadRunnerOut.context.records).toContain('내야 땅볼, 선행 주자 포스 아웃')
+    expect(leadRunnerOut.context.records).toContain('내야 땅볼, 선행 주자 아웃')
+    expect(leadRunnerOut.context.announcement?.title).toBe('내야 땅볼 선행 주자 아웃!')
+  })
+
+  it('announces lead runner out instead of force out when runner is on second base only', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1, [2]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+    const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwSuccess', { manualChance: true })
+    const leadRunnerOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, cleanPlay, 'leadRunnerOut', { manualChance: true })
+
+    expect(leadRunnerOut.context.announcement?.title).toBe('내야 땅볼 선행 주자 아웃!')
+    expect(leadRunnerOut.context.records).toContain('내야 땅볼, 선행 주자 아웃')
   })
 
   it('prioritizes the first-base runner on a ground ball with runners on first and third', () => {

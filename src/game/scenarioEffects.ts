@@ -1,6 +1,7 @@
 import type { ScenarioContext, ScenarioEffect } from './scenario'
 import { ANNOUNCEMENTS } from './announcementMessages'
 import { BATTING_EVENTS } from './battingEvents'
+import { isRunnerForced } from './gameSetup'
 
 const cloneContext = (context: ScenarioContext): ScenarioContext => ({
   ...context,
@@ -148,7 +149,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
 
   if (effect.type === 'applyFollowUpGroundOut') {
     const playerBase = next.playerBase
-    const playerIsForced = playerBase !== null && Array.from({ length: playerBase }, (_, index) => index + 1).every((base) => next.bases.includes(base))
+    const playerIsForced = playerBase !== null && isRunnerForced(next.bases, playerBase)
     next.outs = Math.min(3, next.outs + 1)
     next.records.push(playerIsForced ? '후속 타자 내야 땅볼, 포스 아웃' : '후속 타자 내야 땅볼 아웃')
     next.completionRecords.push(playerIsForced ? '내야 땅볼 포스 아웃' : '내야 땅볼 아웃')
@@ -162,13 +163,19 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'applyGroundForceOut') {
     const leadRunnerBase = [...next.bases].sort((a, b) => a - b)[0]
     if (leadRunnerBase === undefined) throw new Error('선행 주자가 없는 포스 아웃을 적용할 수 없습니다.')
+    const isForced = isRunnerForced(next.bases, leadRunnerBase)
     next.bases = next.bases.filter((base) => base !== leadRunnerBase)
     next.bases.push(1)
     next.playerBase = 1
     next.outs = Math.min(3, next.outs + 1)
-    next.records.push('내야 땅볼, 선행 주자 포스 아웃')
-    next.completionRecords.push('내야 땅볼 선행 주자 포스 아웃')
-    setAnnouncement(next, ANNOUNCEMENTS.groundForceOut(next.outs))
+    if (isForced) {
+      next.records.push('내야 땅볼, 선행 주자 포스 아웃')
+      next.completionRecords.push('내야 땅볼 선행 주자 포스 아웃')
+    } else {
+      next.records.push('내야 땅볼, 선행 주자 아웃')
+      next.completionRecords.push('내야 땅볼 선행 주자 아웃')
+    }
+    setAnnouncement(next, ANNOUNCEMENTS.groundLeadRunnerOut(next.outs, isForced))
   }
 
   if (effect.type === 'applyGroundDoublePlay') {
