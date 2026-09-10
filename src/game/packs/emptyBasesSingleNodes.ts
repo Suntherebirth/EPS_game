@@ -390,12 +390,12 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   },
   'followUp.ground.throw.error.attempt.clear': {
     id: 'followUp.ground.throw.error.attempt.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루',
-    effects: [{ type: 'forceWalk' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'positive' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 완전히 빠진 송구를 틈타 추가 진루에 성공했습니다.', homeDetail: '1루수 뒤로 완전히 빠진 송구를 틈타 홈에 들어왔습니다.', tone: 'positive' }],
+    effects: [{ type: 'forceWalk' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'positive' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '홈 추가 진루 성공!', detail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 추가 진루에 성공했습니다.', homeDetail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 홈에 들어왔습니다.', tone: 'positive' }],
     transition: { to: 'followUp.ground.throw.extra.clear.route' },
   },
   'followUp.ground.throw.error.attempt.ambiguous': {
     id: 'followUp.ground.throw.error.attempt.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루',
-    effects: [{ type: 'forceWalk' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'caution' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 추가 진루에 성공했습니다.', homeDetail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 홈에 들어왔습니다.', tone: 'positive' }],
+    effects: [{ type: 'forceWalk' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'caution' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '홈 추가 진루 성공!', detail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 추가 진루에 성공했습니다.', homeDetail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 홈에 들어왔습니다.', tone: 'positive' }],
     transition: { to: 'followUp.ground.throw.extra.ambiguous.route' },
   },
   'followUp.ground.throw.extra.clear.route': {

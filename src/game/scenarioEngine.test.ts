@@ -780,7 +780,7 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcementHistory).toEqual(expect.arrayContaining([
       expect.objectContaining({ announcement: { title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'caution' } }),
     ]))
-    expect(result.context.announcement).toEqual({ title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 홈에 들어왔습니다.', tone: 'positive' })
+    expect(result.context.announcement).toEqual({ title: '홈 추가 진루 성공!', detail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 홈에 들어왔습니다.', tone: 'positive' })
   })
 
   it('offers the common outfield error choices after a follow-up hit advances the player', () => {
