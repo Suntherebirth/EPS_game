@@ -327,6 +327,23 @@ describe('offense core scenario pack', () => {
     expect(result.context).toMatchObject({ outs: 2, bases: [3], playerBase: 3 })
   })
 
+  it('routes a follow-up deep fly tag-up through an explicit 100/0 chance', () => {
+    const initial = { nodeId: 'followUp.batting.resolve', context: { ...context(0, [3]), playerBase: 3 } }
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'deepFly', { manualChance: true })
+    const tagUp = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'tagUp', { manualChance: true })
+
+    expect(tagUp.nodeId).toBe('runner.third.sacrificeFly.deep.advance')
+    expect(tagUp.context.announcement).toEqual({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', detail: '안전하게 태그업할 수 있는 타구입니다.' })
+
+    const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'out', { manualChance: true })
+    const success = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'success', { manualChance: true })
+
+    expect(success.nodeId).toBe('plate.complete')
+    expect(success.context).toMatchObject({ outs: 1, bases: [], runs: 1, playerBase: null })
+    expect(failure.context).toMatchObject({ outs: 2, bases: [], runs: 0, playerBase: null })
+  })
+
   it('offers second-base runner choices after a clear outfield error on a fly ball', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(0, [2]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })

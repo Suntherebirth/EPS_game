@@ -298,7 +298,14 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     description: '3루 주자: 태그업 여부를 선택하세요.',
     choices: [
       { id: 'stayThird', label: '3루에 머무른다', transition: { to: 'runner.route', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 3루에 머뭅니다.', detail: '명백히 진루할 수 있는 타구였지만 태그업하지 않았습니다.', tone: 'caution' }] } },
-      { id: 'tagUp', label: '홈으로 태그업 진루한다', description: '성공률 100%', transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral' }] } },
+      { id: 'tagUp', label: '홈으로 태그업 진루한다', description: '성공률 100%', transition: { to: 'runner.third.sacrificeFly.deep.advance', effects: [{ type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', detail: '안전하게 태그업할 수 있는 타구입니다.' }] } },
+    ],
+  },
+  'runner.third.sacrificeFly.deep.advance': {
+    id: 'runner.third.sacrificeFly.deep.advance', type: 'chance', view: 'runner:third', title: '홈 태그업', tags: ['player-position-view'],
+    outcomes: [
+      { id: 'success', label: '홈 태그업 성공', weight: 1, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral' }] } },
+      { id: 'out', label: '홈 태그업 실패', weight: 0, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 실패', detail: '3루 주자가 홈에서 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
   'followUp.ground.check': {

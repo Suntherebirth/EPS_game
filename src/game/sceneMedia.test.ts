@@ -47,6 +47,10 @@ describe('scene media fallback names', () => {
     expect(resolveAnnouncementDetailSceneId({ title: '주자 진루', detail: '홈에 들어왔습니다.' })).toBe('home-in-neutral')
   })
 
+  it('uses the ambiguous sacrifice fly image during a deep fly tag-up attempt', () => {
+    expect(resolveSceneImageFilename({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', scene: undefined }, 3)).toBe('sacrifice-fly-ambiguous.png')
+  })
+
   it('uses shared event imagery regardless of player base', () => {
     expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-clear' }, 2)).toBe('dropped-third-strike-clear.png')
     expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-ambiguous' }, 2)).toBe('dropped-third-strike-ambiguous.png')
