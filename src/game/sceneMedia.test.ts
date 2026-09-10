@@ -19,4 +19,16 @@ describe('scene media fallback names', () => {
     expect(shouldUseViewImageForAnnouncementStep({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', category: 'surprise' }, true)).toBe(true)
     expect(resolveAnnouncementStepMissingImageName({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', category: 'surprise' }, 1, true)).toBeUndefined()
   })
+
+  it('returns expected filenames for surprise-only follow-up announcements', () => {
+    expect(resolveSceneImageFilename({ title: '폭투가 나왔지만 진루하지 않았습니다.', scene: undefined }, 2)).toBe('wild-pitch-ambiguous@2.png')
+    expect(resolveSceneImageFilename({ title: '내야 땅볼 송구 실책 이후 진루하지 않았습니다.', scene: undefined }, 1)).toBe('error-infield-throwing-ambiguous@1.png')
+  })
+
+  it('keeps clear and ambiguous event images distinct', () => {
+    expect(resolveSceneImageFilename({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-clear' }, 1)).toBe('error-outfield-through-clear@1.png')
+    expect(resolveSceneImageFilename({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 1)).toBe('error-outfield-through-ambiguous@1.png')
+    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, null)).toBe('wild-pitch-clear.png')
+    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-ambiguous' }, null)).toBe('wild-pitch-ambiguous.png')
+  })
 })

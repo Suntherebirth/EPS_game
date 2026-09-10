@@ -15,12 +15,10 @@ import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenario
 import type { ScenarioState, ScenarioView } from './game/scenario'
 import {
   buildAnnouncementImageTrail,
-  resolveAnnouncementStepMissingImageName,
   resolveSceneImage,
   resolveSceneImageFilename,
   resolveViewImage,
   resolveViewImageFilename,
-  shouldUseViewImageForAnnouncementStep,
 } from './game/sceneMedia'
 import './App.css'
 
@@ -202,31 +200,24 @@ function App() {
   const sceneAnnouncementCount = sceneAnnouncements.length
   // 일반 흐름: 각 장면은 이미지 + 누적 아나운스 묶음으로 표시하고, 탭으로 다음 장면으로 진행한다.
   // 마지막 발표가 끝나면 일정 시간 뒤 자동으로 최종 시점 이미지와 선택지로 전환한다.
-  const sceneTotalTapSteps = sceneAnnouncementCount === 0 ? 1 : sceneAnnouncementCount + 1
+  const sceneTotalTapSteps = sceneAnnouncementCount === 0 ? 1 : sceneAnnouncementCount * 2
   const sceneSequenceKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}:${sceneImageView}:${displayedState.context.playerBase ?? 'none'}`
   const [tapProgress, setTapProgress] = useState({ key: '', step: 0 })
   const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
   const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
-  const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : Math.min(sceneStep, sceneAnnouncementCount - 1)
-  const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneStep + 1
-  const sceneMissingImageName = sceneIsFinalStep
+  const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : Math.min(Math.floor(sceneStep / 2), sceneAnnouncementCount - 1)
+  const sceneIsDetailStep = replay !== null || sceneAnnouncementCount === 0 || sceneStep % 2 === 1
+  const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneEventIndex + 1
+  const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
+  const isSurpriseAnnouncement = currentAnnouncement?.category === 'surprise'
+  const sceneMissingImageName = sceneIsDetailStep || isSurpriseAnnouncement
     ? (sceneViewImageUrl ? undefined : resolveViewImageFilename(sceneImageView))
-    : isSurpriseScene
-      ? resolveAnnouncementStepMissingImageName(sceneAnnouncements[sceneEventIndex], displayedState.context.playerBase, isSurpriseScene)
     : (() => {
-      const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
       if (!currentAnnouncement) return undefined
       const expectedImage = resolveSceneImage(currentAnnouncement, displayedState.context.playerBase)
       return expectedImage ? undefined : resolveSceneImageFilename(currentAnnouncement, displayedState.context.playerBase)
     })()
-  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsFinalStep || shouldUseViewImageForAnnouncementStep(sceneAnnouncements[sceneEventIndex], isSurpriseScene) ? sceneViewImageUrl : sceneImageTrail[sceneEventIndex])
-  const surpriseOverlayAnnouncement = sceneAnnouncements.findLast((message) => message.category === 'surprise')
-  const surpriseOverlayImageUrl = surpriseOverlayAnnouncement
-    ? resolveSceneImage(surpriseOverlayAnnouncement, displayedState.context.playerBase)
-    : undefined
-  const surpriseOverlayImageName = surpriseOverlayAnnouncement
-    ? resolveSceneImageFilename(surpriseOverlayAnnouncement, displayedState.context.playerBase)
-    : undefined
+  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsDetailStep || isSurpriseAnnouncement ? sceneViewImageUrl : sceneImageTrail[sceneEventIndex])
   const advanceScene = () => {
     if (sceneIsFinalStep) return
     setTapProgress({ key: sceneSequenceKey, step: sceneStep + 1 })
@@ -368,18 +359,26 @@ function App() {
   const viewLabel = node.view.startsWith('runner:') && currentViewBase
     ? `${currentViewBase}루 주자 시점`
     : node.view === 'batter' ? '타석 시점' : null
-  const isSurpriseEvent = isSurpriseScene
+  const announcementMessages = sceneAnnouncements
+  const overlayMessages = replaying ? announcementMessages : announcementMessages.slice(0, sceneRevealedCount)
+  const surpriseOverlayAnnouncement = overlayMessages.findLast((message) => message.category === 'surprise')
+  const isSurpriseEvent = isSurpriseScene && surpriseOverlayAnnouncement !== undefined
   const highlightedViewLabel = replaying && replayFrame
     ? `재생 ${replay.index + 1}/${replay.frames.length} · ${viewLabel ?? '결과'}`
     : isSurpriseEvent && viewLabel ? `${viewLabel} : 돌발 이벤트!` : viewLabel
   const availableChoices = getAvailableScenarioChoices(OFFENSE_CORE_PACK, scenario)
+  const shouldShowTapHint = !sceneIsFinalStep && !!overlayMessages.at(-1)?.detail
   const choiceDescription = node.type === 'choice' && isSurpriseEvent && currentViewBase
     ? `${currentViewBase}루 주자: 돌발 상황 대처`
     : node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
     ? node.description.startsWith(`${currentViewBase}루 주자:`) ? node.description : `${currentViewBase}루 주자: ${node.description}`
     : node.type === 'choice' ? node.description : undefined
-  const announcementMessages = sceneAnnouncements
-  const overlayMessages = replaying ? announcementMessages : announcementMessages.slice(0, sceneRevealedCount)
+  const surpriseOverlayImageUrl = surpriseOverlayAnnouncement
+    ? resolveSceneImage(surpriseOverlayAnnouncement, displayedState.context.playerBase)
+    : undefined
+  const surpriseOverlayImageName = surpriseOverlayAnnouncement
+    ? resolveSceneImageFilename(surpriseOverlayAnnouncement, displayedState.context.playerBase)
+    : undefined
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
   const canAct = phase === 'playing' && sceneIsFinalStep
   const playResultVisible = phase === 'between' && sceneIsFinalStep && sceneStep >= sceneAnnouncementCount
@@ -404,7 +403,7 @@ function App() {
 
   return <main className="app-shell">
     <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
-    <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'}`} {...sceneTapProps}>
+    <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedState.context.playerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
         {overlayMessages.length > 0 && <aside className={`result-notice ${overlayMessages.at(-1)?.tone ?? 'neutral'}`} aria-live="polite" key={replaying ? `replay:${replayFrame?.stepIndex ?? 'live'}` : sceneSequenceKey}>
@@ -412,16 +411,12 @@ function App() {
           <div className="notice-stack">
             <div className="message-flow">
               {overlayMessages.map((message, index) => {
-                const isLastMessage = index === overlayMessages.length - 1
-                const shouldShowTapHint = isLastMessage && !sceneIsFinalStep && !!message.detail
+                const showMessageDetail = replaying || index < sceneEventIndex || (index === sceneEventIndex && sceneIsDetailStep)
                 return <div className="message-flow-entry" key={`${message.title}:${message.detail}:${index}`}>
-                  {index > 0 && <span className="message-flow-connector" style={{ animationDelay: `${0.5 + (index - 1) * 0.68}s` }}>그리고</span>}
-                  <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`} style={{ animationDelay: `${0.16 + index * 0.68}s` }}>
+                  {index > 0 && <span className="message-flow-connector" style={{ animationDelay: `${0.31 + (index - 1) * 0.43}s` }}>그리고</span>}
+                  <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`} style={{ animationDelay: `${0.1 + index * 0.43}s` }}>
                     <strong>{message.title}</strong>
-                    <div className="message-detail-row">
-                      <p>{message.detail}</p>
-                      {shouldShowTapHint && <button type="button" className="tap-continue-button" onClick={advanceScene} aria-label="다음 장면 보기">탭하여 계속</button>}
-                    </div>
+                    {showMessageDetail && <div className="message-detail-row"><p>{message.detail}</p></div>}
                   </div>
                 </div>
               })}
@@ -431,6 +426,7 @@ function App() {
         {isSurpriseEvent && surpriseOverlayAnnouncement && <div className={`surprise-event-image ${surpriseOverlayImageUrl ? '' : 'missing'}`} aria-label={`${surpriseOverlayAnnouncement.title} 연출 이미지`}>
           {surpriseOverlayImageUrl ? <img src={surpriseOverlayImageUrl} alt="" /> : <span>{surpriseOverlayImageName ?? '돌발 이벤트 이미지 파일 필요'}</span>}
         </div>}
+        {shouldShowTapHint && <button type="button" className="tap-continue-button" onClick={advanceScene} aria-label="다음 장면 보기">탭하여 계속</button>}
         {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
         {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}

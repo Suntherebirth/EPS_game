@@ -17,6 +17,7 @@ export const ANNOUNCEMENTS = {
     '외야수가 타구를 뒤로 빠뜨렸습니다.',
     clear ? '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' : '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.',
     clear ? 'positive' : 'caution',
+    clear ? 'error-outfield-through-clear' : 'error-outfield-through-ambiguous',
   ),
   groundFieldingSuccess: message('내야수가 땅볼을 포구했습니다!', '1루 송구를 준비합니다.'),
   groundThrowSuccess: message('내야수가 1루 송구를 성공했습니다!', '타자 주자를 1루에서 처리합니다.'),
@@ -39,8 +40,8 @@ export const ANNOUNCEMENTS = {
     'negative',
   ),
   groundForceOut: (outs: number) => ANNOUNCEMENTS.groundLeadRunnerOut(outs, true),
-  groundThrowingErrorClear: message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠졌습니다.\n확실하게 추가 진루할 수 있습니다.', 'positive'),
-  groundThrowingErrorAmbiguous: message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 애매하게 빠졌습니다.\n추가 진루를 시도해서 성공하면 점수를 얻습니다.\n실패하여 아웃되면 점수를 잃습니다.', 'caution'),
+  groundThrowingErrorClear: message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠졌습니다.\n확실하게 추가 진루할 수 있습니다.', 'positive', 'error-infield-throwing-clear'),
+  groundThrowingErrorAmbiguous: message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 애매하게 빠졌습니다.\n추가 진루를 시도해서 성공하면 점수를 얻습니다.\n실패하여 아웃되면 점수를 잃습니다.', 'caution', 'error-infield-throwing-ambiguous'),
   groundDoublePlay: (outs: number) => message('내야 땅볼 병살!', outs >= 3 ? ANNOUNCEMENTS.sideChange : '1루 주자와 타자 주자가 모두 아웃되었습니다.', 'negative'),
   followUpBattingEvent: (title: string, before: number | null, playerBase: number | null, outs: number) => {
     if (outs >= 3) return message(title, ANNOUNCEMENTS.sideChange, 'negative')
