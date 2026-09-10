@@ -17,10 +17,12 @@ import {
   buildAnnouncementImageTrail,
   resolveAnnouncementDetailView,
   resolveAnnouncementImageBase,
+  resolveBaseArrivalEffect,
   resolveSceneImage,
   resolveSceneImageFilename,
   resolveViewImage,
   resolveViewImageFilename,
+  type BaseArrivalEffect,
 } from './game/sceneMedia'
 import './App.css'
 
@@ -108,10 +110,10 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null }) {
+function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, arrivalKey }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: BaseArrivalEffect; arrivalKey?: string }) {
   return <section className="media-stage" aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
-    {!videoUrl && imageUrl && <img src={imageUrl} alt="" key={imageUrl} />}
+    {!videoUrl && imageUrl && <img src={imageUrl} alt="" className={arrivalEffect ? `arrival-${arrivalEffect}` : ''} key={arrivalEffect ? `${imageUrl}:${arrivalKey}` : imageUrl} />}
     {!videoUrl && missingImageName && <div className="media-image-fallback" aria-live="polite"><span>{missingImageName}</span></div>}
     {viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
     <div className={`broadcast-bug ${isPlateEntry ? 'plate-entry-flash' : ''}`}>
@@ -212,16 +214,23 @@ function App() {
   const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneEventIndex + 1
   const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
   const isSurpriseAnnouncement = currentAnnouncement?.category === 'surprise'
-  const sceneDetailViewImageUrl = resolveViewImage(sceneDetailView)
+  const sceneDetailAnnouncement = currentAnnouncement?.detailScene
+    ? { title: currentAnnouncement.title, scene: currentAnnouncement.detailScene }
+    : undefined
+  const sceneDetailImageUrl = sceneDetailAnnouncement
+    ? resolveSceneImage(sceneDetailAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase))
+    : resolveViewImage(sceneDetailView)
   const sceneMissingImageName = sceneIsDetailStep || isSurpriseAnnouncement
-    ? (sceneDetailViewImageUrl ? undefined : resolveViewImageFilename(sceneDetailView))
+    ? (sceneDetailImageUrl ? undefined : sceneDetailAnnouncement
+      ? resolveSceneImageFilename(sceneDetailAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase))
+      : resolveViewImageFilename(sceneDetailView))
     : (() => {
       if (!currentAnnouncement) return undefined
       const imageBase = resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase)
       const expectedImage = resolveSceneImage(currentAnnouncement, imageBase)
       return expectedImage ? undefined : resolveSceneImageFilename(currentAnnouncement, imageBase)
     })()
-  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsDetailStep || isSurpriseAnnouncement ? sceneDetailViewImageUrl : sceneImageTrail[sceneEventIndex])
+  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsDetailStep || isSurpriseAnnouncement ? sceneDetailImageUrl : sceneImageTrail[sceneEventIndex])
   const advanceScene = () => {
     if (sceneIsFinalStep) return
     setTapProgress({ key: sceneSequenceKey, step: sceneStep + 1 })
@@ -385,6 +394,7 @@ function App() {
     : undefined
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
   const canAct = phase === 'playing' && sceneIsFinalStep
+  const arrivalEffect = sceneIsFinalStep ? resolveBaseArrivalEffect(currentAnnouncement ?? displayedState.context.announcement) : undefined
   const playResultVisible = phase === 'between' && sceneIsFinalStep && sceneStep >= sceneAnnouncementCount
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
@@ -408,7 +418,7 @@ function App() {
   return <main className="app-shell">
     <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedState.context.playerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} />
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedState.context.playerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} arrivalKey={sceneSequenceKey} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
         {overlayMessages.length > 0 && <aside className={`result-notice ${overlayMessages.at(-1)?.tone ?? 'neutral'}`} aria-live="polite" key={replaying ? `replay:${replayFrame?.stepIndex ?? 'live'}` : sceneSequenceKey}>
           <span>{replaying ? '아나운스 재생' : '방금 일어난 일'}</span>

@@ -284,6 +284,8 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.first.clearDrop.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 1 })
     expect(result.context.announcementHistory.at(-1)?.announcement).toEqual({ title: '외야수가 뜬공을 놓쳤습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
+    expect(result.context.announcementHistory.at(-1)?.category).toBe('normal')
+    expect(OFFENSE_CORE_PACK.nodes[failure.nodeId]?.tags).not.toContain('surprise-event')
     expect(result.context.announcement).toEqual({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' })
   })
 
@@ -506,7 +508,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 3, bases: [], playerBase: null })
-    expect(result.context.announcement).toEqual({ title: '후속타자의 삼진!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 삼진!', detail: '3아웃 · 공수교대입니다.', tone: 'negative', sceneBase: 1 })
   })
 
   it('continues to a follow-up hit when staying at first', () => {
@@ -517,7 +519,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context).toMatchObject({ bases: [1, 2], hits: 2, battingEvent: 'single', playerBase: 2 })
-    expect(result.context.announcement).toEqual({ title: '후속타자의 1루타!', detail: '2루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 1루타!', detail: '2루에 도착했습니다.', sceneBase: 1 })
     expect(result.context.announcementHistory).toEqual([])
   })
 
@@ -808,7 +810,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ outs: 2, bases: [1, 2, 3], playerBase: 1 })
-    expect(result.context.announcement).toEqual({ title: '후속타자의 삼진!', detail: '1루에서 움직이지 못했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 삼진!', detail: '1루에서 움직이지 못했습니다.', sceneBase: 1 })
     expect(result.context.records).toContain('후속 타자 삼진')
     expect(result.context.completionRecords).not.toContain('후속 타자 삼진')
   })
@@ -826,7 +828,7 @@ describe('offense core scenario pack', () => {
     const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'flyOut', { manualChance: true })
 
     expect(result.nodeId).toBe('plate.complete')
-    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '3아웃 · 공수교대입니다.', tone: 'negative', sceneBase: 3 })
     expect(result.context.announcementHistory).toHaveLength(1)
     expect(result.context.announcementHistory[0].announcement.title).toBe('후속타자의 외야 뜬공 발생!')
   })
@@ -910,7 +912,7 @@ describe('offense core scenario pack', () => {
     expect(wildPitch.nodeId).toBe('wildPitch.check')
     expect(followUp.nodeId).toBe('followUp.batting.resolve')
     expect(result.nodeId).toBe('runner.first.decide')
-    expect(result.context.announcement).toEqual({ title: '후속타자의 삼진!', detail: '1루에서 움직이지 못했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 삼진!', detail: '1루에서 움직이지 못했습니다.', sceneBase: 1 })
   })
 
   it('checks the outfield when the current second-base runner faces a follow-up fly ball', () => {
@@ -943,7 +945,7 @@ describe('offense core scenario pack', () => {
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'flyOut', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'caught', { manualChance: true })
 
-    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '2루에서 움직이지 못했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '2루에서 움직이지 못했습니다.', sceneBase: 2 })
     expect(result.context.announcement?.title).not.toContain('발생')
   })
 

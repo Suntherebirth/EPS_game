@@ -33,7 +33,7 @@ export type ScenarioEffect =
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }
   | { type: 'advanceRunnersAheadOfPlayer' }
-  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId }
+  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId }
   | { type: 'announceFollowUpOutfieldError'; clear: boolean; scene?: SceneId }
   | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
@@ -131,6 +131,7 @@ export type ScenarioAnnouncement = {
   detail: string
   tone?: 'positive' | 'negative' | 'caution' | 'neutral'
   scene?: SceneId
+  detailScene?: SceneId
   sceneBase?: number | null
 }
 

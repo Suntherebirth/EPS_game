@@ -158,3 +158,24 @@ export const resolveAnnouncementStepMissingImageName = (
   if (!announcement || shouldUseViewImageForAnnouncementStep(announcement, isSurpriseScene)) return undefined
   return resolveSceneImage(announcement, playerBase) ? undefined : resolveSceneImageFilename(announcement, playerBase)
 }
+
+/** 다음 베이스 시점 도착 연출의 성격. docs/ux-ui-guide.md의 "베이스 도착 전환 연출" 절 참고. */
+export type BaseArrivalEffect = 'safe' | 'normal' | 'bold' | 'blocked'
+
+const SAFE_ARRIVAL_TITLES = new Set(['볼넷!', '사구!'])
+const BLOCKED_ARRIVAL_DETAIL = /움직이지 못했습니다/
+const BOLD_ARRIVAL_TEXT = /애매|도루|위험을 감수/
+
+/**
+ * 마지막 아나운스 문구로 베이스 도착 전환 컨셉을 추론한다(안전/당연/과감/진루불가).
+ * 판별 근거가 되는 문구 패턴이 바뀌면 이 매핑도 함께 갱신해야 한다.
+ */
+export const resolveBaseArrivalEffect = (
+  announcement: Pick<ScenarioAnnouncement, 'title' | 'detail'> | undefined,
+): BaseArrivalEffect | undefined => {
+  if (!announcement) return undefined
+  if (BLOCKED_ARRIVAL_DETAIL.test(announcement.detail)) return 'blocked'
+  if (SAFE_ARRIVAL_TITLES.has(announcement.title)) return 'safe'
+  if (BOLD_ARRIVAL_TEXT.test(`${announcement.title} ${announcement.detail}`)) return 'bold'
+  return 'normal'
+}

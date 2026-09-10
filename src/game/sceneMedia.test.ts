@@ -6,6 +6,14 @@ describe('scene media fallback names', () => {
     expect(resolveSceneImageFilename({ title: '내야 땅볼 발생!', scene: undefined }, 1)).toBe('ball-ground-infield.png')
   })
 
+  it('returns the shared outfield fly ball filename for a follow-up batter', () => {
+    expect(resolveSceneImageFilename({ title: '후속타자의 외야 뜬공 발생!', scene: undefined }, 1)).toBe('ball-fly-outfield.png')
+  })
+
+  it('returns the dedicated fielder movement filename for an outfield fly ball detail', () => {
+    expect(resolveSceneImageFilename({ title: '외야 뜬공 발생!', scene: 'ball-fly-outfield-fielder-moving' }, 1)).toBe('ball-fly-outfield-fielder-moving.png')
+  })
+
   it('returns the expected filename for the batter view', () => {
     expect(resolveViewImageFilename('batter')).toBe('view-batter.png')
   })

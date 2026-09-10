@@ -189,7 +189,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     eventIds: [...FOLLOW_UP_EVENTS],
     routes: [
       { to: 'followUp.ground.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '후속타자의 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
-      { to: 'followUp.fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '후속타자의 외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.' }] },
+      { to: 'followUp.fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '후속타자의 외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-fly-outfield-fielder-moving' }] },
       { to: 'followUp.batting.apply', when: [{ field: 'battingEvent', operator: 'in', value: [...FOLLOW_UP_EVENTS] }] },
     ],
   },

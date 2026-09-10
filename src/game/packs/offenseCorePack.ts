@@ -46,7 +46,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
         { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
         { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }], effects: [{ type: 'announce', title: '내야 뜬공 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
-        { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.' }] },
+        { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-fly-outfield-fielder-moving' }] },
       ],
     },
     ...EMPTY_BASES_SINGLE_NODES,
@@ -226,7 +226,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       ],
     },
     'fly.outfield.failure.check': {
-      id: 'fly.outfield.failure.check', type: 'chance', view: 'batter', title: '외야수 처리 실패', tags: ['surprise-event', 'composite-event-step'],
+      id: 'fly.outfield.failure.check', type: 'chance', view: 'batter', title: '외야수 처리 실패', tags: ['composite-event-step'],
       outcomes: [
         { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.first.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
         { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
