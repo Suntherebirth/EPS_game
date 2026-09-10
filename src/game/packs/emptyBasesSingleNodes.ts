@@ -196,7 +196,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'followUp.fly.outfield.route': {
     id: 'followUp.fly.outfield.route', type: 'router', view: 'batter', title: '후속 외야 뜬공 주자 확인', tags: ['composite-event-step'],
     routes: [
-      { to: 'followUp.fly.outfield.check', when: [{ field: 'playerBase', operator: 'eq', value: 2 }, { field: 'bases', operator: 'excludes', value: [1] }] },
+      { to: 'followUp.fly.outfield.check', when: [{ field: 'playerBase', operator: 'eq', value: 2 }] },
       { to: 'followUp.fly.outfield.runnerThird.check', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'outs', operator: 'lt', value: 2 }] },
       { to: 'followUp.batting.apply' },
     ],
@@ -223,7 +223,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'followUp.fly.outfield.check': {
     id: 'followUp.fly.outfield.check', type: 'chance', view: 'runner:second', title: '후속 외야수 포구 판정', tags: ['composite-event-step'],
     outcomes: [
-      { id: 'fieldingFailed', label: '외야수 처리 실패', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.fly.outfield.failure.check', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 포구 실책', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' }] } },
+      { id: 'fieldingFailed', label: '외야수 처리 실패', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.fly.outfield.failure.route', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 포구 실책', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' }] } },
       { id: 'caught', label: '뜬공 처리 성공', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.batting.apply' } },
     ],
   },
@@ -232,6 +232,43 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     outcomes: [
       { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.second.outfieldError.clear.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 완전히 뒤로 빠뜨렸습니다!', detail: '2루 주자는 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
       { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.second.outfieldError.ambiguous.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 애매하게 뒤로 빠뜨렸습니다!', detail: '2루 주자가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
+    ],
+  },
+  'followUp.fly.outfield.failure.route': {
+    id: 'followUp.fly.outfield.failure.route', type: 'router', view: 'result', title: '후속 외야수 실책 주자 확인',
+    routes: [
+      { to: 'followUp.fly.outfield.runnerThird.failure.check', when: [{ field: 'flag', operator: 'eq', key: 'followUpOutfieldForcedAdvance', value: true }] },
+      { to: 'followUp.fly.outfield.failure.check' },
+    ],
+  },
+  'followUp.fly.outfield.runnerThird.failure.check': {
+    id: 'followUp.fly.outfield.runnerThird.failure.check', type: 'chance', view: 'runner:third', title: '후속 외야수 처리 실패', tags: ['surprise-event', 'composite-event-step', 'player-position-view'],
+    outcomes: [
+      { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.third.outfieldError.clear.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 완전히 뒤로 빠뜨렸습니다!', detail: '주자들이 한 베이스씩 진루했습니다. 3루 주자는 홈 진루를 선택할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
+      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.third.outfieldError.ambiguous.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 애매하게 뒤로 빠뜨렸습니다!', detail: '주자들이 한 베이스씩 진루했습니다. 3루 주자는 홈 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
+    ],
+  },
+  'runner.third.outfieldError.clear.decide': {
+    id: 'runner.third.outfieldError.clear.decide', type: 'choice', view: 'runner:third', title: '외야수 실책', tags: ['surprise-event', 'player-position-view'],
+    description: '3루 주자: 홈으로 추가 진루할까요?',
+    choices: [
+      { id: 'stayThird', label: '안전하게 3루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책 후 홈 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 홈으로 진루하지 않았습니다.', detail: '3루에 머물렀습니다.' }] } },
+      { id: 'advanceHome', label: '홈으로 진루한다', description: '명백하게 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '외야 실책 이용, 홈 진루', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '홈 진루 성공!', detail: '외야수 실책을 이용해 홈에 들어왔습니다.', category: 'normal' }] } },
+    ],
+  },
+  'runner.third.outfieldError.ambiguous.decide': {
+    id: 'runner.third.outfieldError.ambiguous.decide', type: 'choice', view: 'runner:third', title: '외야수 실책', tags: ['surprise-event', 'player-position-view'],
+    description: '3루 주자: 홈으로 진루할까요?',
+    choices: [
+      { id: 'stayThird', label: '안전하게 3루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책 후 홈 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 홈으로 진루하지 않았습니다.', detail: '위험을 감수하지 않고 3루에 머물렀습니다.' }] } },
+      { id: 'advanceHome', label: '홈으로 진루를 시도한다', description: `애매하게 뒤로 빠진 타구 · 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousDrop * 100)}%`, transition: { to: 'runner.third.outfieldError.ambiguous.advance' } },
+    ],
+  },
+  'runner.third.outfieldError.ambiguous.advance': {
+    id: 'runner.third.outfieldError.ambiguous.advance', type: 'chance', view: 'runner:third', title: '홈 진루', tags: ['player-position-view'],
+    outcomes: [
+      { id: 'success', label: '홈 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '외야 실책 이용, 홈 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '위험을 감수한 홈 진루 성공!', detail: '3루 주자가 홈에 들어왔습니다.', tone: 'positive' }] } },
+      { id: 'out', label: '홈 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '외야 실책 이용, 홈 진루 실패', showInCompletion: false }, { type: 'announce', title: '홈 진루 실패', detail: '홈에서 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
   'followUp.fly.outfield.runnerThird.check': {

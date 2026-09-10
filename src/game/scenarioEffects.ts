@@ -199,8 +199,15 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
 
   if (effect.type === 'applyFollowUpOutfieldDropWithSecondRunner') {
     if (next.playerBase !== 2 || !next.bases.includes(2)) throw new Error('2루 주자가 없는 후속 외야 실책을 적용할 수 없습니다.')
-    if (next.bases.includes(1)) throw new Error('1루 주자가 있는 후속 외야 실책은 일반 타격 흐름으로 처리해야 합니다.')
-    next.bases.push(1)
+    if (next.bases.includes(1)) {
+      const advancedBases = next.bases.map((base) => base + 1)
+      next.runs += advancedBases.filter((base) => base >= 4).length
+      next.bases = [1, ...advancedBases.filter((base) => base < 4)]
+      next.playerBase = 3
+      next.flags.followUpOutfieldForcedAdvance = true
+    } else {
+      next.bases.push(1)
+    }
   }
 
   if (effect.type === 'applySacrificeFlyOut') {

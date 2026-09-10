@@ -984,6 +984,44 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcement?.title).not.toContain('발생')
   })
 
+  it('allows an admin to choose either fielding result for a follow-up fly ball with a runner on second', () => {
+    const runner = { nodeId: 'followUp.batting.resolve', context: { ...context(0, [2]), playerBase: 2 } }
+    const flyOut = selectScenarioBattingEvent(OFFENSE_CORE_PACK, runner, 'flyOut', { manualChance: true })
+
+    const caught = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, flyOut, 'caught', { manualChance: true })
+    const failed = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, flyOut, 'fieldingFailed', { manualChance: true })
+
+    expect(caught.context.announcement?.title).toBe('뜬공 처리 성공!')
+    expect(failed.nodeId).toBe('followUp.fly.outfield.failure.check')
+  })
+
+  it('checks a follow-up fly ball with runners on first and second', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const double = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'double', { manualChance: true })
+    const wait = chooseScenarioOption(OFFENSE_CORE_PACK, double, 'waitForBatter', { manualChance: true })
+    const normalPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
+    const walk = selectScenarioBattingEvent(OFFENSE_CORE_PACK, normalPitch, 'walk', { manualChance: true })
+    const waitWithFirst = chooseScenarioOption(OFFENSE_CORE_PACK, walk, 'waitForBatter', { manualChance: true })
+    const nextPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, waitWithFirst, 'normalPitch', { manualChance: true })
+    const flyOut = selectScenarioBattingEvent(OFFENSE_CORE_PACK, nextPitch, 'flyOut', { manualChance: true })
+
+    expect(flyOut.nodeId).toBe('followUp.fly.outfield.check')
+    expect(flyOut.context.bases).toEqual([1, 2])
+
+    const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, flyOut, 'fieldingFailed', { manualChance: true })
+    expect(failure.nodeId).toBe('followUp.fly.outfield.runnerThird.failure.check')
+    expect(failure.context.bases).toEqual([1, 2, 3])
+    expect(failure.context.playerBase).toBe(3)
+
+    const ambiguous = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, failure, 'ambiguousDrop', { manualChance: true })
+    expect(ambiguous.nodeId).toBe('runner.third.outfieldError.ambiguous.decide')
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, ambiguous).map((choice) => choice.id)).toEqual(['stayThird', 'advanceHome'])
+
+    const stayThird = chooseScenarioOption(OFFENSE_CORE_PACK, ambiguous, 'stayThird', { manualChance: true })
+    expect(stayThird.nodeId).toBe('runner.third.decide')
+    expect(stayThird.context).toMatchObject({ bases: [1, 2, 3], playerBase: 3 })
+  })
+
   it('uses a 70 percent chance for an ambiguous outfield drop advance', () => {
     vi.spyOn(Math, 'random').mockReturnValueOnce(0.15).mockReturnValueOnce(0.69)
     const initial = startScenario(OFFENSE_CORE_PACK, context())
