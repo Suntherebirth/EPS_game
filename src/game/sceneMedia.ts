@@ -29,18 +29,6 @@ const EVENT_IMAGES = Object.fromEntries(
   ).map(([path, url]) => [path.split('/').pop()!.replace(/\.[^.]+$/, ''), url]),
 )
 
-const SHARED_FIRST_BASE_IMAGE_SCENES = new Set<SceneId>([
-  'dropped-third-strike-clear',
-  'dropped-third-strike-ambiguous',
-  'error-outfield-through-clear',
-  'error-outfield-through-ambiguous',
-  'wild-pitch-clear',
-  'wild-pitch-ambiguous',
-])
-
-const resolveSceneImageBase = (sceneId: SceneId, playerBase: number | null): number | null =>
-  playerBase === 2 && SHARED_FIRST_BASE_IMAGE_SCENES.has(sceneId) ? 1 : playerBase
-
 /**
  * 아나운스 문구 → 연출 이미지 ID.
  * 이펙트에 `scene`을 직접 지정하면 이 표보다 우선한다. 같은 문구를 다른 연출로 나눠야 하면 `scene`을 쓴다.
@@ -125,19 +113,16 @@ export const resolveAnnouncementImageBase = (announcement: Pick<ScenarioAnnounce
 export const resolveAnnouncementDetailView = (view: ScenarioView, playerBase: number | null): ScenarioView =>
   playerBase === 1 ? 'runner:first' : playerBase === 2 ? 'runner:second' : playerBase === 3 ? 'runner:third' : view
 
-/** 베이스별 그림이 필요한 연출만 `<sceneId>@2.png` 처럼 추가하면 되고, 없으면 공용 이미지로 떨어진다. */
-export const resolveSceneImage = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, playerBase: number | null): string | undefined => {
+/** 이벤트 연출 이미지는 `src/assets/scenes/events/<sceneId>.png` 파일을 사용한다. */
+export const resolveSceneImage = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, _playerBase: number | null): string | undefined => {
   const sceneId = resolveSceneId(announcement)
   if (!sceneId) return undefined
-  const imageBase = resolveSceneImageBase(sceneId, playerBase)
-  return (imageBase ? EVENT_IMAGES[`${sceneId}@${imageBase}`] : undefined) ?? EVENT_IMAGES[sceneId]
+  return EVENT_IMAGES[sceneId]
 }
 
-export const resolveSceneImageFilename = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, playerBase: number | null): string | undefined => {
+export const resolveSceneImageFilename = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, _playerBase: number | null): string | undefined => {
   const sceneId = resolveSceneId(announcement)
   if (!sceneId) return undefined
-  const imageBase = resolveSceneImageBase(sceneId, playerBase)
-  if (imageBase) return `${sceneId}@${imageBase}.png`
   return `${sceneId}.png`
 }
 
