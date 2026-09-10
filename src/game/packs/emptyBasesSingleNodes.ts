@@ -284,7 +284,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
       { to: 'followUp.ground.throwingError.check', when: [{ field: 'playerBase', operator: 'eq', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }], effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'none' }] },
       { to: 'followUp.ground.throwingError.check', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'bases', operator: 'includes', value: [1, 2, 3] }], effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'none' }] },
       { to: 'runner.second.groundOut.decide', when: [{ field: 'playerBase', operator: 'eq', value: 2 }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', title: '상대 내야수, 1루 송구 준비 완료!', detail: '2루 주자는 송구 시점에 맞춰 3루 진루를 시도할 수 있습니다.' }] },
-      { to: 'runner.third.groundOut.decide', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도합니다.' }] },
+      { to: 'runner.third.groundOut.decide', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution' }] },
       { to: 'followUp.ground.throwingError.check', effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'none' }] },
     ],
   },

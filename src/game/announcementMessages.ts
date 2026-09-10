@@ -30,7 +30,7 @@ export const ANNOUNCEMENTS = {
         'negative',
       )
     }
-    if (playerBase === 3 && outs < 3) return message('상대 내야수, 1루 송구 준비 완료!', '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도합니다.')
+    if (playerBase === 3 && outs < 3) return message('상대 내야수, 1루 송구 준비 완료!', '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', 'caution')
     if (playerBase === 2) return message('후속타자의 내야 땅볼, 정상 수비!', '내야수 송구 순간 3루 진루를 시도할 수 있습니다.')
     return message('후속타자의 내야 땅볼 아웃!', outs >= 3 ? ANNOUNCEMENTS.sideChange : '현재 베이스에 머뭅니다.')
   },
