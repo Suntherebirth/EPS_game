@@ -129,7 +129,7 @@ describe('offense core scenario pack', () => {
 
     expect(fielding.nodeId).toBe('ground.infield.check')
     expect(fieldingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
-    expect(fieldingError.context.announcement).toEqual({ title: '내야수가 땅볼 포구를 놓쳤습니다!', detail: '실책으로 1루에 출루했습니다.' })
+    expect(fieldingError.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '실책으로 1루에 출루했습니다.' })
     expect(throwingError.nodeId).toBe('ground.infield.throwingError.check')
     expect(throwingError.context.announcement).toEqual(ANNOUNCEMENTS.groundFieldingSuccess)
     expect(throwingErrorClear.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
@@ -248,7 +248,7 @@ describe('offense core scenario pack', () => {
     expect(fielding.nodeId).toBe('fly.infield.check')
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 1 })
-    expect(result.context.announcement).toEqual({ title: '내야수가 뜬공을 놓쳤습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
+    expect(result.context.announcement).toEqual({ title: '상대 내야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
   })
 
   it('applies the infield fly rule with runners on first and second before two outs', () => {
@@ -283,10 +283,10 @@ describe('offense core scenario pack', () => {
     expect(failure.nodeId).toBe('fly.outfield.failure.check')
     expect(result.nodeId).toBe('runner.first.clearDrop.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 1 })
-    expect(result.context.announcementHistory.at(-1)?.announcement).toEqual({ title: '외야수가 뜬공을 놓쳤습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
+    expect(result.context.announcementHistory.at(-1)?.announcement).toEqual({ title: '상대 외야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
     expect(result.context.announcementHistory.at(-1)?.category).toBe('normal')
     expect(OFFENSE_CORE_PACK.nodes[failure.nodeId]?.tags).not.toContain('surprise-event')
-    expect(result.context.announcement).toEqual({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' })
+    expect(result.context.announcement).toEqual({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' })
   })
 
   it('announces an outfield fly and then a successful catch as separate steps', () => {
@@ -412,8 +412,8 @@ describe('offense core scenario pack', () => {
     const clear = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'clearDrop', { manualChance: true })
     const ambiguous = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'ambiguousDrop', { manualChance: true })
 
-    expect(clear.context.announcement).toEqual({ title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.', tone: 'positive', scene: 'dropped-third-strike-clear' })
-    expect(ambiguous.context.announcement).toEqual({ title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 열심히 뛴다면 살 수 있을지도 모릅니다.', scene: 'dropped-third-strike-ambiguous' })
+    expect(clear.context.announcement).toEqual({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.', tone: 'positive', scene: 'dropped-third-strike-clear' })
+    expect(ambiguous.context.announcement).toEqual({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 열심히 뛴다면 살 수 있을지도 모릅니다.', scene: 'dropped-third-strike-ambiguous' })
     expect(RUNNING_CHANCES).toMatchObject({
       runHardOnClearDroppedStrike: 1,
       runSlowOnClearDroppedStrike: 0.5,
@@ -653,17 +653,24 @@ describe('offense core scenario pack', () => {
     const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
     const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    expect(cleanPlay.context.announcementHistory.slice(-2).map(({ announcement }) => announcement)).toEqual([
+      { title: '후속타자의 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' },
+      ANNOUNCEMENTS.groundFieldingSuccess,
+    ])
     expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution' })
     const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
     const advance = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
 
+    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.' })
+    expect(advance.context.announcement).toEqual({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' })
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null, runs: 1 })
+    expect(result.context.announcement).toEqual({ title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 먼저 홈 쇄도에 성공했습니다.', tone: 'positive', detailScene: 'home-in-positive' })
   })
 
-  it('announces the batter-runner out before a third-base player is thrown out at home', () => {
-    const initial = startScenario(OFFENSE_CORE_PACK, context(1), { manualChance: true })
+  it('announces the batter-runner out without repeating the throw-ready message before a third-base player is thrown out at home', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
     const firstRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
     const stealSecond = chooseScenarioOption(OFFENSE_CORE_PACK, firstRunner, 'stealSecond', { manualChance: true })
@@ -679,11 +686,12 @@ describe('offense core scenario pack', () => {
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
 
     expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution' })
-    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '내야수의 송구 결과에 따라 진루 성공률이 결정됩니다.' })
-    expect(advance.context.announcement).toEqual({ title: '내야수가 1루 송구를 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' })
+    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.' })
+    expect(advance.context.announcement).toEqual({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' })
+    expect(advance.context.announcementHistory).toEqual([])
     expect(result.nodeId).toBe('plate.complete')
-    expect(result.context).toMatchObject({ outs: 3, bases: [], playerBase: null, runs: 0 })
-    expect(result.context.announcement).toEqual({ title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+    expect(result.context).toMatchObject({ outs: 2, bases: [], playerBase: null, runs: 0 })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '송구를 받은 상대 1루수가 홈으로 송구해 추가진루를 시도하던 3루 주자도 아웃되었습니다.', tone: 'negative' })
   })
 
   it('offers clear or ambiguous extra-advance choices after a follow-up ground-ball throwing error', () => {
@@ -757,7 +765,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '내야수가 땅볼을 포구 실책했습니다!', detail: '홈에 들어왔습니다.' })
+    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '홈에 들어왔습니다.' })
   })
 
   it('completes the play when a throwing error advances a third-base runner home', () => {
@@ -809,7 +817,7 @@ describe('offense core scenario pack', () => {
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'double', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousDrop', { manualChance: true })
 
-    expect(result.context.announcement).toEqual({ title: '외야수가 타구를 뒤로 빠뜨렸습니다.', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' })
+    expect(result.context.announcement).toEqual({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다.', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' })
     expect(result.context.announcementHistory).toEqual([])
     expect(result.context.announcementCategory).toBe('surprise')
   })

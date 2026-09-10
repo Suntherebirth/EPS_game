@@ -77,7 +77,7 @@ describe('announcement audit cases', () => {
 
     expect(frames.map((frame) => getAnnouncementMessages(frame.state).map((message) => message.title))).toContainEqual([
       '1루타 성공!',
-      '외야수가 타구를 뒤로 빠뜨렸습니다!',
+      '상대 외야수가 타구를 뒤로 빠뜨렸습니다!',
     ])
   })
 })

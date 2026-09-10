@@ -30,8 +30,8 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '외야 수비 판정',
     tags: ['composite-event-step'],
     outcomes: [
-      { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.first.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
-      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
+      { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear, transition: { to: 'runner.first.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
+      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
       { id: 'normalFielding', label: '정상 수비', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'runner.route' } },
     ],
   },
@@ -141,8 +141,8 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:first',
     title: '폭투 판정',
     outcomes: [
-      { id: 'clearWildPitch', label: '명백한 폭투', weight: RUNNING_CHANCES.wildPitchClear, transition: { to: 'runner.wildPitch.clear.decide', effects: [{ type: 'advanceRunnersAheadOfPlayer' }, { type: 'record', message: '포수 뒤로 공이 완전히 빠짐', showInCompletion: false }, { type: 'announce', title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'wild-pitch-clear' }] } },
-      { id: 'ambiguousWildPitch', label: '애매한 폭투', weight: RUNNING_CHANCES.wildPitchAmbiguous, transition: { to: 'runner.wildPitch.ambiguous.decide', effects: [{ type: 'advanceRunnersAheadOfPlayer' }, { type: 'record', message: '포수 뒤로 공이 애매하게 빠짐', showInCompletion: false }, { type: 'announce', title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'wild-pitch-ambiguous' }] } },
+      { id: 'clearWildPitch', label: '명백한 폭투', weight: RUNNING_CHANCES.wildPitchClear, transition: { to: 'runner.wildPitch.clear.decide', effects: [{ type: 'advanceRunnersAheadOfPlayer' }, { type: 'record', message: '포수 뒤로 공이 완전히 빠짐', showInCompletion: false }, { type: 'announce', title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'wild-pitch-clear' }] } },
+      { id: 'ambiguousWildPitch', label: '애매한 폭투', weight: RUNNING_CHANCES.wildPitchAmbiguous, transition: { to: 'runner.wildPitch.ambiguous.decide', effects: [{ type: 'advanceRunnersAheadOfPlayer' }, { type: 'record', message: '포수 뒤로 공이 애매하게 빠짐', showInCompletion: false }, { type: 'announce', title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'wild-pitch-ambiguous' }] } },
       { id: 'normalPitch', label: '정상 포구', weight: 1 - RUNNING_CHANCES.wildPitchClear - RUNNING_CHANCES.wildPitchAmbiguous, transition: { to: 'followUp.batting.resolve' } },
     ],
   },
@@ -223,15 +223,15 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'followUp.fly.outfield.check': {
     id: 'followUp.fly.outfield.check', type: 'chance', view: 'runner:second', title: '후속 외야수 포구 판정', tags: ['composite-event-step'],
     outcomes: [
-      { id: 'fieldingFailed', label: '외야수 처리 실패', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.fly.outfield.failure.check', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 포구 실책', showInCompletion: false }, { type: 'announce', title: '외야수가 뜬공을 놓쳤습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' }] } },
+      { id: 'fieldingFailed', label: '외야수 처리 실패', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.fly.outfield.failure.check', effects: [{ type: 'applyFollowUpOutfieldDropWithSecondRunner' }, { type: 'record', message: '후속 타자 외야 뜬공, 외야수 포구 실책', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' }] } },
       { id: 'caught', label: '뜬공 처리 성공', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'followUp.batting.apply' } },
     ],
   },
   'followUp.fly.outfield.failure.check': {
     id: 'followUp.fly.outfield.failure.check', type: 'chance', view: 'runner:second', title: '후속 외야수 처리 실패', tags: ['surprise-event', 'composite-event-step', 'player-position-view'],
     outcomes: [
-      { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.second.outfieldError.clear.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 완전히 뒤로 빠뜨렸습니다!', detail: '2루 주자는 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
-      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.second.outfieldError.ambiguous.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '외야수가 타구를 애매하게 뒤로 빠뜨렸습니다!', detail: '2루 주자가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
+      { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.second.outfieldError.clear.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 완전히 뒤로 빠뜨렸습니다!', detail: '2루 주자는 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
+      { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.second.outfieldError.ambiguous.decide', effects: [{ type: 'record', message: '후속 타자 외야 뜬공, 외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 애매하게 뒤로 빠뜨렸습니다!', detail: '2루 주자가 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
     ],
   },
   'followUp.fly.outfield.runnerThird.check': {
@@ -314,14 +314,14 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     description: '3루 주자: 내야수가 던지는 순간 홈 쇄도를 시도할까요?',
     choices: [
       { id: 'stayThird', label: '안전하게 3루에 머문다', transition: { to: 'followUp.ground.throwingError.check', effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'stay' }, { type: 'announce', title: '3루에 머무릅니다.', detail: '내야수의 송구 결과를 지켜봅니다.' }] } },
-      { id: 'advanceHome', label: '홈으로 쇄도한다', description: '송구 성공 시 성공률 판정', transition: { to: 'followUp.ground.throwingError.check', effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'attempt' }, { type: 'announce', title: '홈 쇄도를 시도합니다.', detail: '내야수의 송구 결과에 따라 진루 성공률이 결정됩니다.' }] } },
+      { id: 'advanceHome', label: '홈으로 쇄도한다', description: '송구 성공 시 성공률 판정', transition: { to: 'followUp.ground.throwingError.check', effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'attempt' }, { type: 'announce', title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.' }] } },
     ],
   },
   'runner.third.groundOut.advance': {
     id: 'runner.third.groundOut.advance', type: 'chance', view: 'runner:third', title: '홈 쇄도',
     outcomes: [
-      { id: 'success', label: '홈 쇄도 성공', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 'home' }, { type: 'record', message: '내야 땅볼 중 홈 쇄도 성공', showInCompletion: false }, { type: 'announce', title: '후속타자의 내야 땅볼 중 홈 쇄도 성공!', detail: '내야수가 던지는 순간 홈에 도착했습니다.', tone: 'positive' }] } },
-      { id: 'out', label: '홈 쇄도 실패', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '내야 땅볼 중 홈 쇄도 실패', showInCompletion: false }, { type: 'announce', title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '홈에서 아웃되었습니다.', tone: 'negative' }] } },
+      { id: 'success', label: '홈 쇄도 성공', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 'home' }, { type: 'record', message: '내야 땅볼 중 홈 쇄도 성공', showInCompletion: false }, { type: 'announce', title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 먼저 홈 쇄도에 성공했습니다.', tone: 'positive', detailScene: 'home-in-positive' }] } },
+      { id: 'out', label: '홈 쇄도 실패', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '내야 땅볼 중 홈 쇄도 실패', showInCompletion: false }, { type: 'announce', title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '송구를 받은 상대 1루수가 홈으로 송구해 추가진루를 시도하던 3루 주자도 아웃되었습니다.', tone: 'negative' }] } },
     ],
   },
   'followUp.ground.fieldingError': {
@@ -329,7 +329,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     type: 'event',
     view: 'runner:first',
     title: '내야수 포구 실책',
-    effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '후속 타자 내야 땅볼 포구 실책' }, { type: 'announcePlayerAdvance', title: '내야수가 땅볼을 포구 실책했습니다!', detail: '한 베이스 진루했습니다.' }],
+    effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '후속 타자 내야 땅볼 포구 실책' }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.' }],
     transition: { to: 'runner.route' },
   },
   'followUp.ground.throwingError.check': {
@@ -349,7 +349,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'result',
     title: '송구 성공 처리',
     routes: [
-      { to: 'followUp.ground.throw.success.advance.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'attempt' }], effects: [{ type: 'applyFollowUpGroundOut' }, { type: 'announce', title: '내야수가 1루 송구를 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' }] },
+      { to: 'followUp.ground.throw.success.advance.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'attempt' }], effects: [{ type: 'applyFollowUpGroundOut', announce: false }, { type: 'announce', title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' }] },
       { to: 'runner.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'stay' }, { field: 'playerBase', operator: 'eq', value: 2 }], effects: [{ type: 'applyFollowUpGroundOut' }, { type: 'announce', title: '후속 타자 내야 땅볼 아웃', detail: '2루에 머물렀습니다.' }] },
       { to: 'runner.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'stay' }, { field: 'playerBase', operator: 'eq', value: 3 }], effects: [{ type: 'applyFollowUpGroundOut' }, { type: 'announce', title: '후속타자의 내야 땅볼 아웃', detail: '3루에 머물렀습니다.' }] },
       { to: 'runner.route', effects: [{ type: 'applyFollowUpGroundOut' }] },

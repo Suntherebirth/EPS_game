@@ -24,8 +24,8 @@ describe('scene media fallback names', () => {
   })
 
   it('uses the view background for the active surprise announcement step', () => {
-    expect(shouldUseViewImageForAnnouncementStep({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', category: 'surprise' }, true)).toBe(true)
-    expect(resolveAnnouncementStepMissingImageName({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', category: 'surprise' }, 1, true)).toBeUndefined()
+    expect(shouldUseViewImageForAnnouncementStep({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', category: 'surprise' }, true)).toBe(true)
+    expect(resolveAnnouncementStepMissingImageName({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', category: 'surprise' }, 1, true)).toBeUndefined()
   })
 
   it('returns expected filenames for surprise-only follow-up announcements', () => {
@@ -34,25 +34,26 @@ describe('scene media fallback names', () => {
   })
 
   it('keeps clear and ambiguous event images distinct', () => {
-    expect(resolveSceneImageFilename({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-clear' }, 1)).toBe('error-outfield-through-clear.png')
-    expect(resolveSceneImageFilename({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 1)).toBe('error-outfield-through-ambiguous.png')
-    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, null)).toBe('wild-pitch-clear.png')
-    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-ambiguous' }, null)).toBe('wild-pitch-ambiguous.png')
+    expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-clear' }, 1)).toBe('error-outfield-through-clear.png')
+    expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 1)).toBe('error-outfield-through-ambiguous.png')
+    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, null)).toBe('wild-pitch-clear.png')
+    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-ambiguous' }, null)).toBe('wild-pitch-ambiguous.png')
   })
 
   it('selects home-in imagery from the detail tone', () => {
     expect(resolveAnnouncementDetailSceneId({ title: '홈 쇄도 성공!', detail: '3루 주자가 홈에 들어왔습니다.', tone: 'positive' })).toBe('home-in-positive')
+    expect(resolveAnnouncementDetailSceneId({ title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 먼저 홈 쇄도에 성공했습니다.', tone: 'positive', detailScene: 'home-in-positive' })).toBe('home-in-positive')
     expect(resolveAnnouncementDetailSceneId({ title: '주자 진루', detail: '홈에 들어왔습니다.', tone: 'neutral' })).toBe('home-in-neutral')
     expect(resolveAnnouncementDetailSceneId({ title: '주자 진루', detail: '홈에 들어왔습니다.' })).toBe('home-in-neutral')
   })
 
   it('uses shared event imagery regardless of player base', () => {
-    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-clear' }, 2)).toBe('dropped-third-strike-clear.png')
-    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-ambiguous' }, 2)).toBe('dropped-third-strike-ambiguous.png')
-    expect(resolveSceneImageFilename({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-clear' }, 2)).toBe('error-outfield-through-clear.png')
-    expect(resolveSceneImageFilename({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 2)).toBe('error-outfield-through-ambiguous.png')
-    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, 2)).toBe('wild-pitch-clear.png')
-    expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-ambiguous' }, 2)).toBe('wild-pitch-ambiguous.png')
+    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-clear' }, 2)).toBe('dropped-third-strike-clear.png')
+    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-ambiguous' }, 2)).toBe('dropped-third-strike-ambiguous.png')
+    expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-clear' }, 2)).toBe('error-outfield-through-clear.png')
+    expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 2)).toBe('error-outfield-through-ambiguous.png')
+    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, 2)).toBe('wild-pitch-clear.png')
+    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-ambiguous' }, 2)).toBe('wild-pitch-ambiguous.png')
   })
 
   it('keeps a follow-up hit title at its starting base and shows detail from its destination', () => {

@@ -160,7 +160,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       next.bases = next.bases.filter((base) => base !== playerBase)
       next.playerBase = null
     }
-    setAnnouncement(next, ANNOUNCEMENTS.followUpGroundOut(playerBase, next.outs, playerIsForced))
+    if (effect.announce ?? true) setAnnouncement(next, ANNOUNCEMENTS.followUpGroundOut(playerBase, next.outs, playerIsForced))
   }
 
   if (effect.type === 'applyGroundForceOut') {

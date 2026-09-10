@@ -23,7 +23,7 @@ export type ScenarioEffect =
   | { type: 'forceWalk'; creditHit?: boolean }
   | { type: 'scoreAll'; creditHit: boolean }
   | { type: 'applyBattingEvent' }
-  | { type: 'applyFollowUpGroundOut' }
+  | { type: 'applyFollowUpGroundOut'; announce?: boolean }
   | { type: 'applyGroundForceOut' }
   | { type: 'applyGroundDoublePlay' }
   | { type: 'applyOutfieldDropWithSecondRunner' }

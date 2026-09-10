@@ -14,13 +14,13 @@ export const ANNOUNCEMENTS = {
   playComplete: '플레이가 완료되었습니다.',
   playEnded: message('플레이 종료', '3아웃 · 공수교대입니다.', 'negative'),
   followUpOutfieldError: (clear: boolean) => message(
-    '외야수가 타구를 뒤로 빠뜨렸습니다.',
+    '상대 외야수가 타구를 뒤로 빠뜨렸습니다.',
     clear ? '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' : '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.',
     clear ? 'positive' : 'caution',
     clear ? 'error-outfield-through-clear' : 'error-outfield-through-ambiguous',
   ),
-  groundFieldingSuccess: message('내야수가 땅볼을 포구했습니다!', '1루 송구를 준비합니다.'),
-  groundThrowSuccess: message('내야수가 1루 송구를 성공했습니다!', '타자 주자를 1루에서 처리합니다.'),
+  groundFieldingSuccess: message('상대 내야수가 땅볼 포구에 성공했습니다!', '1루 송구를 준비합니다.'),
+  groundThrowSuccess: message('상대 내야수가 1루 송구에 성공했습니다!', '타자 주자를 1루에서 처리합니다.'),
   followUpGroundOut: (playerBase: number | null, outs: number, playerIsForced: boolean) => {
     const forceOutBase = playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`
     if (playerIsForced) {
