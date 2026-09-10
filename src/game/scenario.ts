@@ -131,6 +131,7 @@ export type ScenarioAnnouncement = {
   detail: string
   tone?: 'positive' | 'negative' | 'caution' | 'neutral'
   scene?: SceneId
+  sceneBase?: number | null
 }
 
 export type ScenarioAnnouncementHistoryEntry = {

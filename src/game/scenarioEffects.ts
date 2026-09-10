@@ -230,10 +230,10 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     if (resolved.announcement?.title === '플레이 종료') resolved.announcement = undefined
     resolved.flags.advancedByFollowUpHit = event.hit && before !== null && resolved.playerBase !== null && resolved.playerBase > before
     if (resolved.outs >= 3) {
-      setAnnouncement(resolved, ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, resolved.outs))
+      setAnnouncement(resolved, { ...ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, resolved.outs), sceneBase: before })
       return resolved
     }
-    setAnnouncement(resolved, ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, resolved.outs))
+    setAnnouncement(resolved, { ...ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, resolved.outs), sceneBase: before })
     return resolved
   }
 

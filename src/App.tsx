@@ -15,6 +15,8 @@ import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenario
 import type { ScenarioState, ScenarioView } from './game/scenario'
 import {
   buildAnnouncementImageTrail,
+  resolveAnnouncementDetailView,
+  resolveAnnouncementImageBase,
   resolveSceneImage,
   resolveSceneImageFilename,
   resolveViewImage,
@@ -195,8 +197,8 @@ function App() {
   const sceneImageView: ScenarioView = sceneCurrentViewBase ? `runner:${sceneCurrentViewBase === 1 ? 'first' : sceneCurrentViewBase === 2 ? 'second' : 'third'}` : sceneNode.view
   const isSurpriseScene = sceneNode.tags?.includes('surprise-event') ?? false
   const sceneAnnouncements = getAnnouncementMessages(displayedState)
+  const sceneDetailView = resolveAnnouncementDetailView(sceneImageView, displayedState.context.playerBase)
   const sceneImageTrail = buildAnnouncementImageTrail(sceneAnnouncements, sceneImageView, displayedState.context.playerBase)
-  const sceneViewImageUrl = resolveViewImage(sceneImageView)
   const sceneAnnouncementCount = sceneAnnouncements.length
   // 일반 흐름: 각 장면은 이미지 + 누적 아나운스 묶음으로 표시하고, 탭으로 다음 장면으로 진행한다.
   // 마지막 발표가 끝나면 일정 시간 뒤 자동으로 최종 시점 이미지와 선택지로 전환한다.
@@ -210,14 +212,16 @@ function App() {
   const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneEventIndex + 1
   const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
   const isSurpriseAnnouncement = currentAnnouncement?.category === 'surprise'
+  const sceneDetailViewImageUrl = resolveViewImage(sceneDetailView)
   const sceneMissingImageName = sceneIsDetailStep || isSurpriseAnnouncement
-    ? (sceneViewImageUrl ? undefined : resolveViewImageFilename(sceneImageView))
+    ? (sceneDetailViewImageUrl ? undefined : resolveViewImageFilename(sceneDetailView))
     : (() => {
       if (!currentAnnouncement) return undefined
-      const expectedImage = resolveSceneImage(currentAnnouncement, displayedState.context.playerBase)
-      return expectedImage ? undefined : resolveSceneImageFilename(currentAnnouncement, displayedState.context.playerBase)
+      const imageBase = resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase)
+      const expectedImage = resolveSceneImage(currentAnnouncement, imageBase)
+      return expectedImage ? undefined : resolveSceneImageFilename(currentAnnouncement, imageBase)
     })()
-  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsDetailStep || isSurpriseAnnouncement ? sceneViewImageUrl : sceneImageTrail[sceneEventIndex])
+  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsDetailStep || isSurpriseAnnouncement ? sceneDetailViewImageUrl : sceneImageTrail[sceneEventIndex])
   const advanceScene = () => {
     if (sceneIsFinalStep) return
     setTapProgress({ key: sceneSequenceKey, step: sceneStep + 1 })
@@ -374,10 +378,10 @@ function App() {
     ? node.description.startsWith(`${currentViewBase}루 주자:`) ? node.description : `${currentViewBase}루 주자: ${node.description}`
     : node.type === 'choice' ? node.description : undefined
   const surpriseOverlayImageUrl = surpriseOverlayAnnouncement
-    ? resolveSceneImage(surpriseOverlayAnnouncement, displayedState.context.playerBase)
+    ? resolveSceneImage(surpriseOverlayAnnouncement, resolveAnnouncementImageBase(surpriseOverlayAnnouncement, displayedState.context.playerBase))
     : undefined
   const surpriseOverlayImageName = surpriseOverlayAnnouncement
-    ? resolveSceneImageFilename(surpriseOverlayAnnouncement, displayedState.context.playerBase)
+    ? resolveSceneImageFilename(surpriseOverlayAnnouncement, resolveAnnouncementImageBase(surpriseOverlayAnnouncement, displayedState.context.playerBase))
     : undefined
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
   const canAct = phase === 'playing' && sceneIsFinalStep

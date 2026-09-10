@@ -29,6 +29,18 @@ const EVENT_IMAGES = Object.fromEntries(
   ).map(([path, url]) => [path.split('/').pop()!.replace(/\.[^.]+$/, ''), url]),
 )
 
+const SHARED_FIRST_BASE_IMAGE_SCENES = new Set<SceneId>([
+  'dropped-third-strike-clear',
+  'dropped-third-strike-ambiguous',
+  'error-outfield-through-clear',
+  'error-outfield-through-ambiguous',
+  'wild-pitch-clear',
+  'wild-pitch-ambiguous',
+])
+
+const resolveSceneImageBase = (sceneId: SceneId, playerBase: number | null): number | null =>
+  playerBase === 2 && SHARED_FIRST_BASE_IMAGE_SCENES.has(sceneId) ? 1 : playerBase
+
 /**
  * 아나운스 문구 → 연출 이미지 ID.
  * 이펙트에 `scene`을 직접 지정하면 이 표보다 우선한다. 같은 문구를 다른 연출로 나눠야 하면 `scene`을 쓴다.
@@ -38,6 +50,10 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '2루타 성공!': 'hit-double',
   '3루타 성공!': 'hit-triple',
   '홈런!': 'hit-home-run',
+  '후속타자의 1루타!': 'hit-single',
+  '후속타자의 2루타!': 'hit-double',
+  '후속타자의 3루타!': 'hit-triple',
+  '후속타자의 홈런!': 'hit-home-run',
   '내야안타!': 'hit-infield',
   '볼넷!': 'walk',
   '사구!': 'hit-by-pitch',
@@ -103,17 +119,25 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
 export const resolveSceneId = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>): SceneId | undefined =>
   announcement.scene ?? SCENE_BY_ANNOUNCEMENT_TITLE[announcement.title]
 
+export const resolveAnnouncementImageBase = (announcement: Pick<ScenarioAnnouncement, 'sceneBase'>, playerBase: number | null): number | null =>
+  announcement.sceneBase ?? playerBase
+
+export const resolveAnnouncementDetailView = (view: ScenarioView, playerBase: number | null): ScenarioView =>
+  playerBase === 1 ? 'runner:first' : playerBase === 2 ? 'runner:second' : playerBase === 3 ? 'runner:third' : view
+
 /** 베이스별 그림이 필요한 연출만 `<sceneId>@2.png` 처럼 추가하면 되고, 없으면 공용 이미지로 떨어진다. */
 export const resolveSceneImage = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, playerBase: number | null): string | undefined => {
   const sceneId = resolveSceneId(announcement)
   if (!sceneId) return undefined
-  return (playerBase ? EVENT_IMAGES[`${sceneId}@${playerBase}`] : undefined) ?? EVENT_IMAGES[sceneId]
+  const imageBase = resolveSceneImageBase(sceneId, playerBase)
+  return (imageBase ? EVENT_IMAGES[`${sceneId}@${imageBase}`] : undefined) ?? EVENT_IMAGES[sceneId]
 }
 
 export const resolveSceneImageFilename = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, playerBase: number | null): string | undefined => {
   const sceneId = resolveSceneId(announcement)
   if (!sceneId) return undefined
-  if (playerBase) return `${sceneId}@${playerBase}.png`
+  const imageBase = resolveSceneImageBase(sceneId, playerBase)
+  if (imageBase) return `${sceneId}@${imageBase}.png`
   return `${sceneId}.png`
 }
 
@@ -126,13 +150,13 @@ export const resolveViewImageFilename = (view: ScenarioView): string | undefined
  * 직전 이미지(없으면 시점 이미지)를 그대로 물려받아 화면이 비지 않게 한다.
  */
 export const buildAnnouncementImageTrail = (
-  announcements: Array<Pick<ScenarioAnnouncement, 'title' | 'scene'>>,
+  announcements: Array<Pick<ScenarioAnnouncement, 'title' | 'scene' | 'sceneBase'>>,
   view: ScenarioView,
   playerBase: number | null,
 ): string[] => {
   let last = resolveViewImage(view)
   return announcements.map((announcement) => {
-    const imageUrl = resolveSceneImage(announcement, playerBase)
+    const imageUrl = resolveSceneImage(announcement, resolveAnnouncementImageBase(announcement, playerBase))
     if (imageUrl) last = imageUrl
     return last ?? ''
   })
