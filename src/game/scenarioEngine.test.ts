@@ -653,13 +653,37 @@ describe('offense core scenario pack', () => {
     const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
     const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
-    expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.' })
+    expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도합니다.' })
     const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
     const advance = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null, runs: 1 })
+  })
+
+  it('announces the batter-runner out before a third-base player is thrown out at home', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const firstRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const stealSecond = chooseScenarioOption(OFFENSE_CORE_PACK, firstRunner, 'stealSecond', { manualChance: true })
+    const secondRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealSecond, 'success', { manualChance: true })
+    const stealThird = chooseScenarioOption(OFFENSE_CORE_PACK, secondRunner, 'stealThird', { manualChance: true })
+    const thirdRunner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, stealThird, 'success', { manualChance: true })
+    const wait = chooseScenarioOption(OFFENSE_CORE_PACK, thirdRunner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
+    const advance = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
+
+    expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도합니다.' })
+    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '내야수의 송구 결과에 따라 진루 성공률이 결정됩니다.' })
+    expect(advance.context.announcement).toEqual({ title: '내야수가 1루 송구를 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' })
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 3, bases: [], playerBase: null, runs: 0 })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
   })
 
   it('offers clear or ambiguous extra-advance choices after a follow-up ground-ball throwing error', () => {
@@ -753,6 +777,9 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
+    expect(result.context.announcementHistory).toEqual(expect.arrayContaining([
+      expect.objectContaining({ announcement: { title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'caution' } }),
+    ]))
     expect(result.context.announcement).toEqual({ title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 홈에 들어왔습니다.', tone: 'positive' })
   })
 

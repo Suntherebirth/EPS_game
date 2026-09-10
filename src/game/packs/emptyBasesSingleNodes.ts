@@ -217,7 +217,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   },
   'runner.third.sacrificeFly.deep.auto': {
     id: 'runner.third.sacrificeFly.deep.auto', type: 'event', view: 'runner:third', title: '명백하게 깊은 외야 플라이',
-    effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'positive' }],
+    effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral' }],
     transition: { to: 'plate.complete' },
   },
   'followUp.fly.outfield.check': {
@@ -261,7 +261,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     description: '3루 주자: 태그업 여부를 선택하세요.',
     choices: [
       { id: 'stayThird', label: '3루에 머무른다', transition: { to: 'runner.route', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 3루에 머뭅니다.', detail: '명백히 진루할 수 있는 타구였지만 태그업하지 않았습니다.', tone: 'caution' }] } },
-      { id: 'tagUp', label: '홈으로 태그업 진루한다', description: '성공률 100%', transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'positive' }] } },
+      { id: 'tagUp', label: '홈으로 태그업 진루한다', description: '성공률 100%', transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', title: '명백하게 깊은 외야 플라이, 태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral' }] } },
     ],
   },
   'followUp.ground.check': {
@@ -284,7 +284,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
       { to: 'followUp.ground.throwingError.check', when: [{ field: 'playerBase', operator: 'eq', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }], effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'none' }] },
       { to: 'followUp.ground.throwingError.check', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'bases', operator: 'includes', value: [1, 2, 3] }], effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'none' }] },
       { to: 'runner.second.groundOut.decide', when: [{ field: 'playerBase', operator: 'eq', value: 2 }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', title: '상대 내야수, 1루 송구 준비 완료!', detail: '2루 주자는 송구 시점에 맞춰 3루 진루를 시도할 수 있습니다.' }] },
-      { to: 'runner.third.groundOut.decide', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.' }] },
+      { to: 'runner.third.groundOut.decide', when: [{ field: 'playerBase', operator: 'eq', value: 3 }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 송구 시점에 맞춰 홈 쇄도를 시도합니다.' }] },
       { to: 'followUp.ground.throwingError.check', effects: [{ type: 'setFlag', key: 'groundAdvanceIntent', value: 'none' }] },
     ],
   },
@@ -349,7 +349,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'result',
     title: '송구 성공 처리',
     routes: [
-      { to: 'followUp.ground.throw.success.advance.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'attempt' }], effects: [{ type: 'applyFollowUpGroundOut' }] },
+      { to: 'followUp.ground.throw.success.advance.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'attempt' }], effects: [{ type: 'applyFollowUpGroundOut' }, { type: 'announce', title: '내야수가 1루 송구를 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' }] },
       { to: 'runner.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'stay' }, { field: 'playerBase', operator: 'eq', value: 2 }], effects: [{ type: 'applyFollowUpGroundOut' }, { type: 'announce', title: '후속 타자 내야 땅볼 아웃', detail: '2루에 머물렀습니다.' }] },
       { to: 'runner.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'stay' }, { field: 'playerBase', operator: 'eq', value: 3 }], effects: [{ type: 'applyFollowUpGroundOut' }, { type: 'announce', title: '후속타자의 내야 땅볼 아웃', detail: '3루에 머물렀습니다.' }] },
       { to: 'runner.route', effects: [{ type: 'applyFollowUpGroundOut' }] },
@@ -390,12 +390,12 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   },
   'followUp.ground.throw.error.attempt.clear': {
     id: 'followUp.ground.throw.error.attempt.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루',
-    effects: [{ type: 'forceWalk' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 완전히 빠진 송구를 틈타 추가 진루에 성공했습니다.', homeDetail: '1루수 뒤로 완전히 빠진 송구를 틈타 홈에 들어왔습니다.', tone: 'positive' }],
+    effects: [{ type: 'forceWalk' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'positive' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 완전히 빠진 송구를 틈타 추가 진루에 성공했습니다.', homeDetail: '1루수 뒤로 완전히 빠진 송구를 틈타 홈에 들어왔습니다.', tone: 'positive' }],
     transition: { to: 'followUp.ground.throw.extra.clear.route' },
   },
   'followUp.ground.throw.error.attempt.ambiguous': {
     id: 'followUp.ground.throw.error.attempt.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루',
-    effects: [{ type: 'forceWalk' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 추가 진루에 성공했습니다.', homeDetail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 홈에 들어왔습니다.', tone: 'positive' }],
+    effects: [{ type: 'forceWalk' }, { type: 'announce', title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'caution' }, { type: 'advancePlayer' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책, 추가 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '내야 땅볼 송구 실책 추가 진루 성공!', detail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 추가 진루에 성공했습니다.', homeDetail: '1루수 뒤로 애매하게 빠진 송구였지만 이미 스타트를 끊어 홈에 들어왔습니다.', tone: 'positive' }],
     transition: { to: 'followUp.ground.throw.extra.ambiguous.route' },
   },
   'followUp.ground.throw.extra.clear.route': {
