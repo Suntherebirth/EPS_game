@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAnnouncementImageTrail, resolveAnnouncementDetailSceneId, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveViewImageFilename, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
+import { buildAnnouncementImageTrail, resolveAnnouncementDetailSceneId, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveViewImageFilename, shouldShareDetailSceneForTitle, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
 
 describe('scene media fallback names', () => {
   it('returns the expected filename for an infield ground ball event', () => {
@@ -49,6 +49,15 @@ describe('scene media fallback names', () => {
 
   it('uses the ambiguous sacrifice fly image during a deep fly tag-up attempt', () => {
     expect(resolveSceneImageFilename({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', scene: undefined }, 3)).toBe('sacrifice-fly-ambiguous.png')
+  })
+
+  it('shares a dedicated detail scene only when explicitly requested', () => {
+    expect(shouldShareDetailSceneForTitle({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', detail: '안전하게 태그업할 수 있는 타구입니다.', detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(resolveAnnouncementDetailSceneId({ title: '태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral' })).toBe('home-in-neutral')
+    expect(shouldShareDetailSceneForTitle({ title: '태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(shouldShareDetailSceneForTitle({ title: '위험을 감수하고 태그업을 시도합니다.', detail: '홈 태그업 성공률 60%', detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(shouldShareDetailSceneForTitle({ title: '태그업 성공!', detail: '3루 주자가 홈에 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(shouldShareDetailSceneForTitle({ title: '2루타 성공!', detail: '2루에 도착했습니다.' })).toBe(false)
   })
 
   it('uses shared event imagery regardless of player base', () => {

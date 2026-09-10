@@ -49,6 +49,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       ...(effect.tone ? { tone: effect.tone } : next.outs >= 3 ? { tone: 'negative' as const } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
       ...(effect.detailScene ? { detailScene: effect.detailScene } : {}),
+      ...(effect.titleImageMode ? { titleImageMode: effect.titleImageMode } : {}),
     }, viewLabel, effect.category)
   }
   if (effect.type === 'announceFollowUpOutfieldError') {

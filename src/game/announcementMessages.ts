@@ -19,8 +19,8 @@ export const ANNOUNCEMENTS = {
     clear ? 'positive' : 'caution',
     clear ? 'error-outfield-through-clear' : 'error-outfield-through-ambiguous',
   ),
-  groundFieldingSuccess: message('상대 내야수가 땅볼 포구에 성공했습니다!', '1루 송구를 준비합니다.'),
-  groundThrowSuccess: message('상대 내야수가 1루 송구에 성공했습니다!', '타자 주자를 1루에서 처리합니다.'),
+  groundFieldingSuccess: { ...message('상대 내야수가 땅볼 포구에 성공했습니다!', '1루 송구를 준비합니다.'), titleImageMode: 'same-as-detail-scene' as const },
+  groundThrowSuccess: { ...message('상대 내야수가 1루 송구에 성공했습니다!', '타자 주자를 1루에서 처리합니다.'), titleImageMode: 'same-as-detail-scene' as const },
   followUpGroundOut: (playerBase: number | null, outs: number, playerIsForced: boolean) => {
     const forceOutBase = playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`
     if (playerIsForced) {

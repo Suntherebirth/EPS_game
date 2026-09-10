@@ -96,7 +96,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '3루 진루 실패': 'advance-third-out',
   '폭투 진루 성공!': 'wild-pitch-advance-safe',
   '폭투 진루 실패': 'wild-pitch-advance-out',
-  '명백하게 깊은 외야 플라이, 태그업 성공!': 'sacrifice-fly-safe',
+  '태그업 성공!': 'sacrifice-fly-safe',
   '위험을 감수한 태그업 성공!': 'sacrifice-fly-safe',
   '위험을 감수한 태그업 실패': 'sacrifice-fly-out',
 
@@ -140,6 +140,10 @@ export const resolveAnnouncementDetailSceneId = (
   if (!HOME_IN_DETAIL.test(announcement.detail)) return undefined
   return announcement.tone === 'positive' ? 'home-in-positive' : 'home-in-neutral'
 }
+
+export const shouldShareDetailSceneForTitle = (
+  announcement: Pick<ScenarioAnnouncement, 'titleImageMode' | 'title' | 'detail' | 'tone' | 'detailScene'> | undefined,
+): boolean => announcement?.titleImageMode === 'same-as-detail-scene' && Boolean(resolveAnnouncementDetailSceneId(announcement))
 
 /**
  * 아나운스별로 탭 진행 중 배경에 깔릴 이미지를 만든다. 해당 아나운스에 연출 이미지가 없으면

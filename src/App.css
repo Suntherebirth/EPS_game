@@ -43,7 +43,9 @@ button { font: inherit; }
 .media-stage { position: relative; height: 100%; min-height: 0; overflow: hidden; color: white; background-color: var(--green); background-image: linear-gradient(rgba(9,31,22,.12), rgba(9,31,22,.12)), repeating-linear-gradient(100deg, transparent 0, transparent 4rem, rgba(255,255,255,.018) 4rem, rgba(255,255,255,.018) 8rem); }
 .media-stage video, .media-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .media-stage img { animation: scene-fade .26s ease-out; }
+.media-stage img.preserve-image { animation: none; }
 .game-grid.surprise-overlay-visible .media-stage video, .game-grid.surprise-overlay-visible .media-stage img { opacity: .68; transition: opacity .3s ease; }
+.media-stage.background-dimmed video, .media-stage.background-dimmed img { opacity: .68; transition: opacity .3s ease; }
 .media-image-fallback { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; background: rgba(9, 16, 13, .52); backdrop-filter: blur(3px); }
 .media-image-fallback span { max-width: 80%; padding: .75rem 1.1rem; border: 1px dashed rgba(255,255,255,.48); border-radius: 999px; background: rgba(11,19,16,.78); color: #edf2ee; font-size: clamp(.86rem, 2vw, 1.3rem); font-weight: 800; letter-spacing: .04em; text-align: center; text-transform: lowercase; }
 @keyframes scene-fade { from { opacity: 0; } to { opacity: 1; } }
