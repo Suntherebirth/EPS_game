@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAnnouncementImageTrail, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveViewImageFilename, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
+import { buildAnnouncementImageTrail, resolveAnnouncementDetailSceneId, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveViewImageFilename, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
 
 describe('scene media fallback names', () => {
   it('returns the expected filename for an infield ground ball event', () => {
@@ -38,6 +38,12 @@ describe('scene media fallback names', () => {
     expect(resolveSceneImageFilename({ title: '외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 1)).toBe('error-outfield-through-ambiguous.png')
     expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, null)).toBe('wild-pitch-clear.png')
     expect(resolveSceneImageFilename({ title: '포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-ambiguous' }, null)).toBe('wild-pitch-ambiguous.png')
+  })
+
+  it('selects home-in imagery from the detail tone', () => {
+    expect(resolveAnnouncementDetailSceneId({ title: '홈 쇄도 성공!', detail: '3루 주자가 홈에 들어왔습니다.', tone: 'positive' })).toBe('home-in-positive')
+    expect(resolveAnnouncementDetailSceneId({ title: '주자 진루', detail: '홈에 들어왔습니다.', tone: 'neutral' })).toBe('home-in-neutral')
+    expect(resolveAnnouncementDetailSceneId({ title: '주자 진루', detail: '홈에 들어왔습니다.' })).toBe('home-in-neutral')
   })
 
   it('uses shared event imagery regardless of player base', () => {

@@ -15,6 +15,7 @@ import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenario
 import type { ScenarioState, ScenarioView } from './game/scenario'
 import {
   buildAnnouncementImageTrail,
+  resolveAnnouncementDetailSceneId,
   resolveAnnouncementDetailView,
   resolveAnnouncementImageBase,
   resolveBaseArrivalEffect,
@@ -214,8 +215,9 @@ function App() {
   const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneEventIndex + 1
   const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
   const isSurpriseAnnouncement = currentAnnouncement?.category === 'surprise'
-  const sceneDetailAnnouncement = currentAnnouncement?.detailScene
-    ? { title: currentAnnouncement.title, scene: currentAnnouncement.detailScene }
+  const sceneDetailScene = resolveAnnouncementDetailSceneId(currentAnnouncement)
+  const sceneDetailAnnouncement = sceneDetailScene
+    ? { title: currentAnnouncement!.title, scene: sceneDetailScene }
     : undefined
   const sceneDetailImageUrl = sceneDetailAnnouncement
     ? resolveSceneImage(sceneDetailAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase))

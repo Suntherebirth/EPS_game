@@ -130,6 +130,18 @@ export const resolveViewImage = (view: ScenarioView): string | undefined => VIEW
 
 export const resolveViewImageFilename = (view: ScenarioView): string | undefined => VIEW_IMAGE_FILENAMES[view]
 
+const HOME_IN_DETAIL = /홈에 (?:안전하게 )?들어왔습니다/
+
+/** 홈인 detail은 tone에 맞는 전용 이미지를 사용한다. */
+export const resolveAnnouncementDetailSceneId = (
+  announcement: Pick<ScenarioAnnouncement, 'title' | 'detail' | 'tone' | 'detailScene'> | undefined,
+): SceneId | undefined => {
+  if (!announcement) return undefined
+  if (announcement.detailScene) return announcement.detailScene
+  if (!HOME_IN_DETAIL.test(announcement.detail)) return undefined
+  return announcement.tone === 'positive' ? 'home-in-positive' : 'home-in-neutral'
+}
+
 /**
  * 아나운스별로 탭 진행 중 배경에 깔릴 이미지를 만든다. 해당 아나운스에 연출 이미지가 없으면
  * 직전 이미지(없으면 시점 이미지)를 그대로 물려받아 화면이 비지 않게 한다.
