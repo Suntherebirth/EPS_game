@@ -59,7 +59,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'announcePlayerAdvance') {
     setAnnouncement(next, {
       title: effect.title,
-      detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : effect.detail, next.playerBase),
+      detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : (formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.'),
       ...(effect.tone ? { tone: effect.tone } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
     }, viewLabel, effect.category)
