@@ -89,8 +89,8 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'strikeout.catcher.check': {
       id: 'strikeout.catcher.check', type: 'chance', view: 'batter', title: '포수 포구 판정',
       outcomes: [
-        { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.droppedThirdStrikeClear, transition: { to: 'strikeout.clearDrop.decide', effects: [{ type: 'record', message: '낫아웃, 포수가 공을 완전히 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.', tone: 'positive', scene: 'dropped-third-strike-clear' }] } },
-        { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.droppedThirdStrikeAmbiguous, transition: { to: 'strikeout.ambiguousDrop.decide', effects: [{ type: 'record', message: '낫아웃, 포수가 공을 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 열심히 뛴다면 살 수 있을지도 모릅니다.', scene: 'dropped-third-strike-ambiguous' }] } },
+        { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.droppedThirdStrikeClear, transition: { to: 'strikeout.clearDrop.decide', effects: [{ type: 'record', message: '낫아웃, 포수가 공을 완전히 빠뜨림', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.defense.droppedThirdStrikeClear, tone: 'positive', scene: 'dropped-third-strike-clear' }] } },
+        { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.droppedThirdStrikeAmbiguous, transition: { to: 'strikeout.ambiguousDrop.decide', effects: [{ type: 'record', message: '낫아웃, 포수가 공을 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.defense.droppedThirdStrikeAmbiguous, scene: 'dropped-third-strike-ambiguous' }] } },
         { id: 'caught', label: '포수 정상 포구', weight: 1 - RUNNING_CHANCES.droppedThirdStrikeClear - RUNNING_CHANCES.droppedThirdStrikeAmbiguous, transition: { to: 'out.strikeout.generic' } },
       ],
     },
@@ -200,7 +200,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'ground.infield.fieldingError': {
       id: 'ground.infield.fieldingError', type: 'event', view: 'runner:first', title: '내야수 포구 실책',
-      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 포구 실책' }, { type: 'announce', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '실책으로 1루에 출루했습니다.' }],
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 포구 실책' }, { type: 'announce', ...ANNOUNCEMENTS.infieldFieldingError }],
       transition: { to: 'runner.route' },
     },
     'ground.infield.throwingError.check': {
@@ -229,8 +229,8 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'fly.outfield.failure.check': {
       id: 'fly.outfield.failure.check', type: 'chance', view: 'batter', title: '외야수 처리 실패', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.first.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' }] } },
-        { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.', tone: 'caution', scene: 'error-outfield-through-ambiguous' }] } },
+        { id: 'clearDrop', label: '명백하게 완전히 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropClear / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.first.clearDrop.decide', effects: [{ type: 'record', message: '외야수 공 완전 빠뜨림', showInCompletion: false }, { type: 'announce', ...ANNOUNCEMENTS.outfieldError(true) }] } },
+        { id: 'ambiguousDrop', label: '애매하게 뒤로 빠뜨림', weight: RUNNING_CHANCES.outfieldDropAmbiguous / (RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous), transition: { to: 'runner.first.ambiguousDrop.decide', effects: [{ type: 'record', message: '외야수 공 애매하게 빠뜨림', showInCompletion: false }, { type: 'announce', ...ANNOUNCEMENTS.outfieldError(false) }] } },
       ],
     },
     'fly.outfield.runnerSecond.check': {

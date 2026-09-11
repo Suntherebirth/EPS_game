@@ -6,6 +6,7 @@ import { applyScenarioEffect } from './scenarioEffects'
 import { validateScenarioPack, type ScenarioContext } from './scenario'
 import { ANNOUNCEMENTS } from './announcementMessages'
 import { isRunnerForced } from './gameSetup'
+import { formatCurrentPlayerText, SCENARIO_TEXT } from './scenarioText'
 
 const context = (outs = 0, bases: number[] = []): ScenarioContext => ({
   outs,
@@ -54,7 +55,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [], playerBase: null, runs: 4, hits: 1 })
-    expect(result.context.announcement).toEqual({ title: '홈런!', detail: '타자와 모든 주자가 홈에 들어왔습니다.', tone: 'positive' })
+    expect(result.context.announcement).toEqual({ ...SCENARIO_TEXT.batting.homeRun, tone: 'positive' })
   })
 
   it('continues to the second-base runner decision after a double', () => {
@@ -63,7 +64,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context).toMatchObject({ bases: [2, 3], playerBase: 2, hits: 1 })
-    expect(result.context.announcement).toEqual({ title: '2루타 성공!', detail: '2루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual(SCENARIO_TEXT.batting.double)
   })
 
   it('continues to the third-base runner decision after a triple', () => {
@@ -72,7 +73,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.third.decide')
     expect(result.context).toMatchObject({ bases: [3], playerBase: 3, runs: 1, hits: 1 })
-    expect(result.context.announcement).toEqual({ title: '3루타 성공!', detail: '3루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual(SCENARIO_TEXT.batting.triple)
   })
 
   it('forces occupied runners on a walk', () => {
@@ -88,7 +89,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 0 })
-    expect(result.context.announcement).toEqual({ title: '볼넷!', detail: '1루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual(SCENARIO_TEXT.batting.walk)
   })
 
   it('moves the player to first and skips outfield chance after a hit by pitch', () => {
@@ -97,7 +98,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 0 })
-    expect(result.context.announcement).toEqual({ title: '사구!', detail: '1루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual(SCENARIO_TEXT.batting.hitByPitch)
   })
 
   it('records a normal strikeout when the catcher secures the ball', () => {
@@ -107,7 +108,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
-    expect(result.context.announcement).toEqual({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.strikeout, tone: 'negative' })
   })
 
   it('does not offer a dropped third strike when first base is occupied with fewer than two outs', () => {
@@ -117,7 +118,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [1, 2, 3], playerBase: null })
-    expect(result.context.announcement).toEqual({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.strikeout, tone: 'negative' })
   })
 
   it('offers distinct fielding and throwing errors for an infield ground ball', () => {
@@ -129,7 +130,7 @@ describe('offense core scenario pack', () => {
 
     expect(fielding.nodeId).toBe('ground.infield.check')
     expect(fieldingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
-    expect(fieldingError.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '실책으로 1루에 출루했습니다.' })
+    expect(fieldingError.context.announcement).toEqual(ANNOUNCEMENTS.infieldFieldingError)
     expect(throwingError.nodeId).toBe('ground.infield.throwingError.check')
     expect(throwingError.context.announcement).toEqual(ANNOUNCEMENTS.groundFieldingSuccess)
     expect(throwingErrorClear.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
@@ -248,7 +249,7 @@ describe('offense core scenario pack', () => {
     expect(fielding.nodeId).toBe('fly.infield.check')
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 1 })
-    expect(result.context.announcement).toEqual({ title: '상대 내야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
+    expect(result.context.announcement).toEqual(ANNOUNCEMENTS.infieldFlyFieldingError)
   })
 
   it('applies the infield fly rule with runners on first and second before two outs', () => {
@@ -258,7 +259,7 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 2, bases: [1, 2], hits: 0 })
     expect(result.context.records).toContain('인필드 플라이 아웃')
-    expect(result.context.announcement).toEqual({ title: '인필드 플라이 선언!', detail: '타자 아웃. 주자는 원래 베이스에 머뭅니다.' })
+    expect(result.context.announcement).toEqual(ANNOUNCEMENTS.infieldFlyRule)
   })
 
   it('keeps a two-out infield fly as one final announcement', () => {
@@ -283,10 +284,10 @@ describe('offense core scenario pack', () => {
     expect(failure.nodeId).toBe('fly.outfield.failure.check')
     expect(result.nodeId).toBe('runner.first.clearDrop.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, hits: 1 })
-    expect(result.context.announcementHistory.at(-1)?.announcement).toEqual({ title: '상대 외야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' })
+    expect(result.context.announcementHistory.at(-1)?.announcement).toEqual(ANNOUNCEMENTS.outfieldFieldingError)
     expect(result.context.announcementHistory.at(-1)?.category).toBe('normal')
     expect(OFFENSE_CORE_PACK.nodes[failure.nodeId]?.tags).not.toContain('surprise-event')
-    expect(result.context.announcement).toEqual({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.', tone: 'positive', scene: 'error-outfield-through-clear' })
+    expect(result.context.announcement).toEqual(ANNOUNCEMENTS.outfieldError(true))
   })
 
   it('announces an outfield fly and then a successful catch as separate steps', () => {
@@ -295,7 +296,7 @@ describe('offense core scenario pack', () => {
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'caught', { manualChance: true })
 
     expect(result.context.announcementHistory[0].announcement.title).toBe('외야 뜬공 발생!')
-    expect(result.context.announcement).toEqual({ title: '뜬공 처리 성공!', detail: '플레이가 완료되었습니다.' })
+    expect(result.context.announcement).toEqual(SCENARIO_TEXT.defense.flyOut)
   })
 
   it('automatically resolves tag-up for a third-base runner when the player bats', () => {
@@ -334,7 +335,7 @@ describe('offense core scenario pack', () => {
     const tagUp = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'tagUp', { manualChance: true })
 
     expect(tagUp.nodeId).toBe('runner.third.sacrificeFly.deep.advance')
-    expect(tagUp.context.announcement).toEqual({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', detail: '안전하게 태그업할 수 있는 타구입니다.', detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' })
+    expect(tagUp.context.announcement).toEqual({ ...SCENARIO_TEXT.running.deepTagUpAttempt, detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' })
 
     const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'out', { manualChance: true })
     const success = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'success', { manualChance: true })
@@ -429,8 +430,8 @@ describe('offense core scenario pack', () => {
     const clear = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'clearDrop', { manualChance: true })
     const ambiguous = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'ambiguousDrop', { manualChance: true })
 
-    expect(clear.context.announcement).toEqual({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.', tone: 'positive', scene: 'dropped-third-strike-clear' })
-    expect(ambiguous.context.announcement).toEqual({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 열심히 뛴다면 살 수 있을지도 모릅니다.', scene: 'dropped-third-strike-ambiguous' })
+    expect(clear.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.droppedThirdStrikeClear, tone: 'positive', scene: 'dropped-third-strike-clear' })
+    expect(ambiguous.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.droppedThirdStrikeAmbiguous, scene: 'dropped-third-strike-ambiguous' })
     expect(RUNNING_CHANCES).toMatchObject({
       runHardOnClearDroppedStrike: 1,
       runSlowOnClearDroppedStrike: 0.5,
@@ -446,7 +447,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1], hits: 1 })
-    expect(result.context.announcement).toEqual({ title: '1루타 성공!', detail: '1루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual(SCENARIO_TEXT.batting.single)
   })
 
   it('offers stay or steal after a single turns second-and-third into first-and-third', () => {
@@ -481,7 +482,7 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context.bases).toEqual([2])
     expect(result.context.records).toContain('2루 도루 성공')
-    expect(result.context.announcement).toEqual({ title: '2루 도루 성공!', detail: '2루에 도착했습니다.' })
+    expect(result.context.announcement).toEqual(SCENARIO_TEXT.steal.secondSuccess)
   })
 
   it('continues to the third-base runner decision on another successful steal', () => {
@@ -505,7 +506,7 @@ describe('offense core scenario pack', () => {
     expect(result.context.outs).toBe(3)
     expect(result.context.bases).toEqual([])
     expect(result.context.records).toContain('2루 도루 실패')
-    expect(result.context.announcement).toEqual({ title: '2루 도루 실패', detail: '3아웃 · 공수교대입니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ ...SCENARIO_TEXT.steal.secondFailure, detail: ANNOUNCEMENTS.sideChange, tone: 'negative' })
   })
 
   it('marks a failed steal as a negative transition before three outs', () => {
@@ -514,7 +515,7 @@ describe('offense core scenario pack', () => {
     const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
     const result = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'stealSecond')
 
-    expect(result.context.announcement).toEqual({ title: '2루 도루 실패', detail: '2루에서 아웃되었습니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ ...SCENARIO_TEXT.steal.secondFailure, tone: 'negative' })
   })
 
   it('announces a side change instead of scoring when a follow-up strikeout makes three outs', () => {
@@ -727,7 +728,7 @@ describe('offense core scenario pack', () => {
     expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
     expect(clearMiss.nodeId).toBe('followUp.ground.throw.extra.clear.decide')
     expect(clearMiss.context).toMatchObject({ bases: [1, 2], playerBase: 2, hits: 1 })
-    expect(clearMiss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.', tone: 'positive' })
+    expect(clearMiss.context.announcement).toEqual(ANNOUNCEMENTS.followUpGroundThrowingErrorClear)
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, clearMiss).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
     const clearAdvance = chooseScenarioOption(OFFENSE_CORE_PACK, clearMiss, 'advance', { manualChance: true })
     const clearAdvanceNode = OFFENSE_CORE_PACK.nodes[clearAdvance.nodeId]
@@ -736,7 +737,7 @@ describe('offense core scenario pack', () => {
 
     expect(ambiguousMiss.nodeId).toBe('followUp.ground.throw.extra.ambiguous.decide')
     expect(ambiguousMiss.context).toMatchObject({ bases: [1, 2], playerBase: 2, hits: 1 })
-    expect(ambiguousMiss.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도할 수 있습니다.', tone: 'caution' })
+    expect(ambiguousMiss.context.announcement).toEqual(ANNOUNCEMENTS.followUpGroundThrowingErrorAmbiguous)
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, ambiguousMiss).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
     const ambiguousAdvance = chooseScenarioOption(OFFENSE_CORE_PACK, ambiguousMiss, 'advance', { manualChance: true })
     const ambiguousAdvanceNode = OFFENSE_CORE_PACK.nodes[ambiguousAdvance.nodeId]
@@ -803,9 +804,14 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
     expect(result.context.announcementHistory).toEqual(expect.arrayContaining([
-      expect.objectContaining({ announcement: { title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', tone: 'caution' } }),
+      expect.objectContaining({ announcement: ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvanceAttempt.ambiguous }),
     ]))
-    expect(result.context.announcement).toEqual({ title: '홈 추가 진루 성공!', detail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 홈에 들어왔습니다.', tone: 'positive' })
+    const expectedAnnouncement = ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.ambiguous
+    expect(result.context.announcement).toEqual({
+      title: expectedAnnouncement.title,
+      detail: formatCurrentPlayerText(expectedAnnouncement.homeDetail, null),
+      tone: expectedAnnouncement.tone,
+    })
   })
 
   it('offers the common outfield error choices after a follow-up hit advances the player', () => {

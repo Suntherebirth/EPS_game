@@ -21,6 +21,8 @@ export const SCENARIO_TEXT = {
 	running: {
 		tagUpSuccess: { title: '태그업 성공!', detail: '3루 주자가 홈에 들어왔습니다.' },
 		tagUpSafeSuccess: { title: '태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.' },
+		deepTagUpAttempt: { title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', detail: '안전하게 태그업할 수 있는 타구입니다.' },
+		deepTagUpFailure: { title: '명백하게 깊은 외야 플라이, 태그업 실패', detail: '3루 주자가 홈에서 아웃되었습니다.' },
 		advanceThirdSuccess: { title: '3루 진루 성공!', detail: '3루에 도착했습니다.' },
 		homeAdvanceSuccess: { title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 먼저 홈 쇄도에 성공했습니다.' },
 		battedBallHomeAdvance: { title: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 성공!', detail: '타자 주자는 1루에서 아웃됐지만 3루 주자가 홈에 들어왔습니다.' },
@@ -30,8 +32,10 @@ export const SCENARIO_TEXT = {
 		tagUpFailure: { title: '위험을 감수한 태그업 실패', detail: '3루 주자가 홈에서 아웃되었습니다.' },
 	},
 		defense: {
+			droppedThirdStrikeClear: { title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.' },
+			droppedThirdStrikeAmbiguous: { title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '애매하게 빠졌습니다. 열심히 뛴다면 살 수 있을지도 모릅니다.' },
 			sideChange: '3아웃 · 공수교대입니다.',
-			fieldingSuccess: { title: '상대 내야수가 땅볼 포구에 성공했습니다!', detail: '1루 송구를 준비합니다.' },
+			fieldingSuccess: { title: '상대 내야수가 땅볼 포구에 성공했습니다!', detail: '송구를 준비합니다.' },
 			throwSuccess: { title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자를 1루에서 처리합니다.' },
 			throwingErrorClear: { title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 완전히 빠졌습니다.\n확실하게 추가 진루할 수 있습니다.' },
 			throwingErrorAmbiguous: { title: '내야 땅볼 송구 실책!', detail: '1루수 뒤로 송구가 애매하게 빠졌습니다.\n추가 진루를 시도해서 성공하면 점수를 얻습니다.\n실패하여 아웃되면 점수를 잃습니다.' },
