@@ -45,10 +45,10 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   }
   if (effect.type === 'setPlayerBase') next.playerBase = effect.value
   if (effect.type === 'announce') {
-    const tone = effect.tone ?? (next.outs >= 3 ? 'negative' as const : resolveAdvanceTone(effect.advance))
+    const tone = effect.tone ?? resolveAdvanceTone(effect.advance)
     setAnnouncement(next, {
       title: effect.title,
-      detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : effect.detail,
+      detail: effect.detail,
       ...(tone ? { tone } : {}),
       ...(effect.advance ? { advance: effect.advance } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
@@ -66,7 +66,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     const tone = effect.tone ?? (scoredRun ? 'positive' as const : resolveAdvanceTone(effect.advance))
     setAnnouncement(next, {
       title: formatCurrentPlayerText(effect.title, next.playerBase) ?? effect.title,
-      detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : (formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 안전하게 들어왔습니다.') : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.'),
+      detail: formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 안전하게 들어왔습니다.') : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.',
       ...(tone ? { tone } : {}),
       ...(effect.advance ? { advance: effect.advance } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
@@ -200,7 +200,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       next.records.push('내야 땅볼, 선행 주자 아웃')
       next.completionRecords.push('내야 땅볼 선행 주자 아웃')
     }
-    setAnnouncement(next, ANNOUNCEMENTS.groundLeadRunnerOut(next.outs, isForced))
+    setAnnouncement(next, ANNOUNCEMENTS.groundLeadRunnerOut(isForced))
   }
 
   if (effect.type === 'applyGroundDoublePlay') {
@@ -209,7 +209,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.outs = Math.min(3, next.outs + 2)
     next.records.push('내야 땅볼, 병살')
     next.completionRecords.push('내야 땅볼 병살')
-    setAnnouncement(next, ANNOUNCEMENTS.groundDoublePlay(next.outs))
+    setAnnouncement(next, ANNOUNCEMENTS.groundDoublePlay())
   }
 
   if (effect.type === 'applyOutfieldDropWithSecondRunner') {
@@ -261,18 +261,23 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     resolved.flags.advancedByFollowUpHit = event.hit && before !== null && resolved.playerBase !== null && resolved.playerBase > before
     const isForcedWalk = event.kind === 'walk' || event.kind === 'hitByPitch'
     if (resolved.outs >= 3) {
-      setAnnouncement(resolved, { ...ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, resolved.outs, isForcedWalk), sceneBase: before })
+      setAnnouncement(resolved, { ...ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, isForcedWalk), sceneBase: before })
       return resolved
     }
-    setAnnouncement(resolved, { ...ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, resolved.outs, isForcedWalk), sceneBase: before })
+    setAnnouncement(resolved, { ...ANNOUNCEMENTS.followUpBattingEvent(followUpTitle, before, resolved.playerBase, isForcedWalk), sceneBase: before })
     return resolved
   }
 
+  return next
+}
+
+export const finalizeScenarioEffects = (context: ScenarioContext): ScenarioContext => {
+  const next = cloneContext(context)
   next.bases.sort((a, b) => a - b)
   if (next.outs >= 3) {
     next.bases = []
     next.playerBase = null
-    if (!next.announcement) next.announcement = ANNOUNCEMENTS.playEnded
+    if (next.announcement?.title !== ANNOUNCEMENTS.playEnded.title) setAnnouncement(next, ANNOUNCEMENTS.playEnded)
   }
   return next
 }

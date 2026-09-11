@@ -1,5 +1,5 @@
 import { BATTING_EVENTS } from './battingEvents'
-import { applyScenarioEffect } from './scenarioEffects'
+import { applyScenarioEffect, finalizeScenarioEffects } from './scenarioEffects'
 import { formatScenarioText } from './scenarioText'
 import type {
   BattingNode,
@@ -48,7 +48,7 @@ const getNodeViewLabel = (pack: ScenarioPack, nodeId: string, context: ScenarioC
 
 const applyEffects = (pack: ScenarioPack, state: ScenarioState, effects: ScenarioTransition['effects'] = []) => {
   const viewLabel = getNodeViewLabel(pack, state.nodeId, state.context)
-  return effects.reduce((context, effect) => applyScenarioEffect(context, effect, viewLabel), state.context)
+  return finalizeScenarioEffects(effects.reduce((context, effect) => applyScenarioEffect(context, effect, viewLabel), state.context))
 }
 
 const applyTransition = (pack: ScenarioPack, state: ScenarioState, transition: ScenarioTransition): ScenarioState => {

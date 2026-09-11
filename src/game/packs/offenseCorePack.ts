@@ -44,7 +44,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'excludes', value: [1] }] },
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'eq', value: 2 }] },
         { to: 'out.strikeout.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }] },
-        { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
+        { to: 'ground.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield-fielder-moving' }] },
         { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
         { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }], effects: [{ type: 'announce', title: '내야 뜬공 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
         { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-fly-outfield-fielder-moving' }] },
@@ -206,7 +206,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.throwingError.check': {
       id: 'ground.infield.throwingError.check', type: 'chance', view: 'batter', title: '내야 땅볼 1루 송구 판정', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'throwSuccess', label: '송구 성공', weight: GROUND_THROW_SUCCESS_AFTER_FIELDING, transition: { to: 'ground.infield.clean.route', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccess, scene: 'ground-throw-ready' }] } },
+        { id: 'throwSuccess', label: '송구 성공', weight: GROUND_THROW_SUCCESS_AFTER_FIELDING, transition: { to: 'ground.infield.clean.route', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccess }] } },
         { id: 'clearMiss', label: '명백히 1루수 뒤로 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorClear, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorClear }] } },
         { id: 'ambiguousMiss', label: '1루수 뒤로 애매하게 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorAmbiguous, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '내야 땅볼 송구 실책' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorAmbiguous }] } },
       ],

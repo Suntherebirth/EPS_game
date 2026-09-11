@@ -120,7 +120,11 @@ button { font: inherit; }
 .tap-continue-button svg { animation: tap-continue-arrow .9s ease-in-out infinite alternate; }
 @media (prefers-reduced-motion: reduce) { .tap-continue-button { animation: none; } }
 .message-flow-connector { display: block; color: rgba(255,255,255,.52); font-size: 12px; font-weight: 800; text-align: center; animation: announcement-step-in .24s cubic-bezier(.2, .8, .2, 1) both; }
-.message-flow-message strong { display: block; color: #fff; font-size: 23px; line-height: 1.35; }
+.message-flow-message strong { display: block; color: #fff; font-size: 23px; line-height: 1.35; -webkit-text-stroke: .7px rgba(255,255,255,.52); paint-order: stroke fill; }
+.message-flow-message.positive strong { -webkit-text-stroke-color: rgba(118,224,180,.72); }
+.message-flow-message.negative strong { -webkit-text-stroke-color: rgba(255,154,140,.72); }
+.message-flow-message.caution strong { -webkit-text-stroke-color: rgba(255,216,117,.72); }
+.message-flow-message.neutral strong { -webkit-text-stroke-color: rgba(255,255,255,.52); }
 .message-flow-message { animation: announcement-step-in .26s cubic-bezier(.2, .8, .2, 1) both; }
 .message-flow-message p { margin: .5rem 0 0; color: rgba(255,255,255,.76); font-size: .875rem; white-space: pre-line; }
 .message-flow-message.surprise-message strong { color: #ffe49a; }
@@ -407,7 +411,11 @@ button { font: inherit; }
 .audit-message.negative { border-left-color: var(--red); }
 .audit-message.caution { border-left-color: var(--gold); }
 .audit-message > span { display: block; margin-bottom: 8px; color: var(--red); font-size: 11px; font-weight: 800; text-align: center; }
-.audit-message strong { display: block; color: var(--ink); font-size: 19px; line-height: 1.4; }
+.audit-message strong { display: block; color: var(--ink); font-size: 19px; line-height: 1.4; -webkit-text-stroke: .6px rgba(21,32,27,.36); paint-order: stroke fill; }
+.audit-message.positive strong { -webkit-text-stroke-color: rgba(36,117,83,.58); }
+.audit-message.negative strong { -webkit-text-stroke-color: rgba(173,51,32,.58); }
+.audit-message.caution strong { -webkit-text-stroke-color: rgba(128,96,25,.58); }
+.audit-message.neutral strong { -webkit-text-stroke-color: rgba(21,32,27,.36); }
 .audit-message p { margin: 7px 0 0; color: #3d4842; font-size: 14px; line-height: 1.6; }
 .audit-message.positive p { color: #247553; font-weight: 800; }
 .audit-message.negative p { color: #ad3320; font-weight: 800; }

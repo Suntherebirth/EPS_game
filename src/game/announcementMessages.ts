@@ -56,7 +56,7 @@ export const ANNOUNCEMENTS = {
   },
   wildPitchAdvanceFailure: { title: '{destination} 진루 실패', detail: '상대 포수의 좋은 송구로 {destination}에서 아웃되었습니다.', tone: 'negative' as const, detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
   groundFieldingSuccess: { ...message(SCENARIO_TEXT.defense.fieldingSuccess.title, SCENARIO_TEXT.defense.fieldingSuccess.detail), detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' as const },
-  groundThrowSuccess: { ...message(SCENARIO_TEXT.defense.throwSuccess.title, SCENARIO_TEXT.defense.throwSuccess.detail), detailScene: 'ground-first-base-catch', titleImageMode: 'same-as-detail-scene' as const },
+  groundThrowSuccess: { ...message(SCENARIO_TEXT.defense.throwSuccess.title, SCENARIO_TEXT.defense.throwSuccess.detail, undefined, 'ground-throw-ready'), detailScene: 'ground-first-base-catch' as const },
   infieldFieldingError: message('상대 내야수가 땅볼 포구에 실패했습니다!', '실책으로 1루에 출루했습니다.'),
   infieldFlyFieldingError: message('상대 내야수가 뜬공 포구에 실패했습니다!', '실책으로 타자 주자가 1루에 진출합니다.'),
   outfieldFieldingError: message('상대 외야수가 뜬공 포구에 실패했습니다!', '실책으로 타자 주자가 1루에 진출합니다.'),
@@ -66,20 +66,20 @@ export const ANNOUNCEMENTS = {
     if (playerIsForced) {
       return shareDetailScene(message(
         '내야 땅볼 포스 아웃!',
-        `후속 타자의 내야 땅볼로 인해 ${forceOutBase}에서 포스 아웃되었습니다.${outs >= 3 ? ` ${ANNOUNCEMENTS.sideChange}` : ''}`,
+        `후속 타자의 내야 땅볼로 인해 ${forceOutBase}에서 포스 아웃되었습니다.`,
         'negative',
       ), 'out-ground-force')
     }
     if (playerBase === 3 && outs < 3) return { ...message('상대 내야수, 1루 송구 준비 완료!', '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', 'caution'), detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' as const }
     if (playerBase === 2) return shareDetailScene(message('후속타자의 내야 땅볼, 정상 수비!', '내야수 송구 순간 3루 진루를 시도할 수 있습니다.'), 'ground-throw-ready')
-    return shareDetailScene(message('후속타자의 내야 땅볼 아웃!', outs >= 3 ? ANNOUNCEMENTS.sideChange : '현재 베이스에 머뭅니다.'), 'ground-first-base-catch')
+    return shareDetailScene(message('후속타자의 내야 땅볼 아웃!', '현재 베이스에 머뭅니다.'), 'ground-first-base-catch')
   },
-  groundLeadRunnerOut: (outs: number, isForced: boolean) => message(
+  groundLeadRunnerOut: (isForced: boolean) => message(
     isForced ? '내야 땅볼 포스 아웃!' : '내야 땅볼 선행 주자 아웃!',
-    outs >= 3 ? ANNOUNCEMENTS.sideChange : '선행 주자가 아웃되고 타자 주자가 1루에 진출했습니다.',
+    '선행 주자가 아웃되고 타자 주자가 1루에 진출했습니다.',
     'negative',
   ),
-  groundForceOut: (outs: number) => ANNOUNCEMENTS.groundLeadRunnerOut(outs, true),
+  groundForceOut: () => ANNOUNCEMENTS.groundLeadRunnerOut(true),
   groundThrowingErrorClear: { ...message(SCENARIO_TEXT.defense.throwingErrorClear.title, SCENARIO_TEXT.defense.throwingErrorClear.detail, 'positive', 'error-first-base-catch-clear') },
   groundThrowingErrorAmbiguous: { ...message(SCENARIO_TEXT.defense.throwingErrorAmbiguous.title, SCENARIO_TEXT.defense.throwingErrorAmbiguous.detail, 'caution', 'error-first-base-catch-ambiguous') },
   followUpGroundThrowingErrorClear: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.', 'positive'), 'error-first-base-catch-clear'),
@@ -94,7 +94,7 @@ export const ANNOUNCEMENTS = {
       detail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination} 추가 진루에 성공했습니다.',
       homeDetail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination}에 들어왔습니다.',
       advance: 'bold' as const,
-      detailScene: 'error-first-base-catch-clear',
+      detailScene: 'advance-ambiguous-safe' as const,
       titleImageMode: 'same-as-detail-scene' as const,
     },
     ambiguous: {
@@ -102,7 +102,7 @@ export const ANNOUNCEMENTS = {
       detail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination} 추가 진루에 성공했습니다.',
       homeDetail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination}에 들어왔습니다.',
       advance: 'bold' as const,
-      detailScene: 'error-first-base-catch-ambiguous',
+      detailScene: 'advance-ambiguous-safe' as const,
       titleImageMode: 'same-as-detail-scene' as const,
     },
   },
@@ -112,20 +112,19 @@ export const ANNOUNCEMENTS = {
       detail: '송구 실책을 이용해 {destination}에 안전하게 도착했습니다.',
       category: 'normal' as const,
       advance: 'normal' as const,
-      detailScene: 'error-first-base-catch-clear',
+      detailScene: 'advance-clear' as const,
       titleImageMode: 'same-as-detail-scene' as const,
     },
     ambiguous: {
       title: '내야 땅볼 송구 실책 추가 진루 성공!',
       detail: '상대 내야수 송구 실책을 틈타 위험을 감수하고 {destination} 추가 진루에 성공했습니다.',
       advance: 'bold' as const,
-      detailScene: 'error-first-base-catch-ambiguous',
+      detailScene: 'advance-ambiguous-safe' as const,
       titleImageMode: 'same-as-detail-scene' as const,
     },
   },
-  groundDoublePlay: (outs: number) => message('내야 땅볼 병살!', outs >= 3 ? ANNOUNCEMENTS.sideChange : '1루 주자와 타자 주자가 모두 아웃되었습니다.', 'negative'),
-  followUpBattingEvent: (title: string, before: number | null, playerBase: number | null, outs: number, isForcedWalk = false) => {
-    if (outs >= 3) return message(title, ANNOUNCEMENTS.sideChange, 'negative')
+  groundDoublePlay: () => message('내야 땅볼 병살!', '1루 주자와 타자 주자가 모두 아웃되었습니다.', 'negative'),
+  followUpBattingEvent: (title: string, before: number | null, playerBase: number | null, isForcedWalk = false) => {
     const stayed = before !== null && playerBase !== null && playerBase === before
     const detail = before === null || playerBase === null
       ? isForcedWalk ? '홈에 걸어서 들어왔습니다.' : '홈에 안전하게 들어왔습니다.'

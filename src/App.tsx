@@ -229,9 +229,13 @@ function App() {
   const sceneAnnouncementCount = sceneAnnouncements.length
   // 일반 흐름: 각 장면은 이미지 + 누적 아나운스 묶음으로 표시하고, 탭으로 다음 장면으로 진행한다.
   // 마지막 발표가 끝나면 일정 시간 뒤 자동으로 최종 시점 이미지와 선택지로 전환한다.
-  const sceneAnnouncementStages = sceneAnnouncements.flatMap((announcement, index) => shouldShareDetailSceneForTitle(announcement)
-    ? [{ announcementIndex: index, showDetail: true }]
-    : [{ announcementIndex: index, showDetail: false }, { announcementIndex: index, showDetail: true }])
+  const sceneAnnouncementStages = sceneAnnouncements.flatMap((announcement, index) => {
+    const announcementStages = shouldShareDetailSceneForTitle(announcement)
+      ? [{ announcementIndex: index, showDetail: true }]
+      : [{ announcementIndex: index, showDetail: false }, { announcementIndex: index, showDetail: true }]
+    const shouldAddChoiceViewStage = index === sceneAnnouncements.length - 1 && sceneNode.type === 'choice' && !isSurpriseScene
+    return shouldAddChoiceViewStage ? [...announcementStages, { announcementIndex: index, showDetail: true, showChoiceView: true }] : announcementStages
+  })
   const sceneTotalTapSteps = sceneAnnouncementCount === 0 ? 1 : sceneAnnouncementStages.length
   const sceneSequenceKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}:${sceneImageView}:${displayedState.context.playerBase ?? 'none'}`
   const [tapProgress, setTapProgress] = useState({ key: '', step: 0 })
@@ -240,6 +244,7 @@ function App() {
   const sceneCurrentStage = sceneAnnouncementStages[sceneStep]
   const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : sceneCurrentStage.announcementIndex
   const sceneIsDetailStep = replay !== null || sceneAnnouncementCount === 0 || sceneCurrentStage.showDetail
+  const sceneIsChoiceViewStep = sceneCurrentStage && 'showChoiceView' in sceneCurrentStage && sceneCurrentStage.showChoiceView
   const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneEventIndex + 1
   const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
   const isSurpriseAnnouncement = currentAnnouncement?.category === 'surprise'
@@ -247,12 +252,17 @@ function App() {
   const sceneDetailAnnouncement = sceneDetailScene
     ? { title: currentAnnouncement!.title, scene: sceneDetailScene }
     : undefined
-  const sceneDetailImageUrl = sceneDetailAnnouncement
+  const shouldUseChoiceViewImage = sceneIsChoiceViewStep
+  const sceneDetailImageUrl = shouldUseChoiceViewImage
+    ? resolveViewImage(sceneDetailView)
+    : sceneDetailAnnouncement
     ? resolveSceneImage(sceneDetailAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase))
     : resolveViewImage(sceneDetailView)
   const shareDetailSceneForTitle = shouldShareDetailSceneForTitle(currentAnnouncement) && Boolean(sceneDetailAnnouncement && sceneDetailImageUrl)
   const sceneMissingImageName = sceneIsDetailStep || isSurpriseAnnouncement || shareDetailSceneForTitle
-    ? (sceneDetailImageUrl ? undefined : sceneDetailAnnouncement
+    ? (sceneDetailImageUrl ? undefined : shouldUseChoiceViewImage
+      ? resolveViewImageFilename(sceneDetailView)
+      : sceneDetailAnnouncement
       ? resolveSceneImageFilename(sceneDetailAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase))
       : resolveViewImageFilename(sceneDetailView))
     : (() => {
