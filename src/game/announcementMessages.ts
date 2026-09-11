@@ -1,4 +1,5 @@
 import type { SceneId, ScenarioAnnouncement } from './scenario'
+import { getPlayerBaseLabel, getPlayerDestinationLabel, SCENARIO_TEXT } from './scenarioText'
 
 type AnnouncementTone = ScenarioAnnouncement['tone']
 
@@ -10,7 +11,7 @@ const message = (title: string, detail: string, tone?: AnnouncementTone, scene?:
 })
 
 export const ANNOUNCEMENTS = {
-  sideChange: '3아웃 · 공수교대입니다.',
+  sideChange: SCENARIO_TEXT.defense.sideChange,
   playComplete: '플레이가 완료되었습니다.',
   playEnded: message('플레이 종료', '3아웃 · 공수교대입니다.', 'negative'),
   followUpOutfieldError: (clear: boolean) => message(
@@ -19,10 +20,10 @@ export const ANNOUNCEMENTS = {
     clear ? 'positive' : 'caution',
     clear ? 'error-outfield-through-clear' : 'error-outfield-through-ambiguous',
   ),
-  groundFieldingSuccess: { ...message('상대 내야수가 땅볼 포구에 성공했습니다!', '1루 송구를 준비합니다.'), titleImageMode: 'same-as-detail-scene' as const },
-  groundThrowSuccess: { ...message('상대 내야수가 1루 송구에 성공했습니다!', '타자 주자를 1루에서 처리합니다.'), titleImageMode: 'same-as-detail-scene' as const },
+  groundFieldingSuccess: { ...message(SCENARIO_TEXT.defense.fieldingSuccess.title, SCENARIO_TEXT.defense.fieldingSuccess.detail), titleImageMode: 'same-as-detail-scene' as const },
+  groundThrowSuccess: { ...message(SCENARIO_TEXT.defense.throwSuccess.title, SCENARIO_TEXT.defense.throwSuccess.detail), titleImageMode: 'same-as-detail-scene' as const },
   followUpGroundOut: (playerBase: number | null, outs: number, playerIsForced: boolean) => {
-    const forceOutBase = playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`
+    const forceOutBase = getPlayerDestinationLabel(playerBase)
     if (playerIsForced) {
       return message(
         '내야 땅볼 포스 아웃!',
@@ -40,16 +41,16 @@ export const ANNOUNCEMENTS = {
     'negative',
   ),
   groundForceOut: (outs: number) => ANNOUNCEMENTS.groundLeadRunnerOut(outs, true),
-  groundThrowingErrorClear: message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠졌습니다.\n확실하게 추가 진루할 수 있습니다.', 'positive', 'error-infield-throwing-clear'),
-  groundThrowingErrorAmbiguous: message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 애매하게 빠졌습니다.\n추가 진루를 시도해서 성공하면 점수를 얻습니다.\n실패하여 아웃되면 점수를 잃습니다.', 'caution', 'error-infield-throwing-ambiguous'),
+  groundThrowingErrorClear: { ...message(SCENARIO_TEXT.defense.throwingErrorClear.title, SCENARIO_TEXT.defense.throwingErrorClear.detail, 'positive', 'error-infield-throwing-clear') },
+  groundThrowingErrorAmbiguous: { ...message(SCENARIO_TEXT.defense.throwingErrorAmbiguous.title, SCENARIO_TEXT.defense.throwingErrorAmbiguous.detail, 'caution', 'error-infield-throwing-ambiguous') },
   groundDoublePlay: (outs: number) => message('내야 땅볼 병살!', outs >= 3 ? ANNOUNCEMENTS.sideChange : '1루 주자와 타자 주자가 모두 아웃되었습니다.', 'negative'),
   followUpBattingEvent: (title: string, before: number | null, playerBase: number | null, outs: number) => {
     if (outs >= 3) return message(title, ANNOUNCEMENTS.sideChange, 'negative')
     const detail = before === null || playerBase === null
       ? '홈에 들어왔습니다.'
       : playerBase === before
-        ? `${before}루에서 움직이지 못했습니다.`
-        : `${playerBase}루에 도착했습니다.`
+        ? `${getPlayerBaseLabel(before)}에서 움직이지 못했습니다.`
+        : `${getPlayerBaseLabel(playerBase)}에 도착했습니다.`
     return message(title, detail, playerBase === null ? 'neutral' : undefined)
   },
 } as const

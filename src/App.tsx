@@ -11,7 +11,8 @@ import {
   type Situation,
 } from './game/gameSetup'
 import { OFFENSE_CORE_PACK } from './game/packs/offenseCorePack'
-import { chooseScenarioChanceOutcome, chooseScenarioOption, formatScenarioText, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
+import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
+import { formatScenarioText } from './game/scenarioText'
 import type { ScenarioState, ScenarioView } from './game/scenario'
 import {
   buildAnnouncementImageTrail,

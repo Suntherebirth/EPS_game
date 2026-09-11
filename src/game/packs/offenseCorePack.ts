@@ -1,6 +1,7 @@
 import { ANNOUNCEMENTS } from '../announcementMessages'
 import { BATTING_EVENTS } from '../battingEvents'
 import { RUNNING_CHANCES } from '../probabilities'
+import { SCENARIO_TEXT } from '../scenarioText'
 import type { ScenarioEffect, ScenarioPack } from '../scenario'
 import { validateScenarioPack } from '../scenario'
 import { EMPTY_BASES_SINGLE_NODES } from './emptyBasesSingleNodes'
@@ -8,12 +9,12 @@ import { EMPTY_BASES_SINGLE_NODES } from './emptyBasesSingleNodes'
 const GROUND_THROWING_ERROR_AFTER_FIELDING = RUNNING_CHANCES.infieldGroundThrowingError / (1 - RUNNING_CHANCES.infieldGroundFieldingError)
 const GROUND_THROW_SUCCESS_AFTER_FIELDING = 1 - GROUND_THROWING_ERROR_AFTER_FIELDING
 
-const completeEvent = (id: string, title: string, effects: ScenarioEffect[]) => ({
+const completeEvent = (id: string, text: { title: string }, effects: ScenarioEffect[]) => ({
   id,
   type: 'event' as const,
   view: 'result' as const,
-  title,
-  effects: [...effects, { type: 'record' as const, message: title }, { type: 'announce' as const, title: `${title}!`, detail: '플레이가 완료되었습니다.' }],
+  title: text.title,
+  effects: [...effects, { type: 'record' as const, message: text.title.replace('!', '') }, { type: 'announce' as const, title: text.title, detail: ANNOUNCEMENTS.playComplete }],
   transition: { to: 'plate.complete' },
 })
 
@@ -62,27 +63,27 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'hit.double.resolve': {
       id: 'hit.double.resolve', type: 'event', view: 'runner:second', title: '2루타',
-      effects: [{ type: 'applyHit', batterTo: 2, creditHit: true }, { type: 'setPlayerBase', value: 2 }, { type: 'record', message: '2루타' }, { type: 'announce', title: '2루타 성공!', detail: '2루에 도착했습니다.' }],
+      effects: [{ type: 'applyHit', batterTo: 2, creditHit: true }, { type: 'setPlayerBase', value: 2 }, { type: 'record', message: '2루타' }, { type: 'announce', ...SCENARIO_TEXT.batting.double }],
       transition: { to: 'runner.route' },
     },
     'hit.triple.resolve': {
       id: 'hit.triple.resolve', type: 'event', view: 'runner:third', title: '3루타',
-      effects: [{ type: 'applyHit', batterTo: 3, creditHit: true }, { type: 'setPlayerBase', value: 3 }, { type: 'record', message: '3루타' }, { type: 'announce', title: '3루타 성공!', detail: '3루에 도착했습니다.' }],
+      effects: [{ type: 'applyHit', batterTo: 3, creditHit: true }, { type: 'setPlayerBase', value: 3 }, { type: 'record', message: '3루타' }, { type: 'announce', ...SCENARIO_TEXT.batting.triple }],
       transition: { to: 'runner.route' },
     },
     'hit.homeRun.resolve': {
       id: 'hit.homeRun.resolve', type: 'event', view: 'batter', title: '홈런',
-      effects: [{ type: 'scoreAll', creditHit: true }, { type: 'record', message: '홈런' }, { type: 'announce', title: '홈런!', detail: '타자와 모든 주자가 홈에 들어왔습니다.', tone: 'positive' }],
+      effects: [{ type: 'scoreAll', creditHit: true }, { type: 'record', message: '홈런' }, { type: 'announce', ...SCENARIO_TEXT.batting.homeRun, tone: 'positive' }],
       transition: { to: 'plate.complete' },
     },
     'walk.resolve': {
       id: 'walk.resolve', type: 'event', view: 'runner:first', title: '볼넷',
-      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '볼넷' }, { type: 'announce', title: '볼넷!', detail: '1루에 도착했습니다.' }],
+      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '볼넷' }, { type: 'announce', ...SCENARIO_TEXT.batting.walk }],
       transition: { to: 'runner.route' },
     },
     'hitByPitch.resolve': {
       id: 'hitByPitch.resolve', type: 'event', view: 'runner:first', title: '사구',
-      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '사구' }, { type: 'announce', title: '사구!', detail: '1루에 도착했습니다.' }],
+      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '사구' }, { type: 'announce', ...SCENARIO_TEXT.batting.hitByPitch }],
       transition: { to: 'runner.route' },
     },
     'strikeout.catcher.check': {
@@ -155,7 +156,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.runnerThird.advance.check': {
       id: 'ground.infield.runnerThird.advance.check', type: 'chance', view: 'batter', title: '3루 주자 홈 쇄도 판정',
       outcomes: [
-        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'addOuts', value: 1 }, { type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', title: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 성공!', detail: '타자 주자는 1루에서 아웃됐지만 3루 주자가 홈에 들어왔습니다.', tone: 'positive' }] } },
+        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'addOuts', value: 1 }, { type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', ...SCENARIO_TEXT.running.battedBallHomeAdvance, tone: 'positive' }] } },
         { id: 'stayThird', label: '3루 주자 잔류', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'out.ground.generic' } },
       ],
     },
@@ -193,7 +194,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.forceOut.runnerThird.advance.check': {
       id: 'ground.infield.forceOut.runnerThird.advance.check', type: 'chance', view: 'batter', title: '3루 주자 홈 쇄도 판정',
       outcomes: [
-        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', title: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 성공!', detail: '1루 주자가 아웃된 사이 3루 주자가 홈에 들어왔습니다.', tone: 'positive' }] } },
+        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', ...SCENARIO_TEXT.running.leadRunnerHomeAdvance, tone: 'positive' }] } },
         { id: 'stayThird', label: '3루 주자 잔류', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route' } },
       ],
     },
@@ -222,7 +223,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'fly.outfield.check', type: 'chance', view: 'batter', title: '외야수 포구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'fieldingFailed', label: '외야수 처리 실패', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.outfield.drop' } },
-        { id: 'caught', label: '뜬공 처리 성공', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
+        { id: 'caught', label: SCENARIO_TEXT.defense.flyOutChoice, weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
       ],
     },
     'fly.outfield.failure.check': {
@@ -236,7 +237,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'fly.outfield.runnerSecond.check', type: 'chance', view: 'runner:second', title: '외야수 포구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'fieldingFailed', label: '외야수 처리 실패', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.outfield.runnerSecond.failure.check', effects: [{ type: 'applyOutfieldDropWithSecondRunner' }, { type: 'record', message: '외야 뜬공, 외야수 포구 실책', showInCompletion: false }, { type: 'announce', title: '상대 외야수가 뜬공 포구에 실패했습니다!', detail: '실책으로 타자 주자가 1루에 진출합니다.' }] } },
-        { id: 'caught', label: '뜬공 처리 성공', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
+        { id: 'caught', label: SCENARIO_TEXT.defense.flyOutChoice, weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.fly.generic' } },
       ],
     },
     'fly.outfield.runnerSecond.failure.check': {
@@ -266,7 +267,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'runner.second.outfieldError.ambiguous.advance', type: 'chance', view: 'runner:second', title: '3루 진루',
       outcomes: [
         { id: 'success', label: '3루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루 성공', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '위험을 감수하고 3루에 도착했습니다.', tone: 'positive' }] } },
-        { id: 'out', label: '3루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: '외야 실책 이용, 3루 진루 실패', showInCompletion: false }, { type: 'announce', title: '3루 진루 실패', detail: '3루에서 아웃되었습니다.', tone: 'negative' }] } },
+        { id: 'out', label: '3루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: '외야 실책 이용, 3루 진루 실패', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.running.thirdBaseFailure, tone: 'negative' }] } },
       ],
     },
     'fly.outfield.drop': {
@@ -278,7 +279,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'fly.infield.check', type: 'chance', view: 'batter', title: '내야수 포구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'fieldingFailed', label: '내야수 처리 실패', weight: RUNNING_CHANCES.outfieldDropClear + RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'fly.infield.drop', effects: [{ type: 'record', message: '내야 뜬공, 내야수 포구 실책', showInCompletion: false }] } },
-        { id: 'caught', label: '뜬공 처리 성공', weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.infieldFly.generic' } },
+        { id: 'caught', label: SCENARIO_TEXT.defense.flyOutChoice, weight: 1 - RUNNING_CHANCES.outfieldDropClear - RUNNING_CHANCES.outfieldDropAmbiguous, transition: { to: 'out.infieldFly.generic' } },
       ],
     },
     'fly.infield.drop': {
@@ -288,19 +289,19 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'infieldFly.rule.out': {
       id: 'infieldFly.rule.out', type: 'event', view: 'batter', title: '인필드 플라이',
-      effects: [{ type: 'addOuts', value: 1 }, { type: 'record', message: '인필드 플라이 아웃' }, { type: 'announce', title: '인필드 플라이 선언!', detail: '타자 아웃. 주자는 원래 베이스에 머뭅니다.' }],
+      effects: [{ type: 'addOuts', value: 1 }, { type: 'record', message: '인필드 플라이 아웃' }, { type: 'announce', ...SCENARIO_TEXT.defense.infieldFlyRule }],
       transition: { to: 'plate.complete' },
     },
-    'hit.infield.generic': completeEvent('hit.infield.generic', '내야안타', [{ type: 'applyHit', batterTo: 1, creditHit: true }]),
-    'error.infield.generic': completeEvent('error.infield.generic', '내야수 땅볼 실책', [{ type: 'applyHit', batterTo: 1, creditHit: false }]),
+    'hit.infield.generic': completeEvent('hit.infield.generic', { title: '내야안타!' }, [{ type: 'applyHit', batterTo: 1, creditHit: true }]),
+    'error.infield.generic': completeEvent('error.infield.generic', { title: '내야수 땅볼 실책!' }, [{ type: 'applyHit', batterTo: 1, creditHit: false }]),
     'out.strikeout.generic': {
       id: 'out.strikeout.generic', type: 'event', view: 'result', title: '삼진',
-      effects: [{ type: 'addOuts', value: 1 }, { type: 'record', message: '삼진' }, { type: 'announce', title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.', tone: 'negative' }],
+      effects: [{ type: 'addOuts', value: 1 }, { type: 'record', message: '삼진' }, { type: 'announce', ...SCENARIO_TEXT.defense.strikeout, tone: 'negative' }],
       transition: { to: 'plate.complete' },
     },
-    'out.ground.generic': completeEvent('out.ground.generic', '땅볼 처리 성공', [{ type: 'addOuts', value: 1 }]),
-    'out.infieldFly.generic': completeEvent('out.infieldFly.generic', '뜬공 처리 성공', [{ type: 'addOuts', value: 1 }]),
-    'out.fly.generic': completeEvent('out.fly.generic', '뜬공 처리 성공', [{ type: 'addOuts', value: 1 }]),
+    'out.ground.generic': completeEvent('out.ground.generic', SCENARIO_TEXT.defense.groundOut, [{ type: 'addOuts', value: 1 }]),
+    'out.infieldFly.generic': completeEvent('out.infieldFly.generic', SCENARIO_TEXT.defense.infieldFlyOut, [{ type: 'addOuts', value: 1 }]),
+    'out.fly.generic': completeEvent('out.fly.generic', SCENARIO_TEXT.defense.flyOut, [{ type: 'addOuts', value: 1 }]),
   },
 }
 

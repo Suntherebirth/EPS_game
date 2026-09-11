@@ -174,6 +174,9 @@ export const validateScenarioPack = (pack: ScenarioPack): string[] => {
     if (node.type === 'choice' && new Set(node.choices.map((choice) => choice.id)).size !== node.choices.length) {
       errors.push(`${node.id}에 중복된 선택지 id가 있습니다.`)
     }
+    if (node.type === 'chance' && new Set(node.outcomes.map((outcome) => outcome.id)).size !== node.outcomes.length) {
+      errors.push(`${node.id}에 중복된 확률 결과 id가 있습니다.`)
+    }
   }
 
   if (!nodes.some((node) => node.type === 'terminal')) errors.push('종료 노드가 하나 이상 필요합니다.')

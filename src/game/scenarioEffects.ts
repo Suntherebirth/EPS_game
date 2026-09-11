@@ -2,6 +2,7 @@ import type { ScenarioContext, ScenarioEffect } from './scenario'
 import { ANNOUNCEMENTS } from './announcementMessages'
 import { BATTING_EVENTS } from './battingEvents'
 import { isRunnerForced } from './gameSetup'
+import { formatCurrentPlayerText, formatScenarioAdvanceFailureText } from './scenarioText'
 
 const cloneContext = (context: ScenarioContext): ScenarioContext => ({
   ...context,
@@ -27,10 +28,6 @@ const makeRoomForRunner = (bases: number[], base: number): { bases: number[]; ru
   const advanced = makeRoomForRunner(withoutRunner, base + 1)
   return { bases: [...advanced.bases, base + 1], runs: advanced.runs }
 }
-
-const playerDestinationLabel = (playerBase: number | null) => playerBase === null ? '홈' : `${playerBase}루`
-
-const nextPlayerDestinationLabel = (playerBase: number | null) => playerBase === 3 ? '홈' : `${(playerBase ?? 0) + 1}루`
 
 export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEffect, viewLabel?: string): ScenarioContext => {
   const next = cloneContext(context)
@@ -62,7 +59,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'announcePlayerAdvance') {
     setAnnouncement(next, {
       title: effect.title,
-      detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : effect.detail.replaceAll('{destination}', playerDestinationLabel(next.playerBase)),
+      detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : effect.detail, next.playerBase),
       ...(effect.tone ? { tone: effect.tone } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
     }, viewLabel, effect.category)
@@ -70,7 +67,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'announcePlayerAdvanceFailure') {
     setAnnouncement(next, {
       title: effect.title,
-      detail: effect.detail.replaceAll('{destination}', nextPlayerDestinationLabel(next.playerBase)),
+      detail: formatScenarioAdvanceFailureText(effect.detail, next.playerBase),
       ...(effect.tone ? { tone: effect.tone } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
     }, viewLabel, effect.category)

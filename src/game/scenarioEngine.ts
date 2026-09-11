@@ -1,5 +1,6 @@
 import { BATTING_EVENTS } from './battingEvents'
 import { applyScenarioEffect } from './scenarioEffects'
+import { formatScenarioText } from './scenarioText'
 import type {
   BattingNode,
   ScenarioCondition,
@@ -44,10 +45,6 @@ const getNodeViewLabel = (pack: ScenarioPack, nodeId: string, context: ScenarioC
   if (node.view === 'batter') return '타석 시점'
   return '결과 화면'
 }
-
-const getPlayerDestinationLabel = (playerBase: number | null) => playerBase === 3 ? '홈' : playerBase === 1 || playerBase === 2 ? `${playerBase + 1}루` : '진루 대상'
-
-export const formatScenarioText = (text: string | undefined, playerBase: number | null) => text?.replaceAll('{destination}', getPlayerDestinationLabel(playerBase))
 
 const applyEffects = (pack: ScenarioPack, state: ScenarioState, effects: ScenarioTransition['effects'] = []) => {
   const viewLabel = getNodeViewLabel(pack, state.nodeId, state.context)
