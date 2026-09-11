@@ -45,6 +45,10 @@ const getNodeViewLabel = (pack: ScenarioPack, nodeId: string, context: ScenarioC
   return '결과 화면'
 }
 
+const getPlayerDestinationLabel = (playerBase: number | null) => playerBase === 3 ? '홈' : playerBase === 1 || playerBase === 2 ? `${playerBase + 1}루` : '진루 대상'
+
+export const formatScenarioText = (text: string | undefined, playerBase: number | null) => text?.replaceAll('{destination}', getPlayerDestinationLabel(playerBase))
+
 const applyEffects = (pack: ScenarioPack, state: ScenarioState, effects: ScenarioTransition['effects'] = []) => {
   const viewLabel = getNodeViewLabel(pack, state.nodeId, state.context)
   return effects.reduce((context, effect) => applyScenarioEffect(context, effect, viewLabel), state.context)
@@ -137,7 +141,13 @@ export const chooseScenarioChanceOutcome = (pack: ScenarioPack, state: ScenarioS
 export const getAvailableScenarioChoices = (pack: ScenarioPack, state: ScenarioState) => {
   const node = pack.nodes[state.nodeId]
   if (node?.type !== 'choice') return []
-  return node.choices.filter((choice) => (choice.when ?? []).every((condition) => matchesCondition(state.context, condition)))
+  return node.choices
+    .filter((choice) => (choice.when ?? []).every((condition) => matchesCondition(state.context, condition)))
+    .map((choice) => ({
+      ...choice,
+      label: formatScenarioText(choice.label, state.context.playerBase) ?? choice.label,
+      ...(choice.description ? { description: formatScenarioText(choice.description, state.context.playerBase) } : {}),
+    }))
 }
 
 export const selectScenarioBattingEvent = (pack: ScenarioPack, state: ScenarioState, eventId: string, options?: ScenarioExecutionOptions): ScenarioState => {

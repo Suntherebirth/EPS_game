@@ -11,7 +11,7 @@ import {
   type Situation,
 } from './game/gameSetup'
 import { OFFENSE_CORE_PACK } from './game/packs/offenseCorePack'
-import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
+import { chooseScenarioChanceOutcome, chooseScenarioOption, formatScenarioText, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
 import type { ScenarioState, ScenarioView } from './game/scenario'
 import {
   buildAnnouncementImageTrail,
@@ -198,6 +198,8 @@ function App() {
   const [plateAppearance, setPlateAppearance] = useState(1)
   const [phase, setPhase] = useState<Phase>('playing')
   const [situation, setSituation] = useState<Situation>(() => createRandomSituation())
+  const [situationPlayerBase, setSituationPlayerBase] = useState<number | null>(null)
+  const [plateStartSituation, setPlateStartSituation] = useState(situation)
   const [scenario, setScenario] = useState<ScenarioState>(() => startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: adminMode }))
   const [stats, setStats] = useState<Stats>({ runs: 0, hits: 0, outs: 0 })
   const [records, setRecords] = useState<RecordEntry[]>([])
@@ -263,6 +265,8 @@ function App() {
 
   const restartAt = (nextSituation: Situation) => {
     setSituation(nextSituation)
+    setSituationPlayerBase(null)
+    setPlateStartSituation(nextSituation)
     setScenario(startScenario(OFFENSE_CORE_PACK, createScenarioContext(nextSituation), { manualChance: adminMode }))
     setPhase('playing')
   }
@@ -280,12 +284,11 @@ function App() {
     setStats((current) => ({
       runs: current.runs + state.context.runs,
       hits: current.hits + state.context.hits,
-      outs: current.outs + Math.max(0, state.context.outs - situation.outs),
+      outs: current.outs + Math.max(0, state.context.outs - plateStartSituation.outs),
     }))
-    setSituation({ outs: state.context.outs, bases: state.context.bases as Base[] })
     setRecords((current) => [...current, {
       number: plateAppearance,
-      situation: describeSituation(situation),
+      situation: describeSituation(plateStartSituation),
       decision: state.context.selectedLabel ?? '타격',
       result,
       runs: state.context.runs,
@@ -296,6 +299,8 @@ function App() {
 
   const acceptState = (next: ScenarioState) => {
     const terminal = OFFENSE_CORE_PACK.nodes[next.nodeId].type === 'terminal'
+    setSituation({ outs: scenario.context.outs, bases: scenario.context.bases as Base[] })
+    setSituationPlayerBase(scenario.context.playerBase)
     setScenario(next)
     if (terminal) completeScenario(next)
   }
@@ -384,6 +389,7 @@ function App() {
   const displayedSituation = shouldShowResolvedSituation
     ? { outs: displayedState.context.outs, bases: displayedState.context.bases as Base[] }
     : situation
+  const displayedPlayerBase = shouldShowResolvedSituation ? displayedState.context.playerBase : situationPlayerBase
   const currentViewBase = sceneCurrentViewBase
   const viewLabel = node.view.startsWith('runner:') && currentViewBase
     ? `${currentViewBase}루 주자 시점`
@@ -400,8 +406,8 @@ function App() {
   const choiceDescription = node.type === 'choice' && isSurpriseEvent && currentViewBase
     ? `${currentViewBase}루 주자: 돌발 상황 대처`
     : node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
-    ? node.description.startsWith(`${currentViewBase}루 주자:`) ? node.description : `${currentViewBase}루 주자: ${node.description}`
-    : node.type === 'choice' ? node.description : undefined
+    ? node.description.startsWith(`${currentViewBase}루 주자:`) ? formatScenarioText(node.description, scenario.context.playerBase) : `${currentViewBase}루 주자: ${formatScenarioText(node.description, scenario.context.playerBase)}`
+    : node.type === 'choice' ? formatScenarioText(node.description, scenario.context.playerBase) : undefined
   const surpriseOverlayImageUrl = surpriseOverlayAnnouncement
     ? resolveSceneImage(surpriseOverlayAnnouncement, resolveAnnouncementImageBase(surpriseOverlayAnnouncement, displayedState.context.playerBase))
     : undefined
@@ -436,7 +442,7 @@ function App() {
   return <main className="app-shell">
     <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedState.context.playerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${playResultVisible}`} />
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${playResultVisible}`} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
         {overlayMessages.length > 0 && <aside className={`result-notice ${overlayMessages.at(-1)?.tone ?? 'neutral'}`} aria-live="polite" key={replaying ? `replay:${replayFrame?.stepIndex ?? 'live'}` : sceneSequenceKey}>
           <span>{replaying ? '아나운스 재생' : '방금 일어난 일'}</span>

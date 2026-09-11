@@ -258,7 +258,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'runner.second.outfieldError.ambiguous.decide', type: 'choice', view: 'runner:second', title: '외야수 실책', tags: ['surprise-event'],
       description: '2루 주자: 주루 방침을 선택하세요.',
       choices: [
-        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 2루에 머물렀습니다.' }] } },
+        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 2루에 머물렀습니다.', tone: 'neutral' }] } },
         { id: 'advanceThird', label: '3루로 진루를 시도한다', description: `애매한 타구 · 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousDrop * 100)}%`, transition: { to: 'runner.second.outfieldError.ambiguous.advance' } },
       ],
     },

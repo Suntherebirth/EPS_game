@@ -822,7 +822,7 @@ describe('offense core scenario pack', () => {
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, decision).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
     expect(result.nodeId).toBe('runner.third.decide')
     expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 3, hits: 2 })
-    expect(result.context.announcement).toEqual({ title: '후속 타자 타구 외야수 실책 추가 진루 성공!', detail: '외야수 실책을 이용해 다음 베이스에 도착했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '외야수 실책 추가 진루 성공!', detail: '외야수 실책을 이용해 3루에 도착했습니다.' })
   })
 
   it('includes the follow-up hit in the outfield error announcement', () => {
@@ -851,7 +851,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [2], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '후속 타자 타구 외야수 실책 추가 진루 성공!', detail: '홈에 들어왔습니다.' })
+    expect(result.context.announcement).toEqual({ title: '외야수 실책 추가 진루 성공!', detail: '홈에 들어왔습니다.' })
   })
 
   it('reports that the runner stayed put after a follow-up strikeout', () => {
@@ -1047,7 +1047,7 @@ describe('offense core scenario pack', () => {
 
     expect(single.nodeId).toBe('runner.first.ambiguousDrop.decide')
     expect(result.nodeId).toBe('runner.second.decide')
-    expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '위험을 감수하고 추가 진루에 성공했습니다.', tone: 'positive' })
+    expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '위험을 감수하고 2루 추가 진루에 성공했습니다.', tone: 'positive' })
   })
 
   it('offers a guaranteed advance after a clear wild pitch', () => {
@@ -1060,7 +1060,14 @@ describe('offense core scenario pack', () => {
     expect(wildPitch.nodeId).toBe('runner.wildPitch.clear.decide')
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context).toMatchObject({ bases: [2], playerBase: 2 })
-    expect(result.context.announcement).toEqual({ title: '폭투 진루 성공!', detail: '다음 베이스에 도착했습니다.' })
+    expect(result.context.announcement).toEqual({ title: '폭투 진루 성공!', detail: '2루에 도착했습니다.' })
+  })
+
+  it('renders the actual destination in wild pitch choices', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [2]), playerBase: 2 }, { manualChance: true })
+    const wildPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, { ...initial, nodeId: 'wildPitch.check' }, 'clearWildPitch', { manualChance: true })
+
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, wildPitch).find((choice) => choice.id === 'advance')?.label).toBe('3루로 진루한다')
   })
 
   it('uses a 70 percent chance for an ambiguous wild pitch advance', () => {
@@ -1072,6 +1079,15 @@ describe('offense core scenario pack', () => {
 
     expect(wildPitch.nodeId).toBe('runner.wildPitch.ambiguous.decide')
     expect(result.context).toMatchObject({ bases: [2], playerBase: 2 })
+  })
+
+  it('identifies the catcher and destination when an ambiguous wild pitch advance fails', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [2]), playerBase: 2 }, { manualChance: true })
+    const wildPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, { ...initial, nodeId: 'wildPitch.check' }, 'ambiguousWildPitch', { manualChance: true })
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'advance', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
+
+    expect(result.context.announcement).toEqual({ title: '폭투 진루 실패', detail: '상대 포수의 좋은 송구로 3루에서 아웃되었습니다.', tone: 'negative' })
   })
 
   it('returns to the runner decision after staying on base during a wild pitch', () => {
