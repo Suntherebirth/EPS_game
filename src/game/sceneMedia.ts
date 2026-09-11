@@ -82,6 +82,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '애매한 외야 플라이, 3루에 머뭅니다.': 'sacrifice-fly-ambiguous',
   '애매한 외야 플라이, 태그업을 시도합니다.': 'sacrifice-fly-ambiguous',
   '위험을 감수하고 태그업을 시도합니다.': 'sacrifice-fly-ambiguous',
+  '홈 쇄도를 시도합니다.': 'sacrifice-fly-ambiguous',
   '명백하게 깊은 외야 플라이, 3루에 머뭅니다.': 'sacrifice-fly-clear',
   '명백하게 깊은 외야 플라이, 태그업을 시도합니다.': 'sacrifice-fly-ambiguous',
 

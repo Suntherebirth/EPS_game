@@ -51,6 +51,10 @@ describe('scene media fallback names', () => {
     expect(resolveSceneImageFilename({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', scene: undefined }, 3)).toBe('sacrifice-fly-ambiguous.png')
   })
 
+  it('uses the shared ambiguous sacrifice fly image during a home rush attempt', () => {
+    expect(resolveSceneImageFilename({ title: '홈 쇄도를 시도합니다.', scene: undefined }, 3)).toBe('sacrifice-fly-ambiguous.png')
+  })
+
   it('shares a dedicated detail scene only when explicitly requested', () => {
     expect(shouldShareDetailSceneForTitle({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', detail: '안전하게 태그업할 수 있는 타구입니다.', detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' })).toBe(true)
     expect(resolveAnnouncementDetailSceneId({ title: '태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral' })).toBe('home-in-neutral')
