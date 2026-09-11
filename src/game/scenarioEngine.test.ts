@@ -390,7 +390,7 @@ describe('offense core scenario pack', () => {
     expect(decision.nodeId).toBe('strikeout.clearDrop.decide')
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ outs: 0, bases: [1], playerBase: 1 })
-    expect(result.context.announcement).toEqual({ title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', tone: 'positive', advance: 'bold' })
+    expect(result.context.announcement).toEqual({ title: '낫아웃 1루 진루 성공!', detail: '열심히 뛴 결과, 상대 포수의 송구보다 먼저 1루에 도착했습니다.', advance: 'normal' })
   })
 
   it('forces a first-base runner to second after a two-out dropped third strike', () => {
@@ -539,6 +539,18 @@ describe('offense core scenario pack', () => {
     expect(result.context).toMatchObject({ bases: [1, 2], hits: 2, battingEvent: 'single', playerBase: 2 })
     expect(result.context.announcement).toEqual({ title: '후속타자의 1루타!', detail: '2루에 안전하게 도착했습니다.', advance: 'normal', sceneBase: 1 })
     expect(result.context.announcementHistory).toEqual([])
+  })
+
+  it('announces a forced walk advance from the runner-on-first perspective as a walked advance', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const runner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, single, 'normalFielding', { manualChance: true })
+    const wait = chooseScenarioOption(OFFENSE_CORE_PACK, runner, 'waitForBatter', { manualChance: true })
+    const normalPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wait, 'normalPitch', { manualChance: true })
+    const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, normalPitch, 'walk', { manualChance: true })
+
+    expect(result.context).toMatchObject({ bases: [1, 2], battingEvent: 'walk', playerBase: 2 })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 볼넷!', detail: '2루에 걸어서 도착했습니다.', advance: 'safe', sceneBase: 1 })
   })
 
   it('ends the play on a force out when a first-base runner faces a follow-up ground ball', () => {
@@ -691,7 +703,7 @@ describe('offense core scenario pack', () => {
     expect(advance.context.announcement).toEqual({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.', detailScene: 'ground-first-base-catch', titleImageMode: 'same-as-detail-scene' })
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 먼저 홈 쇄도에 성공했습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 위험을 감수하고 먼저 홈 쇄도에 성공했습니다.', tone: 'positive', advance: 'bold', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('announces the batter-runner out without repeating the throw-ready message before a third-base player is thrown out at home', () => {

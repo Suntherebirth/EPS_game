@@ -133,7 +133,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'strikeout.reachFirst': {
       id: 'strikeout.reachFirst', type: 'event', view: 'batter', title: '낫아웃 1루 진루',
-      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '낫아웃 1루 진루' }, { type: 'announce', title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', advance: 'bold' }],
+      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '낫아웃 1루 진루' }, { type: 'announce', title: '낫아웃 1루 진루 성공!', detail: '열심히 뛴 결과, 상대 포수의 송구보다 먼저 1루에 도착했습니다.', advance: 'normal' }],
       transition: { to: 'runner.route' },
     },
     'ground.infield.check': {
@@ -156,7 +156,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.runnerThird.advance.check': {
       id: 'ground.infield.runnerThird.advance.check', type: 'chance', view: 'batter', title: '3루 주자 홈 쇄도 판정',
       outcomes: [
-        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'addOuts', value: 1 }, { type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', ...SCENARIO_TEXT.running.battedBallHomeAdvance, tone: 'positive' }] } },
+        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'addOuts', value: 1 }, { type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', ...SCENARIO_TEXT.running.battedBallHomeAdvance, advance: 'bold' }] } },
         { id: 'stayThird', label: '3루 주자 잔류', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'out.ground.generic' } },
       ],
     },
@@ -194,7 +194,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.forceOut.runnerThird.advance.check': {
       id: 'ground.infield.forceOut.runnerThird.advance.check', type: 'chance', view: 'batter', title: '3루 주자 홈 쇄도 판정',
       outcomes: [
-        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', ...SCENARIO_TEXT.running.leadRunnerHomeAdvance, tone: 'positive' }] } },
+        { id: 'advanceHome', label: '3루 주자 홈 쇄도', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'moveRunner', from: 3, to: 'home' }, { type: 'record', message: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 득점' }, { type: 'announce', ...SCENARIO_TEXT.running.leadRunnerHomeAdvance, advance: 'bold' }] } },
         { id: 'stayThird', label: '3루 주자 잔류', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route' } },
       ],
     },

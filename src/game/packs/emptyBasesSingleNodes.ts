@@ -268,7 +268,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'runner.third.outfieldError.ambiguous.advance': {
     id: 'runner.third.outfieldError.ambiguous.advance', type: 'chance', view: 'runner:third', title: '홈 진루', tags: ['player-position-view'],
     outcomes: [
-      { id: 'success', label: '홈 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '외야 실책 이용, 홈 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '위험을 감수한 홈 진루 성공!', detail: '3루 주자가 홈에 들어왔습니다.', tone: 'positive' }] } },
+      { id: 'success', label: '홈 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '외야 실책 이용, 홈 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '위험을 감수한 홈 진루 성공!', detail: '위험을 감수하고 3루 주자가 홈에 들어왔습니다.', advance: 'bold' }] } },
       { id: 'out', label: '홈 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '외야 실책 이용, 홈 진루 실패', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.running.homeAdvanceFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
     ],
   },
@@ -290,7 +290,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'runner.third.sacrificeFly.ambiguous.advance': {
     id: 'runner.third.sacrificeFly.ambiguous.advance', type: 'chance', view: 'runner:third', title: '홈 태그업',
     outcomes: [
-      { id: 'success', label: '홈 태그업 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpSuccess, tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'success', label: '홈 태그업 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpSuccess, advance: 'bold', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' }] } },
       { id: 'out', label: '홈 태그업 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
     ],
   },
@@ -365,7 +365,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'runner.third.groundOut.advance': {
     id: 'runner.third.groundOut.advance', type: 'chance', view: 'runner:third', title: '홈 쇄도',
     outcomes: [
-      { id: 'success', label: '홈 쇄도 성공', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 'home' }, { type: 'record', message: '내야 땅볼 중 홈 쇄도 성공', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.running.homeAdvanceSuccess, tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'success', label: '홈 쇄도 성공', weight: RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 'home' }, { type: 'record', message: '내야 땅볼 중 홈 쇄도 성공', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.running.homeAdvanceSuccess, advance: 'bold', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' }] } },
       { id: 'out', label: '홈 쇄도 실패', weight: 1 - RUNNING_CHANCES.advanceOnGroundBallToThird, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '내야 땅볼 중 홈 쇄도 실패', showInCompletion: false }, { type: 'announce', title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '송구를 받은 상대 1루수가 재빠르게 홈으로 송구합니다.\n추가진루를 시도하던 3루 주자도 홈에서 아웃되었습니다.', tone: 'negative', scene: 'home-advance-failure', detailScene: 'home-advance-failure', titleImageMode: 'same-as-detail-scene' }] } },
     ],
   },

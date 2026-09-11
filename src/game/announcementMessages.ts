@@ -91,16 +91,16 @@ export const ANNOUNCEMENTS = {
   followUpGroundThrowingErrorExtraAdvance: {
     clear: {
       title: '홈 추가 진루 성공!',
-      detail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination} 추가 진루에 성공했습니다.',
-      homeDetail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination}에 들어왔습니다.',
+      detail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination} 추가 진루에 성공했습니다.',
+      homeDetail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination}에 들어왔습니다.',
       advance: 'bold' as const,
       detailScene: 'error-first-base-catch-clear',
       titleImageMode: 'same-as-detail-scene' as const,
     },
     ambiguous: {
       title: '홈 추가 진루 성공!',
-      detail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination} 추가 진루에 성공했습니다.',
-      homeDetail: '이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination}에 들어왔습니다.',
+      detail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination} 추가 진루에 성공했습니다.',
+      homeDetail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination}에 들어왔습니다.',
       advance: 'bold' as const,
       detailScene: 'error-first-base-catch-ambiguous',
       titleImageMode: 'same-as-detail-scene' as const,
@@ -124,15 +124,15 @@ export const ANNOUNCEMENTS = {
     },
   },
   groundDoublePlay: (outs: number) => message('내야 땅볼 병살!', outs >= 3 ? ANNOUNCEMENTS.sideChange : '1루 주자와 타자 주자가 모두 아웃되었습니다.', 'negative'),
-  followUpBattingEvent: (title: string, before: number | null, playerBase: number | null, outs: number) => {
+  followUpBattingEvent: (title: string, before: number | null, playerBase: number | null, outs: number, isForcedWalk = false) => {
     if (outs >= 3) return message(title, ANNOUNCEMENTS.sideChange, 'negative')
     const stayed = before !== null && playerBase !== null && playerBase === before
     const detail = before === null || playerBase === null
-      ? '홈에 안전하게 들어왔습니다.'
+      ? isForcedWalk ? '홈에 걸어서 들어왔습니다.' : '홈에 안전하게 들어왔습니다.'
       : stayed
         ? `${getPlayerBaseLabel(before)}에서 움직이지 못했습니다.`
-        : `${getPlayerBaseLabel(playerBase)}에 안전하게 도착했습니다.`
+        : isForcedWalk ? `${getPlayerBaseLabel(playerBase)}에 걸어서 도착했습니다.` : `${getPlayerBaseLabel(playerBase)}에 안전하게 도착했습니다.`
     if (playerBase === null) return message(title, detail, 'neutral')
-    return { ...message(title, detail), advance: stayed ? 'blocked' as const : 'normal' as const }
+    return { ...message(title, detail), advance: stayed ? 'blocked' as const : isForcedWalk ? 'safe' as const : 'normal' as const }
   },
 } as const
