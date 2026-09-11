@@ -218,13 +218,17 @@ function App() {
   const sceneAnnouncementCount = sceneAnnouncements.length
   // 일반 흐름: 각 장면은 이미지 + 누적 아나운스 묶음으로 표시하고, 탭으로 다음 장면으로 진행한다.
   // 마지막 발표가 끝나면 일정 시간 뒤 자동으로 최종 시점 이미지와 선택지로 전환한다.
-  const sceneTotalTapSteps = sceneAnnouncementCount === 0 ? 1 : sceneAnnouncementCount * 2
+  const sceneAnnouncementStages = sceneAnnouncements.flatMap((announcement, index) => shouldShareDetailSceneForTitle(announcement)
+    ? [{ announcementIndex: index, showDetail: true }]
+    : [{ announcementIndex: index, showDetail: false }, { announcementIndex: index, showDetail: true }])
+  const sceneTotalTapSteps = sceneAnnouncementCount === 0 ? 1 : sceneAnnouncementStages.length
   const sceneSequenceKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}:${sceneImageView}:${displayedState.context.playerBase ?? 'none'}`
   const [tapProgress, setTapProgress] = useState({ key: '', step: 0 })
   const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
   const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
-  const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : Math.min(Math.floor(sceneStep / 2), sceneAnnouncementCount - 1)
-  const sceneIsDetailStep = replay !== null || sceneAnnouncementCount === 0 || sceneStep % 2 === 1
+  const sceneCurrentStage = sceneAnnouncementStages[sceneStep]
+  const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : sceneCurrentStage.announcementIndex
+  const sceneIsDetailStep = replay !== null || sceneAnnouncementCount === 0 || sceneCurrentStage.showDetail
   const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneEventIndex + 1
   const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
   const isSurpriseAnnouncement = currentAnnouncement?.category === 'surprise'
@@ -418,7 +422,7 @@ function App() {
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
   const canAct = phase === 'playing' && (sceneIsFinalStep || adminMode && sceneNode.type === 'chance')
   const isNormalChoiceOverlayVisible = canAct && !replaying && node.type === 'choice' && !isSurpriseEvent && availableChoices.length > 0
-  const playResultVisible = phase === 'between' && sceneIsFinalStep && sceneStep >= sceneAnnouncementCount
+  const playResultVisible = phase === 'between' && sceneIsFinalStep
   const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : playResultVisible ? 0 : undefined
   const arrivalEffect = sceneIsFinalStep ? resolveBaseArrivalEffect(currentAnnouncement ?? displayedState.context.announcement) : undefined
   const actionInstruction = node.type === 'batting'

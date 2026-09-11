@@ -85,8 +85,8 @@ export const ANNOUNCEMENTS = {
   followUpGroundThrowingErrorClear: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.', 'positive'), 'error-first-base-catch-clear'),
   followUpGroundThrowingErrorAmbiguous: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 빠졌습니다. 추가 진루를 시도할 수 있습니다.', 'caution'), 'error-first-base-catch-ambiguous'),
   followUpGroundThrowingErrorExtraAdvanceAttempt: {
-    clear: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠지며 타자 주자가 1루에서 세이프입니다.', 'positive'), 'ground-throw-ready'),
-    ambiguous: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', 'caution'), 'ground-throw-ready'),
+    clear: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠지며 타자 주자가 1루에서 세이프입니다.', 'positive'), 'error-first-base-catch-clear'),
+    ambiguous: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 애매하게 빠지며 타자 주자가 1루에서 세이프입니다.', 'caution'), 'error-first-base-catch-ambiguous'),
   },
   followUpGroundThrowingErrorExtraAdvance: {
     clear: {
