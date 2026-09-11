@@ -53,22 +53,22 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     ...EMPTY_BASES_SINGLE_NODES,
     'hit.single.firstThird': {
       id: 'hit.single.firstThird', type: 'event', view: 'runner:first', title: '1루타',
-      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '1루타' }, { type: 'record', message: '3루 주자 득점', showInCompletion: false }, { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.' }],
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '1루타' }, { type: 'record', message: '3루 주자 득점', showInCompletion: false }, { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.', advance: 'normal' }],
       transition: { to: 'single.outfield.check' },
     },
     'hit.single.generic': {
       id: 'hit.single.generic', type: 'event', view: 'runner:first', title: '1루타',
-      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '1루타' }, { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.' }],
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: true }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '1루타' }, { type: 'announce', title: '1루타 성공!', detail: '1루에 도착했습니다.', advance: 'normal' }],
       transition: { to: 'single.outfield.check' },
     },
     'hit.double.resolve': {
       id: 'hit.double.resolve', type: 'event', view: 'runner:second', title: '2루타',
-      effects: [{ type: 'applyHit', batterTo: 2, creditHit: true }, { type: 'setPlayerBase', value: 2 }, { type: 'record', message: '2루타' }, { type: 'announce', ...SCENARIO_TEXT.batting.double }],
+      effects: [{ type: 'applyHit', batterTo: 2, creditHit: true }, { type: 'setPlayerBase', value: 2 }, { type: 'record', message: '2루타' }, { type: 'announce', ...SCENARIO_TEXT.batting.double, advance: 'normal' }],
       transition: { to: 'runner.route' },
     },
     'hit.triple.resolve': {
       id: 'hit.triple.resolve', type: 'event', view: 'runner:third', title: '3루타',
-      effects: [{ type: 'applyHit', batterTo: 3, creditHit: true }, { type: 'setPlayerBase', value: 3 }, { type: 'record', message: '3루타' }, { type: 'announce', ...SCENARIO_TEXT.batting.triple }],
+      effects: [{ type: 'applyHit', batterTo: 3, creditHit: true }, { type: 'setPlayerBase', value: 3 }, { type: 'record', message: '3루타' }, { type: 'announce', ...SCENARIO_TEXT.batting.triple, advance: 'normal' }],
       transition: { to: 'runner.route' },
     },
     'hit.homeRun.resolve': {
@@ -78,12 +78,12 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'walk.resolve': {
       id: 'walk.resolve', type: 'event', view: 'runner:first', title: '볼넷',
-      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '볼넷' }, { type: 'announce', ...SCENARIO_TEXT.batting.walk }],
+      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '볼넷' }, { type: 'announce', ...SCENARIO_TEXT.batting.walk, advance: 'safe' }],
       transition: { to: 'runner.route' },
     },
     'hitByPitch.resolve': {
       id: 'hitByPitch.resolve', type: 'event', view: 'runner:first', title: '사구',
-      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '사구' }, { type: 'announce', ...SCENARIO_TEXT.batting.hitByPitch }],
+      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '사구' }, { type: 'announce', ...SCENARIO_TEXT.batting.hitByPitch, advance: 'safe' }],
       transition: { to: 'runner.route' },
     },
     'strikeout.catcher.check': {
@@ -133,7 +133,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'strikeout.reachFirst': {
       id: 'strikeout.reachFirst', type: 'event', view: 'batter', title: '낫아웃 1루 진루',
-      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '낫아웃 1루 진루' }, { type: 'announce', title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', tone: 'positive' }],
+      effects: [{ type: 'forceWalk' }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: '낫아웃 1루 진루' }, { type: 'announce', title: '낫아웃 1루 진루 성공!', detail: '1루에 도착했습니다.', advance: 'bold' }],
       transition: { to: 'runner.route' },
     },
     'ground.infield.check': {
@@ -251,22 +251,22 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'runner.second.outfieldError.clear.decide', type: 'choice', view: 'runner:second', title: '외야수 실책', tags: ['surprise-event'],
       description: '2루 주자: 주루 방침을 선택하세요.',
       choices: [
-        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '2루에 머물렀습니다.', tone: 'negative' }] } },
-        { id: 'advanceThird', label: '3루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '외야수 실책을 이용해 3루에 도착했습니다.', category: 'normal' }] } },
+        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '2루에 머물렀습니다.', tone: 'negative', advance: 'blocked' }] } },
+        { id: 'advanceThird', label: '3루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '외야수 실책을 이용해 3루에 도착했습니다.', category: 'normal', advance: 'normal' }] } },
       ],
     },
     'runner.second.outfieldError.ambiguous.decide': {
       id: 'runner.second.outfieldError.ambiguous.decide', type: 'choice', view: 'runner:second', title: '외야수 실책', tags: ['surprise-event'],
       description: '2루 주자: 주루 방침을 선택하세요.',
       choices: [
-        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 2루에 머물렀습니다.', tone: 'neutral' }] } },
+        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 2루에 머물렀습니다.', tone: 'neutral', advance: 'blocked' }] } },
         { id: 'advanceThird', label: '3루로 진루를 시도한다', description: `애매한 타구 · 성공률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousDrop * 100)}%`, transition: { to: 'runner.second.outfieldError.ambiguous.advance' } },
       ],
     },
     'runner.second.outfieldError.ambiguous.advance': {
       id: 'runner.second.outfieldError.ambiguous.advance', type: 'chance', view: 'runner:second', title: '3루 진루',
       outcomes: [
-        { id: 'success', label: '3루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루 성공', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '위험을 감수하고 3루에 도착했습니다.', tone: 'positive' }] } },
+        { id: 'success', label: '3루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루 성공', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '위험을 감수하고 3루에 도착했습니다.', advance: 'bold' }] } },
         { id: 'out', label: '3루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: '외야 실책 이용, 3루 진루 실패', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.running.thirdBaseFailure, tone: 'negative' }] } },
       ],
     },

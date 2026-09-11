@@ -13,19 +13,18 @@ import {
 import { OFFENSE_CORE_PACK } from './game/packs/offenseCorePack'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
 import { formatScenarioText } from './game/scenarioText'
-import type { ScenarioState, ScenarioView } from './game/scenario'
+import type { AdvanceConcept, ScenarioState, ScenarioView } from './game/scenario'
+import { resolveAdvanceConcept } from './game/advanceConcept'
 import {
   buildAnnouncementImageTrail,
   resolveAnnouncementDetailSceneId,
   resolveAnnouncementDetailView,
   resolveAnnouncementImageBase,
-  resolveBaseArrivalEffect,
   resolveSceneImage,
   resolveSceneImageFilename,
   resolveViewImage,
   resolveViewImageFilename,
   shouldShareDetailSceneForTitle,
-  type BaseArrivalEffect,
 } from './game/sceneMedia'
 import './App.css'
 
@@ -113,7 +112,7 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, preserveImage, backgroundDimmingDelay, backgroundDimmingKey }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: BaseArrivalEffect; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string }) {
+function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, preserveImage, backgroundDimmingDelay, backgroundDimmingKey }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: AdvanceConcept; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string }) {
   const [isBackgroundDimmed, setIsBackgroundDimmed] = useState(false)
 
   useEffect(() => {
@@ -424,7 +423,7 @@ function App() {
   const isNormalChoiceOverlayVisible = canAct && !replaying && node.type === 'choice' && !isSurpriseEvent && availableChoices.length > 0
   const playResultVisible = phase === 'between' && sceneIsFinalStep
   const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : playResultVisible ? 0 : undefined
-  const arrivalEffect = sceneIsFinalStep ? resolveBaseArrivalEffect(currentAnnouncement ?? displayedState.context.announcement) : undefined
+  const arrivalEffect = sceneIsFinalStep ? resolveAdvanceConcept(currentAnnouncement ?? displayedState.context.announcement) : undefined
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
     : node.type === 'choice'

@@ -1,4 +1,5 @@
 import type { ScenarioContext, ScenarioEffect } from './scenario'
+import { resolveAdvanceTone } from './advanceConcept'
 import { ANNOUNCEMENTS } from './announcementMessages'
 import { BATTING_EVENTS } from './battingEvents'
 import { isRunnerForced } from './gameSetup'
@@ -44,10 +45,12 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   }
   if (effect.type === 'setPlayerBase') next.playerBase = effect.value
   if (effect.type === 'announce') {
+    const tone = effect.tone ?? (next.outs >= 3 ? 'negative' as const : resolveAdvanceTone(effect.advance))
     setAnnouncement(next, {
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : effect.detail,
-      ...(effect.tone ? { tone: effect.tone } : next.outs >= 3 ? { tone: 'negative' as const } : {}),
+      ...(tone ? { tone } : {}),
+      ...(effect.advance ? { advance: effect.advance } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
       ...(effect.detailScene ? { detailScene: effect.detailScene } : {}),
       ...(effect.titleImageMode ? { titleImageMode: effect.titleImageMode } : {}),
@@ -59,10 +62,13 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'announcePlayerAdvance') {
     // homeDetail 문구를 쓰는 홈인은 tone 기반 전용 이미지(home-in-positive/neutral)를 써야 하므로 detailScene을 강제하지 않는다.
     const isHomeWithDedicatedDetail = next.playerBase === null && effect.homeDetail !== undefined
+    const scoredRun = next.outs < 3 && next.playerBase === null
+    const tone = effect.tone ?? (scoredRun ? 'positive' as const : resolveAdvanceTone(effect.advance))
     setAnnouncement(next, {
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : (formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.'),
-      ...(effect.tone ? { tone: effect.tone } : {}),
+      ...(tone ? { tone } : {}),
+      ...(effect.advance ? { advance: effect.advance } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
       ...(effect.detailScene && !isHomeWithDedicatedDetail ? { detailScene: effect.detailScene } : {}),
       ...(effect.titleImageMode ? { titleImageMode: effect.titleImageMode } : {}),

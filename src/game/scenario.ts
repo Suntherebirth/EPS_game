@@ -33,10 +33,10 @@ export type ScenarioEffect =
   | { type: 'movePlayer'; to: number | 'home' | 'out' }
   | { type: 'advancePlayer' }
   | { type: 'advanceRunnersAheadOfPlayer' }
-  | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
+  | { type: 'announce'; title: string; detail: string; tone?: AnnouncementTone; advance?: AdvanceConcept; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
   | { type: 'announceFollowUpOutfieldError'; clear: boolean; scene?: SceneId }
-  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
-  | { type: 'announcePlayerAdvanceFailure'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
+  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: AnnouncementTone; advance?: AdvanceConcept; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
+  | { type: 'announcePlayerAdvanceFailure'; title: string; detail: string; tone?: AnnouncementTone; advance?: AdvanceConcept; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'advanceRunner'; from: number; to: number }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
@@ -127,10 +127,16 @@ export type ScenarioContext = {
   announcement?: ScenarioAnnouncement
 }
 
+export type AnnouncementTone = 'positive' | 'negative' | 'caution' | 'neutral'
+
+/** 진루 성격. 도착 전환 연출과 톤의 단일 기준값이다. docs/ux-ui-guide.md 참고. */
+export type AdvanceConcept = 'safe' | 'normal' | 'bold' | 'blocked'
+
 export type ScenarioAnnouncement = {
   title: string
   detail: string
-  tone?: 'positive' | 'negative' | 'caution' | 'neutral'
+  tone?: AnnouncementTone
+  advance?: AdvanceConcept
   scene?: SceneId
   detailScene?: SceneId
   titleImageMode?: 'same-as-detail-scene'

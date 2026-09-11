@@ -27,6 +27,7 @@
 - 톤 모션 keyframes: [src/App.css](../src/App.css)의 `tone-shake` / `tone-rise` / `tone-blink`.
 - 적용 대상: `.message-flow-message.<tone> .message-detail-row` (인게임 오버레이 detail 노출 시점).
 - 톤 값 자체는 [src/game/announcementMessages.ts](../src/game/announcementMessages.ts)에서 지정하며, 새 톤 종류를 늘릴 경우 이 문서의 표에도 반드시 추가한다.
+- 진루 결과 아나운스는 tone을 직접 적지 말고 `advance`로 유도한다. 아래 "베이스 도착 전환 연출 > 판별 로직" 절 참고.
 
 ## 베이스 도착 전환 연출
 
@@ -56,21 +57,28 @@
 
 ### 판별 로직
 
-스키마에 새 필드를 추가하지 않고, 해당 장면의 마지막 아나운스 title/detail 문구 패턴으로 컨셉을 추론한다([src/game/sceneMedia.ts](../src/game/sceneMedia.ts)의 `resolveBaseArrivalEffect`).
+진루 성격은 아나운스의 `advance` 필드(`safe | normal | bold | blocked`)가 단일 기준값이다. 이 값 하나가 **베이스 도착 전환 연출과 detail 톤을 함께 결정**한다. 정책 구현은 [src/game/advanceConcept.ts](../src/game/advanceConcept.ts).
 
-| 컨셉 | 판별 조건 |
-|---|---|
-| 진루불가 | detail에 "움직이지 못했습니다" 포함 |
-| 안전진루 | title이 정확히 `볼넷!` 또는 `사구!` |
-| 과감진루 | title/detail에 "애매", "도루", "위험을 감수" 중 하나라도 포함 |
-| 당연진루 | 위 조건에 모두 해당하지 않는 기본값 |
+| advance | 컨셉 | 유도되는 tone |
+|---|---|---|
+| `safe` | 안전진루 | neutral(미지정) |
+| `normal` | 당연진루 | neutral(미지정) |
+| `bold` | 과감진루 | positive |
+| `blocked` | 진루불가 | neutral(미지정) |
 
-판별 근거 문구가 바뀌면(`announcementMessages.ts`, 각 팩 파일) 이 매핑도 함께 갱신해야 한다. 텍스트 기반 휴리스틱이라 완벽하지 않을 수 있음을 감안한다.
+작성 규칙:
+
+- 베이스에 도착하거나 제자리에 묶이는 아나운스에는 반드시 `advance`를 지정한다. 확률 판정(`chance` 노드)으로 성공이 갈리면 `bold`, 규칙상 확정이면 `normal`, 볼넷/사구는 `safe`, 움직이지 못했으면 `blocked`다.
+- 판정 기준은 "그 진루를 하기로 한 선택에 리스크가 있었는가"이지, 마지막 노드가 확률 노드인지가 아니다. 주자가 먼저 리스크를 감수하는 선택을 했다면, 그 뒤 상황이 유리하게 풀려 진루가 확정되더라도 `bold`다. 예: 내야수 송구 순간 스타트를 끊은 뒤 송구 실책이 나와 추가 진루가 확정되는 경로(`followUp.ground.throw.error.attempt.*`).
+- `tone`을 함께 적으면 유도값보다 우선한다. 기회 상실(`negative`)처럼 진루 성격과 다른 의미를 줄 때만 쓴다.
+- 홈인(득점)은 진루 성격과 무관하게 `announcePlayerAdvance`가 `positive`를 부여한다(3아웃 제외). 홈 도착은 베이스 도착 전환 대상이 아니다.
+- `advance`가 없는 아나운스는 title/detail 문구로 추론한다(`inferAdvanceConcept`). 진루불가="움직이지 못했습니다", 안전진루=title이 `볼넷!`/`사구!`, 과감진루="애매"·"도루"·"위험을 감수" 포함, 나머지는 당연진루. 이 추론은 하위 호환용 안전망이므로 새 문구에는 의존하지 말 것.
+- [src/game/advanceConcept.test.ts](../src/game/advanceConcept.test.ts)가 도달 가능한 모든 아나운스를 순회하며 `bold`↔`positive` 일치를 검사한다. 예외를 만들려면 이 테스트도 함께 고쳐야 한다.
 
 ### 구현 위치
 
 - 전환 keyframes: [src/App.css](../src/App.css)의 `arrival-safe-in` / `arrival-normal-in` / `arrival-bold-in` / `arrival-blocked-bounce`.
-- 적용 대상: `.media-stage img.arrival-<concept>` — `MediaStage`(`src/App.tsx`)의 이미지 엘리먼트.
+- 적용 대상: `.media-stage img.arrival-<concept>` — `MediaStage`(`src/App.tsx`)의 이미지 엘리먼트. `resolveAdvanceConcept`가 돌려준 값을 그대로 클래스명에 쓴다.
 - 트리거 시점: `sceneIsFinalStep`(해당 노드의 마지막 탭 단계, 즉 베이스 도착 이미지가 표시되는 순간)에만 계산해 적용한다.
 - 이미지 URL이 이전 장면과 동일해 리마운트가 안 일어나는 경우를 막기 위해, 최종 단계에서는 `img`의 `key`에 `sceneSequenceKey`(노드 진입마다 바뀌는 값)를 포함시켜 매 플레이마다 전환이 다시 재생되도록 강제한다.
 - `prefers-reduced-motion: reduce`에서는 네 컨셉 모두 단순 `scene-fade`로 대체한다.
