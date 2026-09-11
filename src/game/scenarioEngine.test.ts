@@ -556,7 +556,7 @@ describe('offense core scenario pack', () => {
     expect(throwCheck.context.announcement).toEqual(ANNOUNCEMENTS.groundFieldingSuccess)
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
-    expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'negative', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'negative', detailScene: 'out-ground-force', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('announces the next forced base for runners on first, second, and third', () => {
