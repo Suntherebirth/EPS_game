@@ -14,8 +14,8 @@ export const SCENARIO_TEXT = {
 	},
 	steal: {
 		// 도루는 항상 위험을 감수하는 시도이므로 ambiguous 계열을 쓰되, 성공/실패 결과 이미지는 서로 다르다.
-		secondSuccess: { title: '2루 도루 성공!', detail: '위험을 감수하고 2루에 도착했습니다.', detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
-		thirdSuccess: { title: '3루 도루 성공!', detail: '위험을 감수하고 3루에 도착했습니다.', detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
+		secondSuccess: { title: '2루 진루 성공!', detail: '위험을 감수하고 2루 도루에 성공했습니다.', detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
+		thirdSuccess: { title: '3루 진루 성공!', detail: '위험을 감수하고 3루 도루에 성공했습니다.', detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
 			secondFailure: { title: '2루 도루 실패', detail: '2루에서 아웃되었습니다.', detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
 			thirdFailure: { title: '3루 도루 실패', detail: '3루에서 아웃되었습니다.', detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
 	},

@@ -1075,7 +1075,7 @@ describe('offense core scenario pack', () => {
 
     expect(single.nodeId).toBe('runner.first.ambiguousDrop.decide')
     expect(result.nodeId).toBe('runner.second.decide')
-    expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '위험을 감수하고 2루 추가 진루에 성공했습니다.', tone: 'positive', advance: 'bold', detailScene: 'advance-ambiguous-safe', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 2루 추가 진루에 성공했습니다.', tone: 'positive', advance: 'bold', detailScene: 'advance-ambiguous-safe', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('offers a guaranteed advance after a clear wild pitch', () => {
@@ -1088,7 +1088,7 @@ describe('offense core scenario pack', () => {
     expect(wildPitch.nodeId).toBe('runner.wildPitch.clear.decide')
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context).toMatchObject({ bases: [2], playerBase: 2 })
-    expect(result.context.announcement).toEqual({ title: '폭투 진루 성공!', detail: '2루에 안전하게 도착했습니다.', advance: 'normal', detailScene: 'advance-clear', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '상대 폭투를 이용해 2루에 안전하게 도착했습니다.', advance: 'normal', detailScene: 'advance-clear', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('renders the actual destination in wild pitch choices', () => {

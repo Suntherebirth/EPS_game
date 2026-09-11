@@ -113,16 +113,16 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
 }
 
 function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, preserveImage, backgroundDimmingDelay, backgroundDimmingKey }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: AdvanceConcept; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string }) {
-  const [isBackgroundDimmed, setIsBackgroundDimmed] = useState(false)
+  const [backgroundDimmedToken, setBackgroundDimmedToken] = useState('')
+  const backgroundDimmingToken = `${backgroundDimmingKey ?? ''}:${backgroundDimmingDelay ?? ''}`
 
   useEffect(() => {
-    setIsBackgroundDimmed(false)
     if (backgroundDimmingDelay === undefined) return
-    const timer = window.setTimeout(() => setIsBackgroundDimmed(true), backgroundDimmingDelay)
+    const timer = window.setTimeout(() => setBackgroundDimmedToken(backgroundDimmingToken), backgroundDimmingDelay)
     return () => window.clearTimeout(timer)
-  }, [backgroundDimmingDelay, backgroundDimmingKey])
+  }, [backgroundDimmingDelay, backgroundDimmingToken])
 
-  return <section className={`media-stage ${isBackgroundDimmed ? 'background-dimmed' : ''}`} aria-live="polite">
+  return <section className={`media-stage ${backgroundDimmedToken === backgroundDimmingToken && backgroundDimmingDelay !== undefined ? 'background-dimmed' : ''}`} aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
     {!videoUrl && imageUrl && <img src={imageUrl} alt="" className={preserveImage ? 'preserve-image' : arrivalEffect ? `arrival-${arrivalEffect}` : ''} key={imageUrl} />}
     {!videoUrl && missingImageName && <div className="media-image-fallback" aria-live="polite"><span>{missingImageName}</span></div>}
@@ -133,6 +133,18 @@ function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabe
       <div className="broadcast-outs"><span>OUT</span><div>{[0, 1, 2].map((out) => <i className={out < situation.outs ? 'on' : ''} key={out} />)}</div></div>
     </div>
   </section>
+}
+
+function TapContinueButton({ stepKey, onClick }: { stepKey: string; onClick: () => void }) {
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setIsReady(true))
+    return () => window.cancelAnimationFrame(frame)
+  }, [stepKey])
+
+  if (!isReady) return null
+  return <button type="button" className="tap-continue-button" onClick={(event) => { event.stopPropagation(); onClick() }} aria-label="다음 장면 보기">탭하여 계속 <ChevronRight size={15} aria-hidden="true" /></button>
 }
 
 function AnnouncementCheckMode({ cases, caseStatuses, activeTab, highlightedCaseId, onChangeTab, onSetStatus, onSimulate, onBack }: { cases: AnnouncementAuditCase[]; caseStatuses: Record<string, AnnouncementAuditStatus>; activeTab: AnnouncementAuditTab; highlightedCaseId: string | null; onChangeTab: (tab: AnnouncementAuditTab) => void; onSetStatus: (id: string, status: AnnouncementAuditStatus | null) => void; onSimulate: (item: AnnouncementAuditCase) => void; onBack: () => void }) {
@@ -406,6 +418,7 @@ function App() {
     ? `재생 ${replay.index + 1}/${replay.frames.length} · ${viewLabel ?? '결과'}`
     : isSurpriseEvent && viewLabel ? `${viewLabel} : 돌발 이벤트!` : viewLabel
   const availableChoices = getAvailableScenarioChoices(OFFENSE_CORE_PACK, scenario)
+  const tapHintTargetKey = `${sceneSequenceKey}:${sceneStep}`
   const shouldShowTapHint = !sceneIsFinalStep && !!overlayMessages.at(-1)?.detail
   const choiceDescription = node.type === 'choice' && isSurpriseEvent && currentViewBase
     ? `${currentViewBase}루 주자: 돌발 상황 대처`
@@ -468,7 +481,7 @@ function App() {
         {isSurpriseEvent && surpriseOverlayAnnouncement && <div className={`surprise-event-image ${surpriseOverlayImageUrl ? '' : 'missing'}`} aria-label={`${surpriseOverlayAnnouncement.title} 연출 이미지`}>
           {surpriseOverlayImageUrl ? <img src={surpriseOverlayImageUrl} alt="" /> : <span>{surpriseOverlayImageName ?? '돌발 이벤트 이미지 파일 필요'}</span>}
         </div>}
-        {shouldShowTapHint && <button type="button" className="tap-continue-button" onClick={advanceScene} aria-label="다음 장면 보기">탭하여 계속</button>}
+        {shouldShowTapHint && <TapContinueButton key={tapHintTargetKey} stepKey={tapHintTargetKey} onClick={advanceScene} />}
         {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
         {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}

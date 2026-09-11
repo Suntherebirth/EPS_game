@@ -112,9 +112,13 @@ button { font: inherit; }
 .message-flow-message { flex: 1 1 auto; min-width: 0; }
 .message-detail-row { display: flex; align-items: center; gap: .75rem; }
 .message-detail-row p { flex: 1 1 auto; min-width: 0; }
-.tap-continue-button { position: fixed; z-index: 1; top: 50%; left: 50%; padding: .625rem 1rem; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: rgba(12,20,17,.78); color: rgba(255,255,255,.84); font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-align: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.2); transform: translate(-50%, -50%); transition: border-color .2s ease, background .2s ease, color .2s ease; }
-.tap-continue-button:hover { border-color: rgba(255,255,255,.62); background: rgba(12,20,17,.9); color: white; transform: translate(-50%, -50%); }
+.tap-continue-button { position: fixed; z-index: 4; top: 50%; left: 50%; min-height: 40px; padding: 0 1rem; display: inline-flex; align-items: center; justify-content: center; gap: .3rem; pointer-events: auto; border: 1px solid rgba(255,255,255,.38); border-radius: 999px; background: rgba(7,14,11,.72); color: rgba(255,255,255,.9); font-size: .6875rem; font-weight: 800; letter-spacing: .04em; text-align: center; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.24), 0 0 0 1px rgba(255,255,255,.06) inset; backdrop-filter: blur(8px); transform: translate(-50%, -50%); animation: tap-continue-in .38s cubic-bezier(.2, .8, .2, 1) both; transition: border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.tap-continue-button:hover { border-color: rgba(255,255,255,.7); background: rgba(18,62,45,.86); color: white; box-shadow: 0 10px 28px rgba(0,0,0,.32), 0 0 0 3px rgba(255,255,255,.1); transform: translate(-50%, -50%) scale(1.04); }
 .tap-continue-button:focus-visible { outline: 2px solid rgba(255,255,255,.8); outline-offset: 3px; }
+@keyframes tap-continue-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.94); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes tap-continue-arrow { from { transform: translateX(0); } to { transform: translateX(3px); } }
+.tap-continue-button svg { animation: tap-continue-arrow .9s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .tap-continue-button { animation: none; } }
 .message-flow-connector { display: block; color: rgba(255,255,255,.52); font-size: 12px; font-weight: 800; text-align: center; animation: announcement-step-in .24s cubic-bezier(.2, .8, .2, 1) both; }
 .message-flow-message strong { display: block; color: #fff; font-size: 23px; line-height: 1.35; }
 .message-flow-message { animation: announcement-step-in .26s cubic-bezier(.2, .8, .2, 1) both; }

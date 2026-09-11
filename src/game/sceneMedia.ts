@@ -102,12 +102,14 @@ export const resolveAnnouncementDetailView = (view: ScenarioView, playerBase: nu
 
 /** 이벤트 연출 이미지는 `src/assets/scenes/events/<sceneId>.png` 파일을 사용한다. */
 export const resolveSceneImage = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, _playerBase: number | null): string | undefined => {
+  void _playerBase
   const sceneId = resolveSceneId(announcement)
   if (!sceneId) return undefined
   return EVENT_IMAGES[sceneId]
 }
 
 export const resolveSceneImageFilename = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>, _playerBase: number | null): string | undefined => {
+  void _playerBase
   const sceneId = resolveSceneId(announcement)
   if (!sceneId) return undefined
   return `${sceneId}.png`

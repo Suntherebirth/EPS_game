@@ -51,8 +51,8 @@ export const ANNOUNCEMENTS = {
     ambiguous: { ...message('폭투가 나왔지만 진루하지 않았습니다.', '위험하다고 판단하여 진루하지 않았습니다.', 'neutral', 'wild-pitch-ambiguous'), advance: 'blocked' as const },
   },
   wildPitchAdvance: {
-    clear: { title: '폭투 진루 성공!', detail: SCENARIO_TEXT.advanceArrival, category: 'normal' as const, advance: 'normal' as const, detailScene: 'advance-clear' as const, titleImageMode: 'same-as-detail-scene' as const },
-    ambiguous: { title: '폭투 진루 성공!', detail: SCENARIO_TEXT.riskyAdvanceSuccess, advance: 'bold' as const, detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
+    clear: { title: '{destination} 진루 성공!', detail: '상대 폭투를 이용해 {destination}에 안전하게 도착했습니다.', category: 'normal' as const, advance: 'normal' as const, detailScene: 'advance-clear' as const, titleImageMode: 'same-as-detail-scene' as const },
+    ambiguous: { title: '{destination} 진루 성공!', detail: '상대 폭투를 틈타 위험을 감수하고 {destination} 추가 진루에 성공했습니다.', advance: 'bold' as const, detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
   },
   wildPitchAdvanceFailure: { title: '폭투 진루 실패', detail: '상대 포수의 좋은 송구로 {destination}에서 아웃되었습니다.', tone: 'negative' as const, detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
   groundFieldingSuccess: { ...message(SCENARIO_TEXT.defense.fieldingSuccess.title, SCENARIO_TEXT.defense.fieldingSuccess.detail), detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' as const },
@@ -117,7 +117,7 @@ export const ANNOUNCEMENTS = {
     },
     ambiguous: {
       title: '내야 땅볼 송구 실책 추가 진루 성공!',
-      detail: '위험을 감수하고 {destination} 추가 진루에 성공했습니다.',
+      detail: '상대 내야수 송구 실책을 틈타 위험을 감수하고 {destination} 추가 진루에 성공했습니다.',
       advance: 'bold' as const,
       detailScene: 'error-first-base-catch-ambiguous',
       titleImageMode: 'same-as-detail-scene' as const,
