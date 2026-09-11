@@ -1115,7 +1115,7 @@ describe('offense core scenario pack', () => {
     const advance = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'advance', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
 
-    expect(result.context.announcement).toEqual({ title: '폭투 진루 실패', detail: '상대 포수의 좋은 송구로 3루에서 아웃되었습니다.', tone: 'negative', detailScene: 'advance-ambiguous-out', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '3루 진루 실패', detail: '상대 포수의 좋은 송구로 3루에서 아웃되었습니다.', tone: 'negative', detailScene: 'advance-ambiguous-out', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('returns to the runner decision after staying on base during a wild pitch', () => {

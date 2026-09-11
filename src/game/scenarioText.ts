@@ -16,8 +16,8 @@ export const SCENARIO_TEXT = {
 		// 도루는 항상 위험을 감수하는 시도이므로 ambiguous 계열을 쓰되, 성공/실패 결과 이미지는 서로 다르다.
 		secondSuccess: { title: '2루 진루 성공!', detail: '위험을 감수하고 2루 도루에 성공했습니다.', detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
 		thirdSuccess: { title: '3루 진루 성공!', detail: '위험을 감수하고 3루 도루에 성공했습니다.', detailScene: 'advance-ambiguous-safe' as const, titleImageMode: 'same-as-detail-scene' as const },
-			secondFailure: { title: '2루 도루 실패', detail: '2루에서 아웃되었습니다.', detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
-			thirdFailure: { title: '3루 도루 실패', detail: '3루에서 아웃되었습니다.', detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
+			secondFailure: { title: '2루 도루 실패', detail: '상대 포수의 좋은 송구로 2루에서 아웃되었습니다.', detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
+			thirdFailure: { title: '3루 도루 실패', detail: '상대 포수의 좋은 송구로 3루에서 아웃되었습니다.', detailScene: 'advance-ambiguous-out' as const, titleImageMode: 'same-as-detail-scene' as const },
 	},
 	running: {
 		tagUpSuccess: { title: '태그업 성공!', detail: '위험을 감수하고 3루 주자가 홈에 들어왔습니다.' },
@@ -28,9 +28,9 @@ export const SCENARIO_TEXT = {
 		homeAdvanceSuccess: { title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 위험을 감수하고 먼저 홈 쇄도에 성공했습니다.' },
 		battedBallHomeAdvance: { title: '내야 땅볼 타자 아웃, 3루 주자 홈 쇄도 성공!', detail: '타자 주자는 1루에서 아웃됐지만 3루 주자가 위험을 감수하고 홈에 들어왔습니다.' },
 		leadRunnerHomeAdvance: { title: '내야 땅볼 선행 주자 아웃, 3루 주자 홈 쇄도 성공!', detail: '1루 주자가 아웃된 사이 3루 주자가 위험을 감수하고 홈에 들어왔습니다.' },
-		thirdBaseFailure: { title: '3루 진루 실패', detail: '3루에서 아웃되었습니다.' },
-		homeAdvanceFailure: { title: '홈 진루 실패', detail: '홈에서 아웃되었습니다.' },
-		tagUpFailure: { title: '위험을 감수한 태그업 실패', detail: '3루 주자가 홈에서 아웃되었습니다.' },
+		thirdBaseFailure: { title: '3루 진루 실패', detail: '상대 외야수의 정확한 송구로 3루에서 아웃되었습니다.' },
+		homeAdvanceFailure: { title: '홈 진루 실패', detail: '상대 외야수의 정확한 송구로 홈에서 아웃되었습니다.' },
+		tagUpFailure: { title: '위험을 감수한 태그업 실패', detail: '상대 외야수의 정확한 송구로 3루 주자가 홈에서 아웃되었습니다.' },
 	},
 		defense: {
 			droppedThirdStrikeClear: { title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', detail: '완전히 뒤로 빠졌습니다. 열심히 뛴다면 확실히 살 수 있습니다.' },

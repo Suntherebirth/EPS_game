@@ -76,7 +76,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   }
   if (effect.type === 'announcePlayerAdvanceFailure') {
     setAnnouncement(next, {
-      title: effect.title,
+      title: formatScenarioAdvanceFailureText(effect.title, next.playerBase),
       detail: formatScenarioAdvanceFailureText(effect.detail, next.playerBase),
       ...(effect.tone ? { tone: effect.tone } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
