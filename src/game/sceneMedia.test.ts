@@ -34,6 +34,8 @@ describe('scene media fallback names', () => {
   })
 
   it('keeps clear and ambiguous event images distinct', () => {
+    expect(resolveSceneImageFilename({ title: '내야 땅볼 송구 실책!', scene: 'error-first-base-catch-clear' }, 1)).toBe('error-first-base-catch-clear.png')
+    expect(resolveSceneImageFilename({ title: '내야 땅볼 송구 실책!', scene: 'error-first-base-catch-ambiguous' }, 1)).toBe('error-first-base-catch-ambiguous.png')
     expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-clear' }, 1)).toBe('error-outfield-through-clear.png')
     expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 1)).toBe('error-outfield-through-ambiguous.png')
     expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, null)).toBe('wild-pitch-clear.png')
@@ -51,8 +53,19 @@ describe('scene media fallback names', () => {
     expect(resolveSceneImageFilename({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', scene: undefined }, 3)).toBe('sacrifice-fly-ambiguous.png')
   })
 
-  it('uses the shared ambiguous sacrifice fly image during a home rush attempt', () => {
-    expect(resolveSceneImageFilename({ title: '홈 쇄도를 시도합니다.', scene: undefined }, 3)).toBe('sacrifice-fly-ambiguous.png')
+  it('uses the ground-ball home rush image during a home rush attempt', () => {
+    expect(resolveSceneImageFilename({ title: '홈 쇄도를 시도합니다.', scene: undefined }, 3)).toBe('ground-home-rush.png')
+  })
+
+  it('uses one shared image for failed home advances and tag-ups', () => {
+    expect(resolveSceneImageFilename({ title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', scene: 'home-advance-failure' }, 3)).toBe('home-advance-failure.png')
+    expect(resolveSceneImageFilename({ title: '홈 진루 실패', scene: 'home-advance-failure' }, 3)).toBe('home-advance-failure.png')
+    expect(resolveSceneImageFilename({ title: '위험을 감수한 태그업 실패', scene: undefined }, 3)).toBe('home-advance-failure.png')
+    expect(resolveSceneImageFilename({ title: '명백하게 깊은 외야 플라이, 태그업 실패', scene: undefined }, 3)).toBe('home-advance-failure.png')
+  })
+
+  it('uses the first-base catch filename after a successful ground-ball throw', () => {
+    expect(resolveSceneImageFilename({ title: '상대 내야수가 1루 송구에 성공했습니다!', scene: undefined }, 3)).toBe('ground-first-base-catch.png')
   })
 
   it('shares a dedicated detail scene only when explicitly requested', () => {
@@ -62,6 +75,14 @@ describe('scene media fallback names', () => {
     expect(shouldShareDetailSceneForTitle({ title: '위험을 감수하고 태그업을 시도합니다.', detail: '홈 태그업 성공률 60%', detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' })).toBe(true)
     expect(shouldShareDetailSceneForTitle({ title: '태그업 성공!', detail: '3루 주자가 홈에 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })).toBe(true)
     expect(shouldShareDetailSceneForTitle({ title: '2루타 성공!', detail: '2루에 도착했습니다.' })).toBe(false)
+  })
+
+  it('shares follow-up ground-ball detail imagery with the title step', () => {
+    expect(shouldShareDetailSceneForTitle({ title: '후속타자의 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(shouldShareDetailSceneForTitle({ title: '상대 내야수가 땅볼 포구에 성공했습니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(shouldShareDetailSceneForTitle({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(shouldShareDetailSceneForTitle({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.', detailScene: 'ground-home-rush', titleImageMode: 'same-as-detail-scene' })).toBe(true)
+    expect(shouldShareDetailSceneForTitle({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.', detailScene: 'ground-first-base-catch', titleImageMode: 'same-as-detail-scene' })).toBe(true)
   })
 
   it('uses shared event imagery regardless of player base', () => {

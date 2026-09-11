@@ -556,7 +556,7 @@ describe('offense core scenario pack', () => {
     expect(throwCheck.context.announcement).toEqual(ANNOUNCEMENTS.groundFieldingSuccess)
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
-    expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'negative', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('announces the next forced base for runners on first, second, and third', () => {
@@ -609,7 +609,7 @@ describe('offense core scenario pack', () => {
 
     expect(decision.nodeId).toBe('runner.second.groundOut.decide')
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, decision).map((choice) => choice.id)).toEqual(['staySecond', 'advanceThird'])
-    expect(decision.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '2루 주자는 송구 시점에 맞춰 3루 진루를 시도할 수 있습니다.' })
+    expect(decision.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '2루 주자는 송구 시점에 맞춰 3루 진루를 시도할 수 있습니다.', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })
     expect(throwCheck.nodeId).toBe('followUp.ground.throwingError.check')
     expect(advance.nodeId).toBe('runner.second.groundOut.advance')
     const advanceNode = OFFENSE_CORE_PACK.nodes[advance.nodeId]
@@ -672,16 +672,16 @@ describe('offense core scenario pack', () => {
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
     const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
     expect(cleanPlay.context.announcementHistory.slice(-2).map(({ announcement }) => announcement)).toEqual([
-      { title: '후속타자의 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' },
+      { title: '후속타자의 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' },
       ANNOUNCEMENTS.groundFieldingSuccess,
     ])
-    expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution' })
+    expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })
     const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
     const advance = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
 
-    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.', titleImageMode: 'same-as-detail-scene' })
-    expect(advance.context.announcement).toEqual({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' })
+    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.', detailScene: 'ground-home-rush', titleImageMode: 'same-as-detail-scene' })
+    expect(advance.context.announcement).toEqual({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.', detailScene: 'ground-first-base-catch', titleImageMode: 'same-as-detail-scene' })
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null, runs: 1 })
     expect(result.context.announcement).toEqual({ title: '내야 땅볼 중 홈 추가진루 성공!', detail: '송구를 받은 상대 1루수가 홈에 던졌지만, 3루 주자가 먼저 홈 쇄도에 성공했습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
@@ -703,13 +703,13 @@ describe('offense core scenario pack', () => {
     const advance = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSuccess', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
 
-    expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution' })
-    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.', titleImageMode: 'same-as-detail-scene' })
-    expect(advance.context.announcement).toEqual({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.' })
+    expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })
+    expect(throwCheck.context.announcement).toEqual({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.', detailScene: 'ground-home-rush', titleImageMode: 'same-as-detail-scene' })
+    expect(advance.context.announcement).toEqual({ title: '상대 내야수가 1루 송구에 성공했습니다!', detail: '타자 주자가 1루에서 아웃되었습니다.', detailScene: 'ground-first-base-catch', titleImageMode: 'same-as-detail-scene' })
     expect(advance.context.announcementHistory).toEqual([])
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 2, bases: [], playerBase: null, runs: 0 })
-    expect(result.context.announcement).toEqual({ title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '송구를 받은 상대 1루수가 홈으로 송구해 추가진루를 시도하던 3루 주자도 아웃되었습니다.', tone: 'negative' })
+    expect(result.context.announcement).toEqual({ title: '후속타자의 내야 땅볼 중 홈 쇄도 실패', detail: '송구를 받은 상대 1루수가 재빠르게 홈으로 송구합니다.\n추가진루를 시도하던 3루 주자도 홈에서 아웃되었습니다.', tone: 'negative', scene: 'home-advance-failure', detailScene: 'home-advance-failure', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('offers clear or ambiguous extra-advance choices after a follow-up ground-ball throwing error', () => {
@@ -783,7 +783,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '홈에 들어왔습니다.' })
+    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '홈에 들어왔습니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('completes the play when a throwing error advances a third-base runner home', () => {
@@ -807,10 +807,12 @@ describe('offense core scenario pack', () => {
       expect.objectContaining({ announcement: ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvanceAttempt.ambiguous }),
     ]))
     const expectedAnnouncement = ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.ambiguous
+    // 홈인은 tone 기반 home-in-positive 이미지를 쓰도록 detailScene을 강제하지 않는다.
     expect(result.context.announcement).toEqual({
       title: expectedAnnouncement.title,
       detail: formatCurrentPlayerText(expectedAnnouncement.homeDetail, null),
       tone: expectedAnnouncement.tone,
+      titleImageMode: expectedAnnouncement.titleImageMode,
     })
   })
 

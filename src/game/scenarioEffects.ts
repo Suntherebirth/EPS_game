@@ -57,11 +57,15 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     setAnnouncement(next, { ...ANNOUNCEMENTS.followUpOutfieldError(effect.clear), ...(effect.scene ? { scene: effect.scene } : {}) }, viewLabel)
   }
   if (effect.type === 'announcePlayerAdvance') {
+    // homeDetail 문구를 쓰는 홈인은 tone 기반 전용 이미지(home-in-positive/neutral)를 써야 하므로 detailScene을 강제하지 않는다.
+    const isHomeWithDedicatedDetail = next.playerBase === null && effect.homeDetail !== undefined
     setAnnouncement(next, {
       title: effect.title,
       detail: next.outs >= 3 ? ANNOUNCEMENTS.sideChange : (formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 들어왔습니다.') : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.'),
       ...(effect.tone ? { tone: effect.tone } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
+      ...(effect.detailScene && !isHomeWithDedicatedDetail ? { detailScene: effect.detailScene } : {}),
+      ...(effect.titleImageMode ? { titleImageMode: effect.titleImageMode } : {}),
     }, viewLabel, effect.category)
   }
   if (effect.type === 'announcePlayerAdvanceFailure') {
@@ -70,6 +74,8 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       detail: formatScenarioAdvanceFailureText(effect.detail, next.playerBase),
       ...(effect.tone ? { tone: effect.tone } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
+      ...(effect.detailScene ? { detailScene: effect.detailScene } : {}),
+      ...(effect.titleImageMode ? { titleImageMode: effect.titleImageMode } : {}),
     }, viewLabel, effect.category)
   }
 

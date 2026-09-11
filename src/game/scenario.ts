@@ -35,8 +35,8 @@ export type ScenarioEffect =
   | { type: 'advanceRunnersAheadOfPlayer' }
   | { type: 'announce'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
   | { type: 'announceFollowUpOutfieldError'; clear: boolean; scene?: SceneId }
-  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId }
-  | { type: 'announcePlayerAdvanceFailure'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId }
+  | { type: 'announcePlayerAdvance'; title: string; detail: string; homeDetail?: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
+  | { type: 'announcePlayerAdvanceFailure'; title: string; detail: string; tone?: 'positive' | 'negative' | 'caution' | 'neutral'; category?: 'normal' | 'surprise'; scene?: SceneId; detailScene?: SceneId; titleImageMode?: 'same-as-detail-scene' }
   | { type: 'moveRunner'; from: number; to: number | 'home' | 'out' }
   | { type: 'advanceRunner'; from: number; to: number }
   | { type: 'setFlag'; key: string; value: boolean | number | string }

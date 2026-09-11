@@ -64,8 +64,8 @@
 | 타격 | `hit-single`, `hit-double`, `hit-triple`, `hit-home-run`, `hit-infield`, `walk`, `hit-by-pitch` |
 | 타구 | `ball-ground-infield`, `ball-fly-infield`, `ball-fly-outfield`, `ball-fly-outfield-fielder-moving`, `ball-fly-outfield-deep`, `ball-fly-outfield-shallow`, `ground-fielded`, `ground-throw-ready` |
 | 아웃 | `out-strikeout`, `out-infield-fly`, `out-ground`, `out-fly`, `out-ground-double-play`, `out-ground-force` |
-| 실책 | `error-infield-fielding`, `error-infield-throwing`, `error-infield-fly-drop`, `error-outfield-drop`, `error-outfield-through` |
-| 주루 | `steal-second-safe`, `steal-second-out`, `steal-third-safe`, `steal-third-out`, `advance-second-safe`, `advance-second-out`, `advance-third-safe`, `advance-third-out`, `wild-pitch-advance-safe`, `wild-pitch-advance-out`, `sacrifice-fly-safe`, `sacrifice-fly-out`, `dropped-third-strike-safe` |
+| 실책 | `error-infield-fielding`, `error-infield-throwing`, `error-infield-fly-drop`, `error-outfield-drop`, `error-outfield-through`, `error-first-base-catch-clear`, `error-first-base-catch-ambiguous` |
+| 주루 | `steal-second-safe`, `steal-second-out`, `steal-third-safe`, `steal-third-out`, `advance-second-safe`, `advance-second-out`, `advance-third-safe`, `advance-third-out`, `wild-pitch-advance-safe`, `wild-pitch-advance-out`, `sacrifice-fly-safe`, `sacrifice-fly-out`, `home-advance-failure`, `dropped-third-strike-safe` |
 | 기타 | `play-end` |
 
 ### 문구가 겹치는 경우
