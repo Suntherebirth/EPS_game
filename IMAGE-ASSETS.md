@@ -64,8 +64,8 @@
 | 타격 | `hit-single`, `hit-double`, `hit-triple`, `hit-home-run`, `hit-infield`, `walk`, `hit-by-pitch` |
 | 타구 | `ball-ground-infield`, `ball-fly-infield`, `ball-fly-outfield`, `ball-fly-outfield-fielder-moving`, `ball-fly-outfield-deep`, `ball-fly-outfield-shallow`, `ground-fielded`, `ground-throw-ready` |
 | 아웃 | `out-strikeout`, `out-infield-fly`, `out-ground`, `out-fly`, `out-ground-double-play`, `out-ground-force` |
-| 실책 | `error-infield-fielding`, `error-infield-throwing`, `error-infield-fly-drop`, `error-outfield-drop`, `error-outfield-through`, `error-first-base-catch-clear`, `error-first-base-catch-ambiguous` |
-| 주루 | `steal-second-safe`, `steal-second-out`, `steal-third-safe`, `steal-third-out`, `advance-second-safe`, `advance-second-out`, `advance-third-safe`, `advance-third-out`, `wild-pitch-advance-safe`, `wild-pitch-advance-out`, `sacrifice-fly-safe`, `sacrifice-fly-out`, `home-advance-failure`, `dropped-third-strike-safe` |
+| 실책 | `error-infield-fielding`, `error-infield-throwing`, `error-infield-fly-drop`, `error-outfield-drop`, `error-outfield-through`, `error-outfield-through-clear`, `error-outfield-through-ambiguous`(돌발 이벤트 판정 전용), `error-first-base-catch-clear`, `error-first-base-catch-ambiguous` |
+| 주루 | `wild-pitch-clear`, `wild-pitch-ambiguous`(돌발 이벤트 판정 전용), `advance-clear`(도루/폭투/실책 등 명백한 진루 상황의 포기·성공 공용, 실패가 없으므로 하나로 통일), `advance-ambiguous`(위험을 감수하는 진루 상황의 포기 전용, 아직 결과가 나오지 않은 상태), `advance-ambiguous-safe`(위험을 감수한 진루 성공, 도루는 항상 이쪽), `advance-ambiguous-out`(위험을 감수한 진루 실패), `sacrifice-fly-safe`, `sacrifice-fly-out`, `home-advance-failure`, `dropped-third-strike-safe` |
 | 기타 | `play-end` |
 
 ### 문구가 겹치는 경우

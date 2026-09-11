@@ -29,7 +29,7 @@ describe('scene media fallback names', () => {
   })
 
   it('returns expected filenames for surprise-only follow-up announcements', () => {
-    expect(resolveSceneImageFilename({ title: '폭투가 나왔지만 진루하지 않았습니다.', scene: undefined }, 2)).toBe('wild-pitch-ambiguous.png')
+    expect(resolveSceneImageFilename({ title: '폭투가 나왔지만 진루하지 않았습니다.', scene: 'wild-pitch-ambiguous' }, 2)).toBe('wild-pitch-ambiguous.png')
     expect(resolveSceneImageFilename({ title: '내야 땅볼 송구 실책 이후 진루하지 않았습니다.', scene: undefined }, 1)).toBe('error-infield-throwing-ambiguous.png')
   })
 

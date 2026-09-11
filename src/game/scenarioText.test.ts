@@ -9,9 +9,9 @@ describe('scenario text', () => {
   })
 
   it('formats the current base for arrival announcements', () => {
-    expect(formatCurrentPlayerText(SCENARIO_TEXT.advanceArrival, 2)).toBe('2루에 도착했습니다.')
-    expect(formatCurrentPlayerText(SCENARIO_TEXT.advanceArrival, 3)).toBe('3루에 도착했습니다.')
-    expect(formatCurrentPlayerText(SCENARIO_TEXT.advanceArrival, null)).toBe('홈에 도착했습니다.')
+    expect(formatCurrentPlayerText(SCENARIO_TEXT.advanceArrival, 2)).toBe('2루에 안전하게 도착했습니다.')
+    expect(formatCurrentPlayerText(SCENARIO_TEXT.advanceArrival, 3)).toBe('3루에 안전하게 도착했습니다.')
+    expect(formatCurrentPlayerText(SCENARIO_TEXT.advanceArrival, null)).toBe('홈에 안전하게 도착했습니다.')
   })
 
   it('formats the next destination for advance failures', () => {
