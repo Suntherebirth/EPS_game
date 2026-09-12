@@ -107,8 +107,6 @@ describe('scene media fallback names', () => {
   })
 
   it('uses shared event imagery regardless of player base', () => {
-    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-clear' }, 2)).toBe('dropped-third-strike-clear.png')
-    expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'dropped-third-strike-ambiguous' }, 2)).toBe('dropped-third-strike-ambiguous.png')
     expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-clear' }, 2)).toBe('error-outfield-through-clear.png')
     expect(resolveSceneImageFilename({ title: '상대 외야수가 타구를 뒤로 빠뜨렸습니다!', scene: 'error-outfield-through-ambiguous' }, 2)).toBe('error-outfield-through-ambiguous.png')
     expect(resolveSceneImageFilename({ title: '상대 포수가 공을 뒤로 빠뜨렸습니다!', scene: 'wild-pitch-clear' }, 2)).toBe('wild-pitch-clear.png')

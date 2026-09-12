@@ -7,6 +7,7 @@ import { validateScenarioPack, type ScenarioContext } from './scenario'
 import { ANNOUNCEMENTS } from './announcementMessages'
 import { isRunnerForced } from './gameSetup'
 import { formatCurrentPlayerText, SCENARIO_TEXT } from './scenarioText'
+import { PLAY_RESULT_ITEMS } from './playResultCodes'
 
 const context = (outs = 0, bases: number[] = []): ScenarioContext => ({
   outs,
@@ -272,7 +273,7 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcementHistory[0].announcement.title).toBe('내야 뜬공 발생!')
     expect(result.context.announcementHistory[0].announcement.detail).toBe('내야수가 타구를 처리하러 이동합니다.')
     expect(result.context.announcementHistory).toHaveLength(2)
-    expect(result.context.announcementHistory[1].announcement).toEqual(SCENARIO_TEXT.defense.flyOut)
+    expect(result.context.announcementHistory[1].announcement).toEqual(SCENARIO_TEXT.defense.infieldFlyOut)
   })
 
   it('treats a dropped fly ball as a single', () => {
@@ -438,6 +439,11 @@ describe('offense core scenario pack', () => {
     expect(runCheck.nodeId).toBe('strikeout.ambiguousDrop.slowRun')
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.droppedThirdStrikeOut)
+    expect(result.context.announcement).toEqual({
+      ...SCENARIO_TEXT.defense.droppedThirdStrikeOut,
+      tone: 'negative',
+    })
   })
 
   it('uses the configured messages and odds for clear and ambiguous dropped third strikes', () => {
@@ -446,8 +452,8 @@ describe('offense core scenario pack', () => {
     const clear = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'clearDrop', { manualChance: true })
     const ambiguous = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, catcherCheck, 'ambiguousDrop', { manualChance: true })
 
-    expect(clear.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.droppedThirdStrikeClear, tone: 'positive', scene: 'dropped-third-strike-clear' })
-    expect(ambiguous.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.droppedThirdStrikeAmbiguous, scene: 'dropped-third-strike-ambiguous' })
+    expect(clear.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.droppedThirdStrikeClear, tone: 'positive', scene: 'wild-pitch-clear' })
+    expect(ambiguous.context.announcement).toEqual({ ...SCENARIO_TEXT.defense.droppedThirdStrikeAmbiguous, scene: 'wild-pitch-ambiguous' })
     expect(RUNNING_CHANCES).toMatchObject({
       runHardOnClearDroppedStrike: 1,
       runSlowOnClearDroppedStrike: 0.5,
@@ -586,7 +592,7 @@ describe('offense core scenario pack', () => {
     expect(throwCheck.context.announcement).toEqual(ANNOUNCEMENTS.groundFieldingSuccess)
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
-    expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'negative', detailScene: 'out-ground-force', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'neutral', detailScene: 'out-ground-force', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('announces the next forced base for runners on first, second, and third', () => {

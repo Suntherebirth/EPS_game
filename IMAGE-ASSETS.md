@@ -12,7 +12,7 @@
 | `runner:first` | 1루 주자 시점 | `hit.single.firstThird`, `walk.resolve` |
 | `runner:second` | 2루 주자 시점 | `hit.double.resolve`, `fly.outfield.runnerSecond.check` |
 | `runner:third` | 3루 주자 시점 | `hit.triple.resolve` |
-| `result` | 결과 화면 (아웃/득점 확정 등, 주자·타자 시점이 아님) | `plate.complete`, `out.strikeout.generic` |
+| `result` | 결과 화면 (아웃/득점 확정 등, 주자·타자 시점이 아님) | `plate.complete`, `out.strikeout.generic`, `strikeout.droppedStrikeOut` |
 
 ## 업로드 경로 및 파일명 (기본 세트)
 
@@ -65,7 +65,7 @@
 | 타구 | `ball-ground-infield`, `ball-ground-infield-fielder-moving`, `ball-fly-infield`, `ball-fly-outfield`, `ball-fly-outfield-fielder-moving`, `ball-fly-outfield-deep`, `ball-fly-outfield-shallow`, `ground-fielded`, `ground-throw-ready` |
 | 아웃 | `out-strikeout`, `out-infield-fly`, `out-ground`, `out-fly`, `out-ground-double-play`, `out-ground-force` |
 | 실책 | `error-infield-fielding`, `error-infield-throwing`, `error-infield-fly-drop`, `error-outfield-drop`, `error-outfield-through`, `error-outfield-through-clear`, `error-outfield-through-ambiguous`(돌발 이벤트 판정 전용), `error-first-base-catch-clear`, `error-first-base-catch-ambiguous` |
-| 주루 | `wild-pitch-clear`, `wild-pitch-ambiguous`(돌발 이벤트 판정 전용), `advance-clear`(도루/폭투/실책 등 명백한 진루 상황의 포기·성공 공용, 실패가 없으므로 하나로 통일), `advance-ambiguous`(위험을 감수하는 진루 상황의 포기 전용, 아직 결과가 나오지 않은 상태), `advance-ambiguous-safe`(위험을 감수한 진루 성공, 도루는 항상 이쪽), `advance-ambiguous-out`(위험을 감수한 진루 실패), `sacrifice-fly-safe`, `sacrifice-fly-out`, `home-advance-failure`, `dropped-third-strike-safe` |
+| 주루 | `wild-pitch-clear`(포수가 공을 뒤로 빠뜨리는 순간, 폭투/낫아웃 공용), `wild-pitch-ambiguous`(돑발 이벤트 판정 전용, 폭투/낫아웃 공용), `advance-clear`(도루/폭투/실책/낫아웃 등 명백한 진루 상황의 포기·성공 공용, 실패가 없으므로 하나로 통일), `advance-ambiguous`(위험을 감수하는 진루 상황의 포기 전용, 아직 결과가 나오지 않은 상태), `advance-ambiguous-safe`(위험을 감수한 진루 성공, 도루는 항상 이쪽), `advance-ambiguous-out`(위험을 감수한 진루 실패), `sacrifice-fly-safe`, `sacrifice-fly-out`, `home-advance-failure` |
 | 기타 | `play-end` |
 
 ### 문구가 겹치는 경우
@@ -73,7 +73,7 @@
 같은 title을 쓰는 아나운스를 서로 다른 이미지로 나누려면, 해당 `announce` 이펙트에 `scene`을 직접 지정합니다. 이 값이 title 매핑보다 우선합니다.
 
 ```ts
-{ type: 'announce', title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '...', scene: 'dropped-third-strike' }
+{ type: 'announce', title: '포수가 공을 뒤로 빠뜨렸습니다!', detail: '...', scene: 'wild-pitch-clear' }
 ```
 
 ## 참고: 코드 연결 방식

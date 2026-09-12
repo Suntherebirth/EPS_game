@@ -2,6 +2,7 @@ import { Bug, CheckCircle2, ChevronRight, Pause, Play, RotateCcw, SkipBack, Skip
 import { useEffect, useState } from 'react'
 import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
 import { BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
+import { PLAY_RESULT_CODES, resolvePlayResultCode } from './game/playResultCodes'
 import {
   createRandomSituation,
   createScenarioContext,
@@ -29,7 +30,7 @@ import {
 import './App.css'
 
 type Phase = 'playing' | 'between' | 'finished'
-type AppMode = 'game' | 'announcementCheck'
+type AppMode = 'game' | 'announcementCheck' | 'codeMapping'
 type AnnouncementAuditStatus = 'needsReview' | 'ok'
 type AnnouncementAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
 type BattingInputMode = 'direct' | 'probabilistic'
@@ -154,6 +155,23 @@ function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabe
   </section>
 }
 
+function CodeMappingMode({ onBack }: { onBack: () => void }) {
+  return <main className="app-shell audit-page">
+    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
+    <section className="audit-summary">
+      <p className="eyebrow">CODE MAPPING TEST</p>
+      <h1>타석 결산 항목-코드-점수 매핑</h1>
+      <p>이번 타석 결산에 표시되는 각 항목에 어떤 코드와 점수가 연결되어 있는지 확인합니다. 값은 src/game/playResultCodes.ts 에서 관리합니다.</p>
+    </section>
+    <section className="audit-list" aria-label="항목-코드-점수 매핑 목록">
+      <div className="play-result-record" aria-label="항목 코드 점수 매핑 표">
+        <div className="play-result-columns"><span>항목</span><span>코드</span><span>점수</span></div>
+        {PLAY_RESULT_CODES.map((entry) => <div className="play-result-entry" key={entry.item}><strong>{entry.item}</strong><span>{entry.code || '미정'}</span><span>{entry.score ?? '미정'}</span></div>)}
+      </div>
+    </section>
+  </main>
+}
+
 function TapContinueButton({ stepKey, onClick }: { stepKey: string; onClick: () => void }) {
   const [isReady, setIsReady] = useState(false)
 
@@ -262,6 +280,7 @@ function App() {
   const [tapProgress, setTapProgress] = useState({ key: '', step: 0 })
   const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
   const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
+  const playResultVisible = phase === 'between' && sceneIsFinalStep
   const sceneCurrentStage = sceneAnnouncementStages[sceneStep]
   const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : sceneCurrentStage.announcementIndex
   const sceneIsDetailStep = replay !== null || sceneAnnouncementCount === 0 || sceneCurrentStage.showDetail
@@ -328,6 +347,7 @@ function App() {
 
   const completeScenario = (state: ScenarioState) => {
     const result = state.context.completionRecords.join('\n') || state.context.selectedLabel || '플레이 완료'
+    setPlayResultReady(false)
     setStats((current) => ({
       runs: current.runs + state.context.runs,
       hits: current.hits + state.context.hits,
@@ -429,6 +449,12 @@ function App() {
     restartAt(createRandomSituation())
   }
 
+  useEffect(() => {
+    if (!playResultVisible) return
+    const timer = window.setTimeout(() => setPlayResultReady(true), 550)
+    return () => window.clearTimeout(timer)
+  }, [playResultVisible])
+
   if (appMode === 'announcementCheck') return <AnnouncementCheckMode cases={announcementAuditCases} caseStatuses={announcementCaseStatuses} activeTab={announcementAuditTab} highlightedCaseId={highlightedAuditCaseId} onChangeTab={setAnnouncementAuditTab} onSetStatus={setAnnouncementCaseStatus} onSimulate={simulateAuditCase} onBack={() => setAppMode('game')} />
 
   if (phase === 'finished') return <main className="app-shell result-page">
@@ -479,7 +505,6 @@ function App() {
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
   const canAct = phase === 'playing' && (sceneIsFinalStep || adminMode && sceneNode.type === 'chance')
   const isNormalChoiceOverlayVisible = canAct && !replaying && node.type === 'choice' && !isSurpriseEvent && availableChoices.length > 0
-  const playResultVisible = phase === 'between' && sceneIsFinalStep
   const showPlayResult = playResultVisible && playResultReady
   const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : showPlayResult ? 0 : undefined
   const arrivalEffect = sceneIsFinalStep ? resolveAdvanceConcept(currentAnnouncement ?? displayedState.context.announcement) : undefined
@@ -506,15 +531,10 @@ function App() {
     },
   }
 
-  useEffect(() => {
-    setPlayResultReady(false)
-    if (!playResultVisible) return
-    const timer = window.setTimeout(() => setPlayResultReady(true), 550)
-    return () => window.clearTimeout(timer)
-  }, [playResultVisible])
+  if (appMode === 'codeMapping') return <CodeMappingMode onBack={() => setAppMode('game')} />
 
   return <main className="app-shell">
-    <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
+    <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
@@ -590,7 +610,10 @@ function App() {
           <h2>이번 타석 결산</h2>
           <div className="play-result-record" aria-label="플레이 점수 기록">
             <div className="play-result-columns"><span>항목</span><span>코드</span><span>점수</span></div>
-            {(scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result]).map((item, index) => <div className="play-result-entry" key={`${item}:${index}`}><strong>{item}</strong><span /><span /></div>)}
+            {(scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result]).map((item, index) => {
+              const resolved = resolvePlayResultCode(item ?? '')
+              return <div className="play-result-entry" key={`${item}:${index}`}><strong>{item}</strong><span>{resolved.code}</span><span>{resolved.score ?? ''}</span></div>
+            })}
             <div className="play-result-total"><span>점수 합계</span><b /></div>
           </div>
           <button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button>

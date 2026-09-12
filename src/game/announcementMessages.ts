@@ -19,7 +19,7 @@ const shareDetailScene = (announcement: ScenarioAnnouncement, detailScene: Scene
 export const ANNOUNCEMENTS = {
   sideChange: SCENARIO_TEXT.defense.sideChange,
   playComplete: '플레이가 완료되었습니다.',
-  playEnded: message('플레이 종료', '3아웃 · 공수교대입니다.', 'negative'),
+  playEnded: message('플레이 종료', '3아웃 · 공수교대입니다.', 'neutral'),
   followUpOutfieldError: (clear: boolean) => message(
     '상대 외야수가 타구를 뒤로 빠뜨렸습니다.',
     clear ? '완전히 뒤로 빠졌습니다. 확실하게 진루할 수 있습니다.' : '애매하게 빠졌습니다. 진루를 시도하다가 아웃될 수도 있습니다.',
@@ -67,7 +67,7 @@ export const ANNOUNCEMENTS = {
       return shareDetailScene(message(
         '내야 땅볼 포스 아웃!',
         `후속 타자의 내야 땅볼로 인해 ${forceOutBase}에서 포스 아웃되었습니다.`,
-        'negative',
+        'neutral',
       ), 'out-ground-force')
     }
     if (playerBase === 3 && outs < 3) return { ...message('상대 내야수, 1루 송구 준비 완료!', '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', 'caution'), detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' as const }

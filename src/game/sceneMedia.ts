@@ -59,6 +59,9 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
 
   '삼진 아웃되었습니다.': 'out-strikeout',
   '인필드 플라이 선언!': 'out-infield-fly',
+  '내야 땅볼 아웃!': 'ground-first-base-catch',
+  '내야 뜬공 아웃!': 'ball-fly-infield',
+  '외야 뜬공 아웃!': 'out-fly',
   '땅볼 처리 성공!': 'ground-first-base-catch',
   '뜬공 처리 성공!': 'out-fly',
   '내야 땅볼 병살!': 'out-ground-double-play',
@@ -75,7 +78,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '상대 외야수가 뜬공 포구에 실패했습니다!': 'error-outfield-drop',
   '상대 외야수가 타구를 뒤로 빠뜨렸습니다!': 'error-outfield-through',
 
-  '상대 포수가 공을 뒤로 빠뜨렸습니다!': 'dropped-third-strike-clear',
+  '상대 포수가 공을 뒤로 빠뜨렸습니다!': 'wild-pitch-clear',
   '내야 땅볼 송구 실책 이후 진루하지 않았습니다.': 'error-infield-throwing-ambiguous',
   '내야 땅볼 송구 실책이 나왔지만 진루하지 않았습니다.': 'error-infield-throwing-ambiguous',
   '애매한 외야 플라이, 3루에 머뭅니다.': 'sacrifice-fly-ambiguous',
@@ -95,7 +98,8 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '명백하게 깊은 외야 플라이, 3루에 머뭅니다.': 'sacrifice-fly-clear',
   '명백하게 깊은 외야 플라이, 태그업을 시도합니다.': 'sacrifice-fly-ambiguous',
 
-  '낫아웃 1루 진루 성공!': 'dropped-third-strike-safe',
+  '낫아웃 1루 진루 성공!': 'advance-clear',
+  '낫아웃 아웃!': 'out-strikeout',
   '태그업 성공!': 'sacrifice-fly-safe',
   '위험을 감수한 태그업 성공!': 'sacrifice-fly-safe',
   '2루 진루 성공!': 'advance-clear',

@@ -1,4 +1,5 @@
 import { ANNOUNCEMENTS } from '../announcementMessages'
+import { PLAY_RESULT_ITEMS } from '../playResultCodes'
 import { RUNNING_CHANCES } from '../probabilities'
 import { SCENARIO_TEXT } from '../scenarioText'
 import type { ScenarioNode } from '../scenario'
@@ -19,7 +20,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
       { type: 'placeRunner', base: 1 },
       { type: 'setPlayerBase', value: 1 },
       { type: 'addHits', value: 1 },
-      { type: 'record', message: '1루타' },
+      { type: 'record', message: PLAY_RESULT_ITEMS.single },
       { type: 'announce', title: '1루타 성공!', detail: '1루에 안전하게 도착했습니다.' },
     ],
     transition: { to: 'single.outfield.check' },
@@ -101,8 +102,8 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:first',
     title: '2루 도루',
     outcomes: [
-      { id: 'success', label: '2루 도루 성공', weight: RUNNING_CHANCES.stealSecond, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 2 }, { type: 'record', message: '2루 도루 성공' }, { type: 'announce', ...SCENARIO_TEXT.steal.secondSuccess, advance: 'bold' }] } },
-      { id: 'out', label: '2루 도루 실패', weight: 1 - RUNNING_CHANCES.stealSecond, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '2루 도루 실패' }, { type: 'announce', ...SCENARIO_TEXT.steal.secondFailure, tone: 'negative' }] } },
+      { id: 'success', label: '2루 도루 성공', weight: RUNNING_CHANCES.stealSecond, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 2 }, { type: 'record', message: PLAY_RESULT_ITEMS.stealSecondSuccess }, { type: 'announce', ...SCENARIO_TEXT.steal.secondSuccess, advance: 'bold' }] } },
+      { id: 'out', label: '2루 도루 실패', weight: 1 - RUNNING_CHANCES.stealSecond, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: PLAY_RESULT_ITEMS.stealSecondFailure }, { type: 'announce', ...SCENARIO_TEXT.steal.secondFailure, tone: 'negative' }] } },
     ],
   },
   'runner.second.decide': {
@@ -122,8 +123,8 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:second',
     title: '3루 도루',
     outcomes: [
-      { id: 'success', label: '3루 도루 성공', weight: RUNNING_CHANCES.stealThird, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 3 }, { type: 'record', message: '3루 도루 성공' }, { type: 'announce', ...SCENARIO_TEXT.steal.thirdSuccess, advance: 'bold' }] } },
-      { id: 'out', label: '3루 도루 실패', weight: 1 - RUNNING_CHANCES.stealThird, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: '3루 도루 실패' }, { type: 'announce', ...SCENARIO_TEXT.steal.thirdFailure, tone: 'negative' }] } },
+      { id: 'success', label: '3루 도루 성공', weight: RUNNING_CHANCES.stealThird, transition: { to: 'runner.route', effects: [{ type: 'movePlayer', to: 3 }, { type: 'record', message: PLAY_RESULT_ITEMS.stealThirdSuccess }, { type: 'announce', ...SCENARIO_TEXT.steal.thirdSuccess, advance: 'bold' }] } },
+      { id: 'out', label: '3루 도루 실패', weight: 1 - RUNNING_CHANCES.stealThird, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: PLAY_RESULT_ITEMS.stealThirdFailure }, { type: 'announce', ...SCENARIO_TEXT.steal.thirdFailure, tone: 'negative' }] } },
     ],
   },
   'runner.third.decide': {
@@ -388,7 +389,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     type: 'event',
     view: 'runner:first',
     title: '내야수 포구 실책',
-    effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '후속 타자 내야 땅볼 포구 실책' }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' }],
+    effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' }],
     transition: { to: 'runner.route' },
   },
   'followUp.ground.throwingError.check': {
@@ -439,12 +440,12 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   },
   'followUp.ground.throw.error.clear': {
     id: 'followUp.ground.throw.error.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
-    effects: [{ type: 'forceWalk' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorClear }],
+    effects: [{ type: 'forceWalk' }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorClear }],
     transition: { to: 'followUp.ground.throw.extra.clear.route' },
   },
   'followUp.ground.throw.error.ambiguous': {
     id: 'followUp.ground.throw.error.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
-    effects: [{ type: 'forceWalk' }, { type: 'record', message: '후속 타자 내야 땅볼 송구 실책' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorAmbiguous }],
+    effects: [{ type: 'forceWalk' }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorAmbiguous }],
     transition: { to: 'followUp.ground.throw.extra.ambiguous.route' },
   },
   'followUp.ground.throw.error.attempt.clear': {

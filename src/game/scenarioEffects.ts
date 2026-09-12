@@ -3,6 +3,7 @@ import { resolveAdvanceTone } from './advanceConcept'
 import { ANNOUNCEMENTS } from './announcementMessages'
 import { BATTING_EVENTS } from './battingEvents'
 import { isRunnerForced } from './gameSetup'
+import { PLAY_RESULT_ITEMS } from './playResultCodes'
 import { formatCurrentPlayerText, formatScenarioAdvanceFailureText } from './scenarioText'
 
 const cloneContext = (context: ScenarioContext): ScenarioContext => ({
@@ -40,8 +41,9 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'placeRunner' && !next.bases.includes(effect.base)) next.bases.push(effect.base)
   if (effect.type === 'setFlag') next.flags[effect.key] = effect.value
   if (effect.type === 'record') {
-    next.records.push(effect.message)
-    if (effect.showInCompletion ?? true) next.completionRecords.push(effect.message)
+    const message = formatCurrentPlayerText(effect.message, next.playerBase) ?? effect.message
+    next.records.push(message)
+    if (effect.showInCompletion ?? true) next.completionRecords.push(message)
   }
   if (effect.type === 'setPlayerBase') next.playerBase = effect.value
   if (effect.type === 'announce') {
@@ -183,7 +185,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     const playerIsForced = playerBase !== null && isRunnerForced(next.bases, playerBase)
     next.outs = Math.min(3, next.outs + 1)
     next.records.push(playerIsForced ? '후속 타자 내야 땅볼, 포스 아웃' : '후속 타자 내야 땅볼 아웃')
-    next.completionRecords.push(playerIsForced ? '내야 땅볼 포스 아웃' : '내야 땅볼 아웃')
+    next.completionRecords.push(playerIsForced ? PLAY_RESULT_ITEMS.followUpGroundForceOut : PLAY_RESULT_ITEMS.followUpGroundOut)
     if (playerIsForced && playerBase !== null) {
       next.bases = next.bases.filter((base) => base !== playerBase)
       next.playerBase = null
@@ -201,10 +203,10 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.outs = Math.min(3, next.outs + 1)
     if (isForced) {
       next.records.push('내야 땅볼, 선행 주자 포스 아웃')
-      next.completionRecords.push('내야 땅볼 선행 주자 포스 아웃')
+      next.completionRecords.push(PLAY_RESULT_ITEMS.groundLeadRunnerForceOut)
     } else {
       next.records.push('내야 땅볼, 선행 주자 아웃')
-      next.completionRecords.push('내야 땅볼 선행 주자 아웃')
+      next.completionRecords.push(PLAY_RESULT_ITEMS.groundLeadRunnerOut)
     }
     setAnnouncement(next, ANNOUNCEMENTS.groundLeadRunnerOut(isForced))
   }
@@ -214,7 +216,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.bases = next.bases.filter((base) => base !== 1)
     next.outs = Math.min(3, next.outs + 2)
     next.records.push('내야 땅볼, 병살')
-    next.completionRecords.push('내야 땅볼 병살')
+    next.completionRecords.push(PLAY_RESULT_ITEMS.groundDoublePlay)
     setAnnouncement(next, ANNOUNCEMENTS.groundDoublePlay())
   }
 
@@ -241,7 +243,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'applySacrificeFlyOut') {
     next.outs = Math.min(3, next.outs + 1)
     next.records.push(effect.score ? '외야 뜬공, 3루 주자 태그업 득점' : '외야 뜬공, 3루 주자 진루하지 않음')
-    next.completionRecords.push(effect.score ? '희생플라이' : '외야 뜬공 아웃')
+    next.completionRecords.push(effect.score ? PLAY_RESULT_ITEMS.sacrificeFly : PLAY_RESULT_ITEMS.flyOutNoScore)
     if (effect.score) {
       const runnerIndex = next.bases.indexOf(3)
       if (runnerIndex >= 0) next.bases.splice(runnerIndex, 1)
