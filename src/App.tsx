@@ -281,6 +281,9 @@ function App() {
   const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
   const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
   const playResultVisible = phase === 'between' && sceneIsFinalStep
+  const playResultItems = scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result]
+  const playResultTotal = playResultItems.reduce((total, item) => total + (resolvePlayResultCode(item ?? '').score ?? 0), 0)
+  const playResultTotalTone = playResultTotal > 0 ? 'positive' : playResultTotal < 0 ? 'negative' : 'zero'
   const sceneCurrentStage = sceneAnnouncementStages[sceneStep]
   const sceneEventIndex = sceneAnnouncementCount === 0 ? -1 : sceneCurrentStage.announcementIndex
   const sceneIsDetailStep = replay !== null || sceneAnnouncementCount === 0 || sceneCurrentStage.showDetail
@@ -610,11 +613,12 @@ function App() {
           <h2>이번 타석 결산</h2>
           <div className="play-result-record" aria-label="플레이 점수 기록">
             <div className="play-result-columns"><span>항목</span><span>코드</span><span>점수</span></div>
-            {(scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result]).map((item, index) => {
+            {playResultItems.map((item, index) => {
               const resolved = resolvePlayResultCode(item ?? '')
-              return <div className="play-result-entry" key={`${item}:${index}`}><strong>{item}</strong><span>{resolved.code}</span><span>{resolved.score ?? ''}</span></div>
+              const scoreTone = resolved.score === null ? 'unscored' : resolved.score > 0 ? 'positive' : resolved.score < 0 ? 'negative' : 'zero'
+              return <div className="play-result-entry" key={`${item}:${index}`}><strong>{item}</strong><span className={`play-result-code play-result-score-${scoreTone}`}><b>{resolved.code}</b></span><span className={`play-result-score-${scoreTone}`}>{resolved.score ?? ''}</span></div>
             })}
-            <div className="play-result-total"><span>점수 합계</span><b /></div>
+            <div className="play-result-total"><span>점수 합계</span><b className={`play-result-score-${playResultTotalTone}`}>{playResultTotal > 0 ? '+' : ''}{playResultTotal}</b></div>
           </div>
           <button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button>
         </section>}

@@ -4,7 +4,7 @@ import { ANNOUNCEMENTS } from './announcementMessages'
 import { BATTING_EVENTS } from './battingEvents'
 import { isRunnerForced } from './gameSetup'
 import { PLAY_RESULT_ITEMS } from './playResultCodes'
-import { formatCurrentPlayerText, formatScenarioAdvanceFailureText } from './scenarioText'
+import { formatCurrentPlayerText, formatScenarioAdvanceFailureText, formatScenarioText } from './scenarioText'
 
 const cloneContext = (context: ScenarioContext): ScenarioContext => ({
   ...context,
@@ -41,7 +41,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'placeRunner' && !next.bases.includes(effect.base)) next.bases.push(effect.base)
   if (effect.type === 'setFlag') next.flags[effect.key] = effect.value
   if (effect.type === 'record') {
-    const message = formatCurrentPlayerText(effect.message, next.playerBase) ?? effect.message
+    const message = formatScenarioText(effect.message, next.playerBase) ?? effect.message
     next.records.push(message)
     if (effect.showInCompletion ?? true) next.completionRecords.push(message)
   }
@@ -243,7 +243,9 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'applySacrificeFlyOut') {
     next.outs = Math.min(3, next.outs + 1)
     next.records.push(effect.score ? '외야 뜬공, 3루 주자 태그업 득점' : '외야 뜬공, 3루 주자 진루하지 않음')
-    next.completionRecords.push(effect.score ? PLAY_RESULT_ITEMS.sacrificeFly : PLAY_RESULT_ITEMS.flyOutNoScore)
+    if (next.playerBase === null) {
+      next.completionRecords.push(effect.score ? PLAY_RESULT_ITEMS.sacrificeFly : PLAY_RESULT_ITEMS.flyOutNoScore)
+    }
     if (effect.score) {
       const runnerIndex = next.bases.indexOf(3)
       if (runnerIndex >= 0) next.bases.splice(runnerIndex, 1)

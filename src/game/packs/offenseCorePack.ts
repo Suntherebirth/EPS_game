@@ -257,8 +257,8 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'runner.second.outfieldError.clear.decide', type: 'choice', view: 'runner:second', title: '외야수 실책', tags: ['surprise-event'],
       description: '2루 주자: 주루 방침을 선택하세요.',
       choices: [
-        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '외야수 실책, 2루 주자 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '2루에 머물렀습니다.', tone: 'negative', advance: 'blocked', scene: 'error-outfield-through-clear' }] } },
-        { id: 'advanceThird', label: '3루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '외야수 실책을 이용해 3루에 안전하게 도착했습니다.', category: 'normal', advance: 'normal', detailScene: 'advance-clear', titleImageMode: 'same-as-detail-scene' }] } },
+        { id: 'staySecond', label: '안전하게 2루에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: PLAY_RESULT_ITEMS.advanceThirdMissed }, { type: 'announce', title: '외야수 실책이 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative', advance: 'blocked', scene: 'error-outfield-through-clear' }] } },
+        { id: 'advanceThird', label: '3루로 진루한다', description: '완전히 뒤로 빠진 타구 · 성공률 100%', transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: PLAY_RESULT_ITEMS.advanceThirdError }, { type: 'announce', title: '3루 진루 성공!', detail: '외야수 실책을 이용해 3루에 안전하게 도착했습니다.', category: 'normal', advance: 'normal', detailScene: 'advance-clear', titleImageMode: 'same-as-detail-scene' }] } },
       ],
     },
     'runner.second.outfieldError.ambiguous.decide': {
@@ -272,8 +272,8 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'runner.second.outfieldError.ambiguous.advance': {
       id: 'runner.second.outfieldError.ambiguous.advance', type: 'chance', view: 'runner:second', title: '3루 진루',
       outcomes: [
-        { id: 'success', label: '3루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: '외야 실책 이용, 3루 진루 성공', showInCompletion: false }, { type: 'announce', title: '3루 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 3루에 도착했습니다.', advance: 'bold', detailScene: 'advance-ambiguous-safe', titleImageMode: 'same-as-detail-scene' }] } },
-        { id: 'out', label: '3루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: '외야 실책 이용, 3루 진루 실패', showInCompletion: false }, { type: 'announce', ...SCENARIO_TEXT.running.thirdBaseFailure, tone: 'negative', detailScene: 'advance-ambiguous-out', titleImageMode: 'same-as-detail-scene' }] } },
+        { id: 'success', label: '3루 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advanceRunner', from: 2, to: 3 }, { type: 'record', message: PLAY_RESULT_ITEMS.advanceThirdETB }, { type: 'announce', title: '3루 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 3루에 도착했습니다.', advance: 'bold', detailScene: 'advance-ambiguous-safe', titleImageMode: 'same-as-detail-scene' }] } },
+        { id: 'out', label: '3루 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'moveRunner', from: 2, to: 'out' }, { type: 'record', message: PLAY_RESULT_ITEMS.advanceThirdFailure }, { type: 'announce', ...SCENARIO_TEXT.running.thirdBaseFailure, tone: 'negative', detailScene: 'advance-ambiguous-out', titleImageMode: 'same-as-detail-scene' }] } },
       ],
     },
     'fly.outfield.drop': {

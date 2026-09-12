@@ -54,7 +54,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '애매한 외야 플라이!': 'ball-fly-outfield-shallow',
   '명백하게 깊은 외야 플라이!': 'ball-fly-outfield-deep',
   '상대 내야수가 땅볼 포구에 성공했습니다!': 'ground-fielded',
-  '상대 내야수가 1루 송구에 성공했습니다!': 'ground-throw-ready',
+  '상대 내야수가 1루 송구에 성공했습니다!': 'ground-first-base-catch',
   '상대 내야수, 1루 송구 준비 완료!': 'ground-throw-ready',
 
   '삼진 아웃되었습니다.': 'out-strikeout',

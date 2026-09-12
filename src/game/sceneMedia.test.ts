@@ -85,8 +85,8 @@ describe('scene media fallback names', () => {
     expect(resolveSceneImageFilename({ title: '후속 타자 내야 땅볼 3루 진루 성공!', scene: undefined }, 2)).toBe('advance-ambiguous-safe.png')
   })
 
-  it('uses ground-throw-ready for throw title and ground-first-base-catch for ground out completed', () => {
-    expect(resolveSceneImageFilename({ title: '상대 내야수가 1루 송구에 성공했습니다!', scene: undefined }, 3)).toBe('ground-throw-ready.png')
+  it('uses ground-first-base-catch for throw success title and ground out completed', () => {
+    expect(resolveSceneImageFilename({ title: '상대 내야수가 1루 송구에 성공했습니다!', scene: undefined }, 3)).toBe('ground-first-base-catch.png')
     expect(resolveSceneImageFilename({ title: '땅볼 처리 성공!', scene: undefined }, 1)).toBe('ground-first-base-catch.png')
   })
 
