@@ -12,6 +12,7 @@ import type {
 
 export type ScenarioExecutionOptions = {
   manualChance?: boolean
+  selectedLabel?: string
 }
 
 const matchesCondition = (context: ScenarioContext, condition: ScenarioCondition): boolean => {
@@ -154,7 +155,7 @@ export const selectScenarioBattingEvent = (pack: ScenarioPack, state: ScenarioSt
   const event = BATTING_EVENTS.find((item) => item.kind === eventId)
   if (!event) throw new Error(`타격 이벤트를 찾을 수 없습니다: ${eventId}`)
   const actionState = beginUserAction(state)
-  const context = { ...actionState.context, battingEvent: event.kind, selectedLabel: event.label }
+  const context = { ...actionState.context, battingEvent: event.kind, selectedLabel: options?.selectedLabel ?? event.label }
   const route = node.routes.find((item) => (item.when ?? []).every((condition) => matchesCondition(context, condition)))
   if (!route) throw new Error(`${node.id}에 ${eventId} 결과를 처리할 경로가 없습니다.`)
   return settleScenario(pack, applyTransition(pack, { ...actionState, context }, route), options)

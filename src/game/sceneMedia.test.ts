@@ -78,6 +78,7 @@ describe('scene media fallback names', () => {
   it('uses advance-clear and advance-ambiguous-safe images for base advance successes', () => {
     expect(resolveSceneImageFilename({ title: '2루 진루 성공!', scene: undefined }, 1)).toBe('advance-clear.png')
     expect(resolveSceneImageFilename({ title: '3루 진루 성공!', scene: undefined }, 2)).toBe('advance-clear.png')
+    expect(resolveSceneImageFilename({ title: '홈 진루 성공!', scene: undefined }, 3)).toBe('home-in-positive.png')
     expect(resolveSceneImageFilename({ title: '외야수 실책 추가 진루 성공!', scene: undefined }, 2)).toBe('advance-clear.png')
     expect(resolveSceneImageFilename({ title: '내야 땅볼 송구 실책 추가 진루 성공!', scene: undefined }, 1)).toBe('advance-clear.png')
     expect(resolveSceneImageFilename({ title: '2루 도루 성공!', scene: undefined }, 1)).toBe('advance-ambiguous-safe.png')

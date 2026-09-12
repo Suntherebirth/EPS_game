@@ -60,27 +60,33 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     setAnnouncement(next, { ...ANNOUNCEMENTS.followUpOutfieldError(effect.clear), ...(effect.scene ? { scene: effect.scene } : {}) }, viewLabel)
   }
   if (effect.type === 'announcePlayerAdvance') {
-    // homeDetail 문구를 쓰는 홈인은 tone 기반 전용 이미지(home-in-positive/neutral)를 써야 하므로 detailScene을 강제하지 않는다.
-    const isHomeWithDedicatedDetail = next.playerBase === null && effect.homeDetail !== undefined
-    const scoredRun = next.outs < 3 && next.playerBase === null
-    const tone = effect.tone ?? (scoredRun ? 'positive' as const : resolveAdvanceTone(effect.advance))
+    const isHome = next.playerBase === null
+    const scoredRun = next.outs < 3 && isHome
+    const tone = effect.advance !== undefined
+      ? resolveAdvanceTone(effect.advance)
+      : effect.tone ?? (scoredRun ? 'positive' as const : undefined)
+    const detailScene = isHome
+      ? (tone === 'positive' ? 'home-in-positive' as const : 'home-in-neutral' as const)
+      : effect.detailScene
     setAnnouncement(next, {
       title: formatCurrentPlayerText(effect.title, next.playerBase) ?? effect.title,
-      detail: formatCurrentPlayerText(next.playerBase === null ? (effect.homeDetail ?? '홈에 안전하게 들어왔습니다.') : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.',
+      detail: formatCurrentPlayerText(isHome ? (effect.homeDetail ?? '홈에 안전하게 들어왔습니다.') : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.',
       ...(tone ? { tone } : {}),
       ...(effect.advance ? { advance: effect.advance } : {}),
       ...(effect.scene ? { scene: effect.scene } : {}),
-      ...(effect.detailScene && !isHomeWithDedicatedDetail ? { detailScene: effect.detailScene } : {}),
+      ...(detailScene ? { detailScene } : {}),
       ...(effect.titleImageMode ? { titleImageMode: effect.titleImageMode } : {}),
     }, viewLabel, effect.category)
   }
   if (effect.type === 'announcePlayerAdvanceFailure') {
+    const isHomeFailure = next.playerBase === 3
+    const detailScene = isHomeFailure ? 'home-advance-failure' as const : effect.detailScene
     setAnnouncement(next, {
       title: formatScenarioAdvanceFailureText(effect.title, next.playerBase),
       detail: formatScenarioAdvanceFailureText(effect.detail, next.playerBase),
       ...(effect.tone ? { tone: effect.tone } : {}),
-      ...(effect.scene ? { scene: effect.scene } : {}),
-      ...(effect.detailScene ? { detailScene: effect.detailScene } : {}),
+      ...(effect.scene ? { scene: isHomeFailure ? 'home-advance-failure' as const : effect.scene } : {}),
+      ...(detailScene ? { detailScene } : {}),
       ...(effect.titleImageMode ? { titleImageMode: effect.titleImageMode } : {}),
     }, viewLabel, effect.category)
   }

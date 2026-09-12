@@ -102,3 +102,28 @@ export const BATTING_EVENT_RANDOM_WEIGHTS = {
   // 외야 뜬공 발생 가중치
   flyOut: 11,
 } as const
+
+export const PROBABILISTIC_BATTING_WEIGHTS = {
+  // 확률형 타격 선택지별 결과 발생 상대 가중치
+  contact: {
+    single: 35,
+    infieldHit: 10,
+    double: 10,
+    groundOut: 20,
+    flyOut: 15,
+    strikeout: 10,
+  },
+  power: {
+    homeRun: 15,
+    double: 20,
+    triple: 5,
+    single: 10,
+    flyOut: 20,
+    strikeout: 30,
+  },
+  watch: {
+    walk: 65,
+    hitByPitch: 5,
+    strikeout: 30,
+  },
+} as const

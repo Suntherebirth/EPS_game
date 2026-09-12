@@ -100,6 +100,9 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '위험을 감수한 태그업 성공!': 'sacrifice-fly-safe',
   '2루 진루 성공!': 'advance-clear',
   '3루 진루 성공!': 'advance-clear',
+  '홈 진루 성공!': 'home-in-positive',
+  '위험을 감수한 홈 진루 성공!': 'home-in-positive',
+  '홈 추가 진루 성공!': 'home-in-positive',
   '2루 도루 성공!': 'advance-ambiguous-safe',
   '3루 도루 성공!': 'advance-ambiguous-safe',
   '외야수 실책 추가 진루 성공!': 'advance-clear',
@@ -137,7 +140,7 @@ export const resolveViewImage = (view: ScenarioView): string | undefined => VIEW
 
 export const resolveViewImageFilename = (view: ScenarioView): string | undefined => VIEW_IMAGE_FILENAMES[view]
 
-const HOME_IN_DETAIL = /홈에 (?:안전하게 )?들어왔습니다/
+const HOME_IN_DETAIL = /홈에 (?:안전하게 |그대로 )?(?:들어왔습니다|도착했습니다)|홈 (?:추가 )?진루에 성공했습니다|홈 쇄도에 성공했습니다|3루 주자가 홈에/
 
 /** 홈인 detail은 tone에 맞는 전용 이미지를 사용한다. */
 export const resolveAnnouncementDetailSceneId = (

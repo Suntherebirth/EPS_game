@@ -1,7 +1,7 @@
 import { Bug, CheckCircle2, ChevronRight, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
-import { BATTING_EVENTS, type BattingEventId } from './game/battingEvents'
+import { BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
 import {
   createRandomSituation,
   createScenarioContext,
@@ -32,11 +32,30 @@ type Phase = 'playing' | 'between' | 'finished'
 type AppMode = 'game' | 'announcementCheck'
 type AnnouncementAuditStatus = 'needsReview' | 'ok'
 type AnnouncementAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
+type BattingInputMode = 'direct' | 'probabilistic'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
 type Stats = { runs: number; hits: number; outs: number }
 
 const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
 const ANNOUNCEMENT_AUDIT_TAB_STORAGE_KEY = 'eps:announcement-check:tab:v1'
+const BATTING_INPUT_MODE_STORAGE_KEY = 'eps:batting-input-mode:v1'
+
+const loadBattingInputMode = (): BattingInputMode => {
+  try {
+    const value = localStorage.getItem(BATTING_INPUT_MODE_STORAGE_KEY)
+    return value === 'direct' || value === 'probabilistic' ? value : 'probabilistic'
+  } catch {
+    return 'probabilistic'
+  }
+}
+
+const saveBattingInputMode = (mode: BattingInputMode) => {
+  try {
+    localStorage.setItem(BATTING_INPUT_MODE_STORAGE_KEY, mode)
+  } catch {
+    // ignore
+  }
+}
 
 const loadAnnouncementCaseStatuses = () => {
   try {
@@ -202,6 +221,7 @@ function AnnouncementCheckMode({ cases, caseStatuses, activeTab, highlightedCase
 function App() {
   const [appMode, setAppMode] = useState<AppMode>('game')
   const [adminMode, setAdminMode] = useState(false)
+  const [battingInputMode, setBattingInputModeState] = useState<BattingInputMode>(() => loadBattingInputMode())
   const [announcementAuditCases] = useState(() => createAnnouncementAuditCases())
   const [announcementCaseStatuses, setAnnouncementCaseStatuses] = useState<Record<string, AnnouncementAuditStatus>>(() => loadAnnouncementCaseStatuses())
   const [announcementAuditTab, setAnnouncementAuditTabState] = useState<AnnouncementAuditTab>(() => loadAnnouncementAuditTab())
@@ -323,6 +343,11 @@ function App() {
     setPhase('between')
   }
 
+  const setBattingInputMode = (mode: BattingInputMode) => {
+    setBattingInputModeState(mode)
+    saveBattingInputMode(mode)
+  }
+
   const acceptState = (next: ScenarioState) => {
     const terminal = OFFENSE_CORE_PACK.nodes[next.nodeId].type === 'terminal'
     setSituation({ outs: scenario.context.outs, bases: scenario.context.bases as Base[] })
@@ -331,7 +356,16 @@ function App() {
     if (terminal) completeScenario(next)
   }
 
-  const chooseBatting = (eventId: BattingEventId) => acceptState(selectScenarioBattingEvent(OFFENSE_CORE_PACK, scenario, eventId, { manualChance: adminMode }))
+  const chooseBatting = (eventId: BattingEventId, customLabel?: string) =>
+    acceptState(selectScenarioBattingEvent(OFFENSE_CORE_PACK, scenario, eventId, { manualChance: adminMode, selectedLabel: customLabel }))
+
+  const chooseProbabilisticBatting = (choiceId: ProbabilisticBattingChoice) => {
+    const config = PROBABILISTIC_BATTING_CHOICES.find((item) => item.id === choiceId)
+    if (!config) return
+    const eventId = resolveProbabilisticBattingChoice(choiceId)
+    chooseBatting(eventId, config.label)
+  }
+
   const chooseOption = (choiceId: string) => acceptState(chooseScenarioOption(OFFENSE_CORE_PACK, scenario, choiceId, { manualChance: adminMode }))
   const chooseChanceOutcome = (outcomeId: string) => acceptState(chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, scenario, outcomeId, { manualChance: adminMode }))
   const toggleAdminMode = (enabled: boolean) => {
@@ -448,7 +482,11 @@ function App() {
   const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : playResultVisible ? 0 : undefined
   const arrivalEffect = sceneIsFinalStep ? resolveAdvanceConcept(currentAnnouncement ?? displayedState.context.announcement) : undefined
   const actionInstruction = node.type === 'batting'
-    ? adminMode && node.mode === 'random' ? '관리자: 후속 타자 결과를 지정하세요.' : '타격 결과를 선택해주세요.'
+    ? adminMode && node.mode === 'random'
+      ? '관리자: 후속 타자 결과를 지정하세요.'
+      : battingInputMode === 'probabilistic'
+        ? '타격 방침을 선택해주세요.'
+        : '타격 결과를 선택해주세요.'
     : node.type === 'choice'
       ? choiceDescription ?? '주루 방침을 선택해주세요.'
       : node.type === 'chance' && adminMode
@@ -492,9 +530,51 @@ function App() {
           {surpriseOverlayImageUrl ? <img src={surpriseOverlayImageUrl} alt="" /> : <span>{surpriseOverlayImageName ?? '돌발 이벤트 이미지 파일 필요'}</span>}
         </div>}
         {shouldShowTapHint && <TapContinueButton key={tapHintTargetKey} stepKey={tapHintTargetKey} onClick={advanceScene} />}
-        {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
+        {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' || node.type === 'batting' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
         {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
-        {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && <div className={`choices batting-choices ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}><span><strong>{event.label}</strong><small>{event.description}</small></span><ChevronRight size={18} /></button>)}</div>}
+        {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && (
+          <div className={`choices batting-choices ${battingInputMode === 'probabilistic' && !adminMode ? 'probabilistic-choices' : 'direct-choices'} ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>
+            {!adminMode && (
+              <div className="batting-mode-toggle" role="radiogroup" aria-label="타격 모드 선택">
+                <button
+                  type="button"
+                  className={`mode-toggle-chip ${battingInputMode === 'probabilistic' ? 'active' : ''}`}
+                  onClick={() => setBattingInputMode('probabilistic')}
+                >
+                  확률형
+                </button>
+                <button
+                  type="button"
+                  className={`mode-toggle-chip ${battingInputMode === 'direct' ? 'active' : ''}`}
+                  onClick={() => setBattingInputMode('direct')}
+                >
+                  결과확정형
+                </button>
+              </div>
+            )}
+            {battingInputMode === 'probabilistic' && !adminMode ? (
+              PROBABILISTIC_BATTING_CHOICES.map((choice) => (
+                <button type="button" onClick={() => chooseProbabilisticBatting(choice.id)} key={choice.id}>
+                  <span>
+                    <strong>{choice.label}</strong>
+                    <small>{choice.description}</small>
+                  </span>
+                  <ChevronRight size={18} />
+                </button>
+              ))
+            ) : (
+              BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => (
+                <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}>
+                  <span>
+                    <strong>{event.label}</strong>
+                    <small>{event.description}</small>
+                  </span>
+                  <ChevronRight size={18} />
+                </button>
+              ))
+            )}
+          </div>
+        )}
         {canAct && !replaying && node.type === 'choice' && <div className={`choices runner-choices ${availableChoices.length === 1 ? 'single-choice' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{availableChoices.map((choice) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`} onClick={(event) => event.stopPropagation()}><span>관리자 콘솔 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
         {playResultVisible && <div className="play-result"><p className="eyebrow">PLAY COMPLETE</p><h3>{records.at(-1)?.result}</h3><p>{plateAppearance === 3 ? '모든 타석이 끝났습니다.' : '다음 타석은 새로운 상황에서 시작합니다.'}</p><button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button></div>}

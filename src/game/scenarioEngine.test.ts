@@ -300,7 +300,7 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcement).toEqual(SCENARIO_TEXT.defense.flyOut)
   })
 
-  it('automatically resolves tag-up for a third-base runner when the player bats', () => {
+  it('automatically resolves tag-up for a third-base AI runner when the player bats', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(1, [3]), { manualChance: true })
     const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
     const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'deepFly', { manualChance: true })
@@ -309,6 +309,21 @@ describe('offense core scenario pack', () => {
     expect(depth.nodeId).toBe('plate.complete')
     expect(depth.context).toMatchObject({ outs: 2, bases: [], runs: 1, playerBase: null })
     expect(depth.context.completionRecords).toContain('희생플라이')
+  })
+
+  it('allows the player to decide tag-up for a third-base runner on a deep outfield fly when the player is a runner', () => {
+    const initial = { nodeId: 'batting.select', context: { ...context(1, [3]), playerBase: 3 } }
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'deepFly', { manualChance: true })
+    const tagUp = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'tagUp', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'success', { manualChance: true })
+
+    expect(fielding.nodeId).toBe('fly.outfield.runnerThird.check')
+    expect(depth.nodeId).toBe('runner.third.sacrificeFly.deep.decide')
+    expect(tagUp.nodeId).toBe('runner.third.sacrificeFly.deep.advance')
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context).toMatchObject({ outs: 2, bases: [], runs: 1, playerBase: null })
+    expect(result.context.completionRecords).toContain('희생플라이')
   })
 
   it('keeps a third-base runner active after staying on an outfield fly with one out', () => {
@@ -806,7 +821,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '홈에 안전하게 들어왔습니다.', tone: 'positive', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '홈에 안전하게 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('completes the play when a throwing error advances a third-base runner home', () => {
@@ -830,12 +845,12 @@ describe('offense core scenario pack', () => {
       expect.objectContaining({ announcement: ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvanceAttempt.ambiguous }),
     ]))
     const expectedAnnouncement = ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.ambiguous
-    // 홈인은 득점이므로 tone이 positive로 유도되고, home-in-positive 이미지를 쓰도록 detailScene을 강제하지 않는다.
     expect(result.context.announcement).toEqual({
       title: expectedAnnouncement.title,
       detail: formatCurrentPlayerText(expectedAnnouncement.homeDetail, null),
       tone: 'positive',
       advance: expectedAnnouncement.advance,
+      detailScene: 'home-in-positive',
       titleImageMode: expectedAnnouncement.titleImageMode,
     })
   })
@@ -883,7 +898,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [2], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '외야수 실책 추가 진루 성공!', detail: '홈에 안전하게 들어왔습니다.', tone: 'positive', advance: 'normal', detailScene: 'advance-clear', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '외야수 실책 추가 진루 성공!', detail: '홈에 안전하게 들어왔습니다.', advance: 'normal', detailScene: 'home-in-neutral', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('reports that the runner stayed put after a follow-up strikeout', () => {
@@ -1121,6 +1136,36 @@ describe('offense core scenario pack', () => {
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
 
     expect(result.context.announcement).toEqual({ title: '3루 진루 실패', detail: '상대 포수의 좋은 송구로 3루에서 아웃되었습니다.', tone: 'negative', detailScene: 'advance-ambiguous-out', titleImageMode: 'same-as-detail-scene' })
+  })
+
+  it('keeps a clear wild-pitch home advance neutral', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [3]), playerBase: 3 }, { manualChance: true })
+    const wildPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, { ...initial, nodeId: 'wildPitch.check' }, 'clearWildPitch', { manualChance: true })
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'advance', { manualChance: true })
+    const result = advance
+
+    expect(result.context.announcement).toEqual({
+      title: '홈 진루 성공!',
+      detail: '홈에 안전하게 들어왔습니다.',
+      advance: 'normal',
+      detailScene: 'home-in-neutral',
+      titleImageMode: 'same-as-detail-scene',
+    })
+  })
+
+  it('maps home-advance-failure when third base runner fails to advance home on an ambiguous wild pitch', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [3]), playerBase: 3 }, { manualChance: true })
+    const wildPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, { ...initial, nodeId: 'wildPitch.check' }, 'ambiguousWildPitch', { manualChance: true })
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'advance', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
+
+    expect(result.context.announcement).toEqual({
+      title: '홈 진루 실패',
+      detail: '상대 포수의 좋은 송구로 홈에서 아웃되었습니다.',
+      tone: 'negative',
+      detailScene: 'home-advance-failure',
+      titleImageMode: 'same-as-detail-scene',
+    })
   })
 
   it('sets advance-ambiguous-out scene when extra advance fails after a ground throwing error', () => {

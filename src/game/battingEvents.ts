@@ -1,4 +1,4 @@
-import { BATTING_EVENT_RANDOM_WEIGHTS } from './probabilities'
+import { BATTING_EVENT_RANDOM_WEIGHTS, PROBABILISTIC_BATTING_WEIGHTS } from './probabilities'
 
 export type BattingMode = 'direct' | 'random'
 
@@ -52,3 +52,80 @@ export const BATTING_EVENTS: Play[] = [
   battingEvent('infieldFly', '내야 뜬공', '내야수가 뜬공을 잡아낸다', '내야수가 타구를 잡아 아웃됩니다.', 0, 1, false, BATTING_EVENT_RANDOM_WEIGHTS.infieldFly),
   battingEvent('flyOut', '외야 뜬공', '외야수가 타구를 잡아낸다', '외야수가 낙구 지점에서 타구를 잡습니다.', 0, 1, false, BATTING_EVENT_RANDOM_WEIGHTS.flyOut),
 ]
+
+export type ProbabilisticBattingChoice = 'contact' | 'power' | 'watch'
+
+export type ProbabilisticOutcome = {
+  eventId: BattingEventId
+  weight: number
+}
+
+export type ProbabilisticChoiceConfig = {
+  id: ProbabilisticBattingChoice
+  label: string
+  description: string
+  detail: string
+  outcomes: ProbabilisticOutcome[]
+}
+
+export const PROBABILISTIC_BATTING_CHOICES: ProbabilisticChoiceConfig[] = [
+  {
+    id: 'contact',
+    label: '컨택트 스윙',
+    description: '안타 확률 증가 · 삼진 위험 감소',
+    detail: '공을 정확히 맞히는 데 집중합니다. 안타와 내야 안타 확률이 높습니다.',
+    outcomes: [
+      { eventId: 'single', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.single },
+      { eventId: 'infieldHit', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.infieldHit },
+      { eventId: 'double', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.double },
+      { eventId: 'groundOut', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.groundOut },
+      { eventId: 'flyOut', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.flyOut },
+      { eventId: 'strikeout', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.strikeout },
+    ],
+  },
+  {
+    id: 'power',
+    label: '파워 스윙',
+    description: '장타/홈런 확률 증가 · 삼진 위험 증가',
+    detail: '큰 것 한 방을 노리고 강하게 휘두릅니다. 홈런과 장타 확률이 높지만 삼진 가능성도 큽니다.',
+    outcomes: [
+      { eventId: 'homeRun', weight: PROBABILISTIC_BATTING_WEIGHTS.power.homeRun },
+      { eventId: 'double', weight: PROBABILISTIC_BATTING_WEIGHTS.power.double },
+      { eventId: 'triple', weight: PROBABILISTIC_BATTING_WEIGHTS.power.triple },
+      { eventId: 'single', weight: PROBABILISTIC_BATTING_WEIGHTS.power.single },
+      { eventId: 'flyOut', weight: PROBABILISTIC_BATTING_WEIGHTS.power.flyOut },
+      { eventId: 'strikeout', weight: PROBABILISTIC_BATTING_WEIGHTS.power.strikeout },
+    ],
+  },
+  {
+    id: 'watch',
+    label: '지켜본다',
+    description: '볼넷 또는 삼진 (스윙하지 않음)',
+    detail: '투수의 투구를 끝까지 지켜봅니다. 볼넷이나 사구로 출루하거나 삼진을 당합니다.',
+    outcomes: [
+      { eventId: 'walk', weight: PROBABILISTIC_BATTING_WEIGHTS.watch.walk },
+      { eventId: 'hitByPitch', weight: PROBABILISTIC_BATTING_WEIGHTS.watch.hitByPitch },
+      { eventId: 'strikeout', weight: PROBABILISTIC_BATTING_WEIGHTS.watch.strikeout },
+    ],
+  },
+]
+
+export const resolveProbabilisticBattingChoice = (
+  choiceId: ProbabilisticBattingChoice,
+  randomFn: () => number = Math.random,
+): BattingEventId => {
+  const config = PROBABILISTIC_BATTING_CHOICES.find((item) => item.id === choiceId)
+  if (!config) throw new Error(`알 수 없는 확률형 선택지입니다: ${choiceId}`)
+
+  const totalWeight = config.outcomes.reduce((sum, item) => sum + item.weight, 0)
+  let roll = randomFn() * totalWeight
+
+  for (const item of config.outcomes) {
+    roll -= item.weight
+    if (roll <= 0) {
+      return item.eventId
+    }
+  }
+
+  return config.outcomes[0].eventId
+}
