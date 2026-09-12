@@ -85,19 +85,19 @@ describe('playResultCodes', () => {
 
   it('maps 2B/3B missed chances to BR-E-3 code and home missed chance to BR-E-5 code', () => {
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceSecondMissed)).toEqual({
-      item: '2루 진루 포기',
+      item: '2루 진루 기회 놓침',
       code: 'BR-E-3',
       score: -1.0,
       description: 'Base Running-Missed Chance at 2B/3B',
     })
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceThirdMissed)).toEqual({
-      item: '3루 진루 포기',
+      item: '3루 진루 기회 놓침',
       code: 'BR-E-3',
       score: -1.0,
       description: 'Base Running-Missed Chance at 2B/3B',
     })
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceMissed)).toEqual({
-      item: '홈 진루 포기',
+      item: '홈 진루 기회 놓침',
       code: 'BR-E-5',
       score: -1.5,
       description: 'Base Running-Missed Chance at Home',

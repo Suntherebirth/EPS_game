@@ -1308,4 +1308,23 @@ describe('offense core scenario pack', () => {
 
     expect(result.bases).toEqual([1])
   })
+
+  it('records 2B missed chance when a first-base runner stays on a clear wild pitch', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [1]), playerBase: 1 }, { manualChance: true })
+    const wildPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, { ...initial, nodeId: 'wildPitch.check' }, 'clearWildPitch', { manualChance: true })
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'stayOnBase', { manualChance: true })
+
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceSecondMissed)
+  })
+
+  it('records ETB 3B advance when a second-base runner advances on a ground ball and succeeds', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [2]), playerBase: 2 }, { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, { ...initial, nodeId: 'followUp.batting.resolve' }, 'groundOut', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwChoice = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceThird', { manualChance: true })
+    const throwSuccess = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwChoice, 'throwSuccess', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwSuccess, 'success', { manualChance: true })
+
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdETB)
+  })
 })
