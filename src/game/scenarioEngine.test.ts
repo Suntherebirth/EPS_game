@@ -845,7 +845,7 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '홈에 안전하게 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '상대 내야수 땅볼 포구 실책을 틈타 위험을 감수하고 홈에 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('completes the play when a throwing error advances a third-base runner home', () => {
@@ -1173,6 +1173,23 @@ describe('offense core scenario pack', () => {
       detail: '홈에 안전하게 들어왔습니다.',
       advance: 'normal',
       detailScene: 'home-in-neutral',
+      titleImageMode: 'same-as-detail-scene',
+    })
+  })
+
+  it('records ETB and risky wording when a third-base runner succeeds on an ambiguous wild pitch home advance', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [3]), playerBase: 3 }, { manualChance: true })
+    const wildPitch = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, { ...initial, nodeId: 'wildPitch.check' }, 'ambiguousWildPitch', { manualChance: true })
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'advance', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
+
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.homeAdvanceETB)
+    expect(result.context.announcement).toEqual({
+      title: '홈 진루 성공!',
+      detail: '상대 폭투를 틈타 위험을 감수하고 홈에 들어왔습니다.',
+      tone: 'positive',
+      advance: 'bold',
+      detailScene: 'home-in-positive',
       titleImageMode: 'same-as-detail-scene',
     })
   })

@@ -29,6 +29,51 @@ describe('playResultCodes', () => {
     })
   })
 
+  it('maps dropped-third-strike out to the same code and score as a regular strikeout', () => {
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.droppedThirdStrikeOut)).toEqual({
+      item: '낫아웃 아웃',
+      code: 'B-SO-O',
+      score: -1.5,
+      description: 'Batting-StrikeOut-Out',
+    })
+  })
+
+  it('maps successful steals to BR-2nd and BR-3rd with +1 points', () => {
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondSuccess)).toEqual({
+      item: '2루 도루 성공',
+      code: 'BR-2nd',
+      score: 1.0,
+      description: 'Base Running-Steal 2B Success',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.stealThirdSuccess)).toEqual({
+      item: '3루 도루 성공',
+      code: 'BR-3rd',
+      score: 1.0,
+      description: 'Base Running-Steal 3B Success',
+    })
+  })
+
+  it('maps extra-base ETB advances to BR-ETB-1 and BR-ETB-2', () => {
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceSecondETB)).toEqual({
+      item: '2루 진루 (ETB)',
+      code: 'BR-ETB-1',
+      score: 1.0,
+      description: 'Base Running-Extra Base ETB at 2B/3B',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceThirdETB)).toEqual({
+      item: '3루 진루 (ETB)',
+      code: 'BR-ETB-1',
+      score: 1.0,
+      description: 'Base Running-Extra Base ETB at 2B/3B',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceETB)).toEqual({
+      item: '홈 진루 (ETB)',
+      code: 'BR-ETB-2',
+      score: 1.5,
+      description: 'Base Running-Extra Base ETB at Home',
+    })
+  })
+
   it('maps home out to BR-E-2 code', () => {
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceFailure)).toEqual({
       item: '홈 진루 실패',

@@ -178,7 +178,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:first',
     title: '폭투 진루 판정',
     outcomes: [
-      { id: 'success', label: '폭투 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousWildPitch, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '폭투 이용 진루 성공', showInCompletion: false }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.wildPitchAdvance.ambiguous }] } },
+      { id: 'success', label: '폭투 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousWildPitch, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceETB }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.wildPitchAdvance.ambiguous }] } },
       { id: 'out', label: '폭투 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousWildPitch, transition: { to: 'plate.complete', effects: [{ type: 'announcePlayerAdvanceFailure', ...ANNOUNCEMENTS.wildPitchAdvanceFailure }, { type: 'record', message: '{destination} 진루 실패' }, { type: 'movePlayer', to: 'out' }] } },
     ],
   },
@@ -283,7 +283,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'runner.third.outfieldError.ambiguous.advance': {
     id: 'runner.third.outfieldError.ambiguous.advance', type: 'chance', view: 'runner:third', title: '홈 진루', tags: ['player-position-view'],
     outcomes: [
-      { id: 'success', label: '홈 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceETB }, { type: 'announcePlayerAdvance', title: '위험을 감수한 홈 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 3루 주자가 홈에 들어왔습니다.', advance: 'bold' }] } },
+      { id: 'success', label: '홈 진루 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceETB }, { type: 'announcePlayerAdvance', title: '위험을 감수한 홈 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 3루 주자가 홈에 들어왔습니다.', homeDetail: '상대 외야수 실책을 틈타 위험을 감수하고 {destination}에 들어왔습니다.', advance: 'bold' }] } },
       { id: 'out', label: '홈 진루 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousDrop, transition: { to: 'plate.complete', effects: [{ type: 'movePlayer', to: 'out' }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceFailure }, { type: 'announce', ...SCENARIO_TEXT.running.homeAdvanceFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
     ],
   },
@@ -389,7 +389,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     type: 'event',
     view: 'runner:first',
     title: '내야수 포구 실책',
-    effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' }],
+    effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.', homeDetail: '상대 내야수 땅볼 포구 실책을 틈타 위험을 감수하고 {destination}에 들어왔습니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' }],
     transition: { to: 'runner.route' },
   },
   'followUp.ground.throwingError.check': {
