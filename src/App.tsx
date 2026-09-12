@@ -37,8 +37,8 @@ type BattingInputMode = 'direct' | 'probabilistic'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
 type Stats = { runs: number; hits: number; outs: number }
 
-// 선택지 없이 강제로 정해지는 항목(포스 상황 강제 아웃)은 타석 결산/파이널 리포트에 노출하지 않는다
-const HIDDEN_PLAY_RESULT_ITEMS: string[] = [PLAY_RESULT_ITEMS.followUpGroundForceOut]
+// 후속 타자 내야 땅볼의 자동 처리 결과는 타석 결산/파이널 리포트에 노출하지 않는다
+const HIDDEN_PLAY_RESULT_ITEMS: string[] = [PLAY_RESULT_ITEMS.followUpGroundOut, PLAY_RESULT_ITEMS.followUpGroundForceOut]
 const filterHiddenPlayResultItems = (items: string[]) => items.filter((item) => !HIDDEN_PLAY_RESULT_ITEMS.includes(item))
 
 const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
