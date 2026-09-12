@@ -2,7 +2,7 @@ import { Bug, CheckCircle2, ChevronRight, Pause, Play, RotateCcw, SkipBack, Skip
 import { useEffect, useState } from 'react'
 import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
 import { BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
-import { PLAY_RESULT_CODES, resolvePlayResultCode } from './game/playResultCodes'
+import { PLAY_RESULT_CODES, PLAY_RESULT_ITEMS, resolvePlayResultCode } from './game/playResultCodes'
 import {
   createRandomSituation,
   createScenarioContext,
@@ -36,6 +36,10 @@ type AnnouncementAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
 type BattingInputMode = 'direct' | 'probabilistic'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
 type Stats = { runs: number; hits: number; outs: number }
+
+// 선택지 없이 강제로 정해지는 항목(포스 상황 강제 아웃)은 타석 결산/파이널 리포트에 노출하지 않는다
+const HIDDEN_PLAY_RESULT_ITEMS: string[] = [PLAY_RESULT_ITEMS.followUpGroundForceOut]
+const filterHiddenPlayResultItems = (items: string[]) => items.filter((item) => !HIDDEN_PLAY_RESULT_ITEMS.includes(item))
 
 const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
 const ANNOUNCEMENT_AUDIT_TAB_STORAGE_KEY = 'eps:announcement-check:tab:v1'
@@ -281,7 +285,8 @@ function App() {
   const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
   const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
   const playResultVisible = phase === 'between' && sceneIsFinalStep
-  const playResultItems = scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result]
+  const playResultItems = (scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result])
+    .filter((item) => !HIDDEN_PLAY_RESULT_ITEMS.includes(item ?? ''))
   const playResultTotal = playResultItems.reduce((total, item) => total + (resolvePlayResultCode(item ?? '').score ?? 0), 0)
   const playResultTotalTone = playResultTotal > 0 ? 'positive' : playResultTotal < 0 ? 'negative' : 'zero'
   const sceneCurrentStage = sceneAnnouncementStages[sceneStep]
@@ -349,7 +354,7 @@ function App() {
   }
 
   const completeScenario = (state: ScenarioState) => {
-    const result = state.context.completionRecords.join('\n') || state.context.selectedLabel || '플레이 완료'
+    const result = filterHiddenPlayResultItems(state.context.completionRecords).join('\n') || state.context.selectedLabel || '플레이 완료'
     setPlayResultReady(false)
     setStats((current) => ({
       runs: current.runs + state.context.runs,
