@@ -48,7 +48,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
 
   '내야 땅볼 발생!': 'ball-ground-infield',
   '후속타자의 내야 땅볼 발생!': 'ball-ground-infield',
-  '내야 뜬공 발생!': 'ball-fly-infield',
+  '내야 뜬공 발생!': 'ball-fly-outfield',
   '외야 뜬공 발생!': 'ball-fly-outfield',
   '후속타자의 외야 뜬공 발생!': 'ball-fly-outfield',
   '애매한 외야 플라이!': 'ball-fly-outfield-shallow',
@@ -60,7 +60,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '삼진 아웃되었습니다.': 'out-strikeout',
   '인필드 플라이 선언!': 'out-infield-fly',
   '내야 땅볼 아웃!': 'ground-first-base-catch',
-  '내야 뜬공 아웃!': 'ball-fly-infield',
+  '내야 뜬공 아웃!': 'ball-fly-outfield',
   '외야 뜬공 아웃!': 'out-fly',
   '땅볼 처리 성공!': 'ground-first-base-catch',
   '뜬공 처리 성공!': 'out-fly',
@@ -74,7 +74,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '상대 내야수가 땅볼 포구에 실패했습니다!': 'error-infield-fielding',
   '내야수 땅볼 실책!': 'error-infield-fielding',
   '내야 땅볼 송구 실책!': 'error-infield-throwing',
-  '상대 내야수가 뜬공 포구에 실패했습니다!': 'error-infield-fly-drop',
+  '상대 내야수가 뜬공 포구에 실패했습니다!': 'error-outfield-drop',
   '상대 외야수가 뜬공 포구에 실패했습니다!': 'error-outfield-drop',
   '상대 외야수가 타구를 뒤로 빠뜨렸습니다!': 'error-outfield-through',
 

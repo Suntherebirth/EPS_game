@@ -476,7 +476,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'followUp.ground.throw.extra.clear.decide', type: 'choice', view: 'runner:first', title: '내야 땅볼 송구 실책', tags: ['surprise-event', 'player-position-view'],
     description: SCENARIO_TEXT.advanceQuestion,
     choices: [
-      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '송구 실책 후 추가 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '내야 땅볼 송구 실책 이후 진루하지 않았습니다.', detail: '현재 베이스에 머물렀습니다.', tone: 'neutral', advance: 'blocked', detailScene: 'error-first-base-catch-clear', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '송구 실책 후 추가 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '내야 땅볼 송구 실책이 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative', advance: 'blocked', detailScene: 'error-first-base-catch-clear', titleImageMode: 'same-as-detail-scene' }] } },
       { id: 'advance', label: SCENARIO_TEXT.advanceAttemptChoice, description: `명백하게 빠진 송구 · 성공률 ${Math.round(FOLLOW_UP_GROUND_THROW_CLEAR_EXTRA_ADVANCE * 100)}%`, transition: { to: 'followUp.ground.throw.extra.clear.advance' } },
     ],
   },
@@ -491,7 +491,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'followUp.ground.throw.extra.ambiguous.decide', type: 'choice', view: 'runner:first', title: '내야 땅볼 송구 실책', tags: ['surprise-event', 'player-position-view'],
     description: SCENARIO_TEXT.advanceQuestion,
     choices: [
-      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '송구 실책 후 추가 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '내야 땅볼 송구 실책 이후 진루하지 않았습니다.', detail: '현재 베이스에 머물렀습니다.', tone: 'neutral', advance: 'blocked', detailScene: 'error-first-base-catch-ambiguous', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'stayOnBase', label: '안전하게 현재 베이스에 머문다', transition: { to: 'runner.route', effects: [{ type: 'record', message: '송구 실책 후 추가 진루하지 않음', showInCompletion: false }, { type: 'announce', title: '내야 땅볼 송구 실책이 나왔지만 진루하지 않았습니다.', detail: '위험하다고 판단하여 진루하지 않았습니다.', tone: 'neutral', advance: 'blocked', detailScene: 'error-first-base-catch-ambiguous', titleImageMode: 'same-as-detail-scene' }] } },
       { id: 'advance', label: SCENARIO_TEXT.advanceAttemptChoice, description: `애매하게 빠진 송구 · 성공률 ${Math.round(FOLLOW_UP_GROUND_THROW_AMBIGUOUS_EXTRA_ADVANCE * 100)}%`, transition: { to: 'followUp.ground.throw.extra.ambiguous.advance' } },
     ],
   },
