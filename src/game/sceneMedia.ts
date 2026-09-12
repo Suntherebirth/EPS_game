@@ -8,6 +8,8 @@ type AnnouncementStageMessage = Pick<ScenarioAnnouncement, 'title' | 'scene'> & 
 
 export const SCENE_FRAME_INTERVAL_MS = 680
 
+export type SceneTransition = 'runner-reveal' | 'impact' | 'lift' | 'fade'
+
 const VIEW_IMAGES: Partial<Record<ScenarioView, string>> = {
   batter: viewBatter,
   'runner:first': viewRunnerFirst,
@@ -45,6 +47,8 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '내야안타!': 'hit-infield',
   '볼넷!': 'walk',
   '사구!': 'hit-by-pitch',
+  '후속타자의 볼넷!': 'walk',
+  '후속타자의 사구!': 'hit-by-pitch',
 
   '내야 땅볼 발생!': 'ball-ground-infield',
   '후속타자의 내야 땅볼 발생!': 'ball-ground-infield',
@@ -58,6 +62,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '상대 내야수, 1루 송구 준비 완료!': 'ground-throw-ready',
 
   '삼진 아웃되었습니다.': 'out-strikeout',
+  '후속타자의 삼진!': 'out-strikeout',
   '인필드 플라이 선언!': 'out-infield-fly',
   '내야 땅볼 아웃!': 'ground-first-base-catch',
   '내야 뜬공 아웃!': 'ball-fly-outfield',
@@ -143,6 +148,21 @@ export const resolveSceneImageFilename = (announcement: Pick<ScenarioAnnouncemen
 export const resolveViewImage = (view: ScenarioView): string | undefined => VIEW_IMAGES[view]
 
 export const resolveViewImageFilename = (view: ScenarioView): string | undefined => VIEW_IMAGE_FILENAMES[view]
+
+export const resolveSceneTransition = ({
+  view,
+  sceneId,
+  advance,
+}: {
+  view: ScenarioView
+  sceneId?: SceneId
+  advance?: 'safe' | 'normal' | 'bold' | 'blocked'
+}): SceneTransition => {
+  if (view.startsWith('runner:')) return 'runner-reveal'
+  if (advance === 'bold' || advance === 'blocked' || sceneId?.startsWith('out-') || sceneId?.startsWith('error-')) return 'impact'
+  if (advance === 'safe' || advance === 'normal' || sceneId?.startsWith('hit-') || sceneId === 'walk') return 'lift'
+  return 'fade'
+}
 
 const HOME_IN_DETAIL = /홈에 (?:안전하게 |그대로 )?(?:들어왔습니다|도착했습니다)|홈 (?:추가 )?진루에 성공했습니다|홈 쇄도에 성공했습니다|3루 주자가 홈에/
 

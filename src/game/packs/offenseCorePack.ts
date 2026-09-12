@@ -152,10 +152,10 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.clean.route': {
       id: 'ground.infield.clean.route', type: 'router', view: 'batter', title: '내야 땅볼 정상 수비 처리',
       routes: [
-        { to: 'ground.infield.runnerThird.advance.check', when: [{ field: 'bases', operator: 'includes', value: [3] }, { field: 'bases', operator: 'excludes', value: [1] }, { field: 'outs', operator: 'lt', value: 2 }] },
-        { to: 'out.ground.generic', when: [{ field: 'bases', operator: 'empty' }] },
-        { to: 'ground.infield.doublePlay.check', when: [{ field: 'bases', operator: 'includes', value: [1] }, { field: 'outs', operator: 'lt', value: 2 }] },
-        { to: 'ground.infield.forceOut', when: [{ field: 'bases', operator: 'includes', value: [1] }], effects: [{ type: 'applyGroundForceOut' }] },
+        { to: 'ground.infield.runnerThird.advance.check', when: [{ field: 'bases', operator: 'includes', value: [3] }, { field: 'bases', operator: 'excludes', value: [1] }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccessAtBase(1) }] },
+        { to: 'out.ground.generic', when: [{ field: 'bases', operator: 'empty' }], effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccessAtBase(1) }] },
+        { to: 'ground.infield.doublePlay.check', when: [{ field: 'bases', operator: 'includes', value: [1] }, { field: 'outs', operator: 'lt', value: 2 }], effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccessAtBase(2) }] },
+        { to: 'ground.infield.forceOut', when: [{ field: 'bases', operator: 'includes', value: [1] }], effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccessAtBase(2) }, { type: 'applyGroundForceOut' }] },
         { to: 'ground.infield.force.check' },
       ],
     },
@@ -181,8 +181,8 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.force.check': {
       id: 'ground.infield.force.check', type: 'chance', view: 'batter', title: '내야 땅볼 선행 주자 아웃 판정',
       outcomes: [
-        { id: 'batterOut', label: '타자 주자 아웃', weight: RUNNING_CHANCES.infieldGroundBatterOut, transition: { to: 'out.ground.generic' } },
-        { id: 'leadRunnerOut', label: '선행 주자 아웃', weight: RUNNING_CHANCES.infieldGroundLeadRunnerOut, transition: { to: 'ground.infield.forceOut', effects: [{ type: 'applyGroundForceOut' }] } },
+        { id: 'batterOut', label: '타자 주자 아웃', weight: RUNNING_CHANCES.infieldGroundBatterOut, transition: { to: 'out.ground.generic', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccessAtBase(1) }] } },
+        { id: 'leadRunnerOut', label: '선행 주자 아웃', weight: RUNNING_CHANCES.infieldGroundLeadRunnerOut, transition: { to: 'ground.infield.forceOut', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccessAtBase(3) }, { type: 'applyGroundForceOut' }] } },
       ],
     },
     'ground.infield.forceOut': {
@@ -212,7 +212,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.throwingError.check': {
       id: 'ground.infield.throwingError.check', type: 'chance', view: 'batter', title: '내야 땅볼 1루 송구 판정', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'throwSuccess', label: '송구 성공', weight: GROUND_THROW_SUCCESS_AFTER_FIELDING, transition: { to: 'ground.infield.clean.route', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundThrowSuccess }] } },
+        { id: 'throwSuccess', label: '송구 성공', weight: GROUND_THROW_SUCCESS_AFTER_FIELDING, transition: { to: 'ground.infield.clean.route' } },
         { id: 'clearMiss', label: '명백히 1루수 뒤로 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorClear, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowingError }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorClear }] } },
         { id: 'ambiguousMiss', label: '1루수 뒤로 애매하게 빠진 송구', weight: GROUND_THROWING_ERROR_AFTER_FIELDING * RUNNING_CHANCES.infieldGroundThrowingErrorAmbiguous, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowingError }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorAmbiguous }] } },
       ],

@@ -389,7 +389,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     type: 'event',
     view: 'runner:first',
     title: '내야수 포구 실책',
-    effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.', homeDetail: '상대 내야수 땅볼 포구 실책을 틈타 위험을 감수하고 {destination}에 들어왔습니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' }],
+    effects: [{ type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.', homeDetail: '상대 내야수 땅볼 포구 실책으로 안전하게 {destination}에 들어왔습니다.', detailScene: 'ball-ground-infield', titleImageMode: 'same-as-detail-scene' }],
     transition: { to: 'runner.route' },
   },
   'followUp.ground.throwingError.check': {
@@ -440,12 +440,12 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   },
   'followUp.ground.throw.error.clear': {
     id: 'followUp.ground.throw.error.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
-    effects: [{ type: 'forceWalk' }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorClear }],
+    effects: [{ type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'forceWalk' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorClear }],
     transition: { to: 'followUp.ground.throw.extra.clear.route' },
   },
   'followUp.ground.throw.error.ambiguous': {
     id: 'followUp.ground.throw.error.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
-    effects: [{ type: 'forceWalk' }, { type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorAmbiguous }],
+    effects: [{ type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'forceWalk' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorAmbiguous }],
     transition: { to: 'followUp.ground.throw.extra.ambiguous.route' },
   },
   'followUp.ground.throw.error.attempt.clear': {
@@ -483,7 +483,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'followUp.ground.throw.extra.clear.advance': {
     id: 'followUp.ground.throw.extra.clear.advance', type: 'chance', view: 'runner:first', title: '송구 실책 추가 진루', tags: ['player-position-view'],
     outcomes: [
-      { id: 'success', label: '추가 진루 성공', weight: FOLLOW_UP_GROUND_THROW_CLEAR_EXTRA_ADVANCE, transition: { to: 'runner.route', effects: [{ type: 'advancePlayer' }, { type: 'record', message: '{destination} 진루 (ETB)' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.clear }] } },
+      { id: 'success', label: '추가 진루 성공', weight: FOLLOW_UP_GROUND_THROW_CLEAR_EXTRA_ADVANCE, transition: { to: 'runner.route', effects: [{ type: 'record', message: '{destination} 진루 (ETB)' }, { type: 'advancePlayer' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.clear }] } },
       { id: 'out', label: '추가 진루 실패', weight: 1 - FOLLOW_UP_GROUND_THROW_CLEAR_EXTRA_ADVANCE, transition: { to: 'plate.complete', effects: [{ type: 'announcePlayerAdvanceFailure', title: '{destination} 진루 실패', detail: '상대 1루수의 빠른 넥스트 플레이로 {destination}에서 아웃되었습니다.', tone: 'negative', detailScene: 'advance-ambiguous-out', titleImageMode: 'same-as-detail-scene' }, { type: 'record', message: '{destination} 진루 실패' }, { type: 'movePlayer', to: 'out' }] } },
     ],
   },

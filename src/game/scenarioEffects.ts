@@ -70,7 +70,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     const detailScene = isHome
       ? (tone === 'positive' ? 'home-in-positive' as const : 'home-in-neutral' as const)
       : effect.detailScene
-    const homeDetail = effect.homeDetail ?? (tone === 'positive' || effect.advance === 'bold' ? '위험을 감수하고 {destination}에 들어왔습니다.' : '홈에 안전하게 들어왔습니다.')
+    const homeDetail = effect.homeDetail ?? (effect.advance === 'bold' ? '위험을 감수하고 {destination}에 들어왔습니다.' : '홈에 안전하게 들어왔습니다.')
     setAnnouncement(next, {
       title: formatCurrentPlayerText(effect.title, next.playerBase) ?? effect.title,
       detail: formatCurrentPlayerText(isHome ? homeDetail : (effect.detail ?? '진루했습니다.'), next.playerBase) ?? '진루했습니다.',
@@ -184,6 +184,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
   if (effect.type === 'applyFollowUpGroundOut') {
     const playerBase = next.playerBase
     const playerIsForced = playerBase !== null && isRunnerForced(next.bases, playerBase)
+    next.flags.followUpGroundOut = true
     next.outs = Math.min(3, next.outs + 1)
     next.records.push(playerIsForced ? '후속 타자 내야 땅볼, 포스 아웃' : '후속 타자 내야 땅볼 아웃')
     next.completionRecords.push(playerIsForced ? PLAY_RESULT_ITEMS.followUpGroundForceOut : PLAY_RESULT_ITEMS.followUpGroundOut)

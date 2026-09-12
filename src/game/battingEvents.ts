@@ -53,6 +53,36 @@ export const BATTING_EVENTS: Play[] = [
   battingEvent('flyOut', '외야 뜬공', '외야수가 타구를 잡아낸다', '외야수가 낙구 지점에서 타구를 잡습니다.', 0, 1, false, BATTING_EVENT_RANDOM_WEIGHTS.flyOut),
 ]
 
+export type BattingCategory = 'hit' | 'out' | 'strikeoutWalk'
+
+export type BattingCategoryConfig = {
+  id: BattingCategory
+  label: string
+  description: string
+  eventIds: BattingEventId[]
+}
+
+export const BATTING_CATEGORIES: BattingCategoryConfig[] = [
+  {
+    id: 'hit',
+    label: '안타',
+    description: '1루타 · 2루타 · 3루타 · 홈런',
+    eventIds: ['single', 'double', 'triple', 'homeRun', 'infieldHit'],
+  },
+  {
+    id: 'out',
+    label: '범타',
+    description: '내야 땅볼 · 외야 뜬공 · 내야 뜬공',
+    eventIds: ['groundOut', 'flyOut', 'infieldFly', 'infieldError'],
+  },
+  {
+    id: 'strikeoutWalk',
+    label: '삼진/볼넷',
+    description: '삼진 · 볼넷 · 사구',
+    eventIds: ['strikeout', 'walk', 'hitByPitch'],
+  },
+]
+
 export type ProbabilisticBattingChoice = 'contact' | 'power' | 'watch'
 
 export type ProbabilisticOutcome = {

@@ -237,6 +237,7 @@ describe('offense core scenario pack', () => {
 
     expect(throwing.nodeId).toBe('ground.infield.throwingError.check')
     expect(decision.nodeId).toBe('ground.infield.doublePlay.check')
+    expect(decision.context.announcement).toEqual(ANNOUNCEMENTS.groundThrowSuccessAtBase(2))
     expect(doublePlay.nodeId).toBe('plate.complete')
     expect(doublePlay.context).toMatchObject({ outs: 3, bases: [], playerBase: null })
     expect(doublePlay.context.records).toContain('내야 땅볼, 병살')
@@ -628,7 +629,7 @@ describe('offense core scenario pack', () => {
     const result = finalizeScenarioEffects(applyScenarioEffect({ ...context(2, [3]), playerBase: 3 }, batterOut))
 
     expect(result.announcement).toEqual(ANNOUNCEMENTS.playEnded)
-    expect(result.announcementHistory.at(-1)?.announcement).toEqual({ title: '후속타자의 내야 땅볼 아웃!', detail: '현재 베이스에 머뭅니다.', detailScene: 'ground-first-base-catch', titleImageMode: 'same-as-detail-scene' })
+    expect(result.announcementHistory.at(-1)?.announcement).toEqual(ANNOUNCEMENTS.groundThrowSuccess)
   })
 
   it('allows a third-base runner to score while the batter is retired on a clean ground ball', () => {
@@ -718,6 +719,7 @@ describe('offense core scenario pack', () => {
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, throwCheck)).toEqual([])
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 3, bases: [], playerBase: null })
+    expect(result.context.announcementHistory.at(-1)?.announcement).toEqual(ANNOUNCEMENTS.groundThrowSuccess)
   })
 
   it('scores a third-base runner who successfully advances home on a clean ground ball', () => {
@@ -807,6 +809,21 @@ describe('offense core scenario pack', () => {
     if (ambiguousAdvanceNode.type === 'chance') expect(ambiguousAdvanceNode.outcomes[1].weight).toBeCloseTo(1 - RUNNING_CHANCES.followUpGroundThrowAmbiguousExtraAdvance)
   })
 
+  it('records a 3B ETB advance when a runner takes the extra base after a clear follow-up throwing error', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const runner = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, firstFielding, 'normalFielding', { manualChance: true })
+    const wildPitch = chooseScenarioOption(OFFENSE_CORE_PACK, runner, 'waitForBatter', { manualChance: true })
+    const followUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, wildPitch, 'normalPitch', { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, followUp, 'groundOut', { manualChance: true })
+    const throwCheck = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const clearMiss = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'clearMiss', { manualChance: true })
+    const advanceChoice = chooseScenarioOption(OFFENSE_CORE_PACK, clearMiss, 'advance', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advanceChoice, 'success', { manualChance: true })
+
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdETB)
+  })
+
   it('asks for another extra-advance decision after a runner started on the throw and the throw misses', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
@@ -845,7 +862,19 @@ describe('offense core scenario pack', () => {
 
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
-    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '상대 내야수 땅볼 포구 실책을 틈타 위험을 감수하고 홈에 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceHomeError)
+    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '상대 내야수 땅볼 포구 실책으로 안전하게 홈에 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
+  })
+
+  it('records a home advance and safe wording when a third-base runner is forced home by a follow-up ground throwing error', () => {
+    const initial = { nodeId: 'followUp.batting.resolve', context: { ...context(0, [1, 2, 3]), playerBase: 3 } }
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, cleanPlay, 'clearMiss', { manualChance: true })
+
+    expect(result.context).toMatchObject({ playerBase: null, runs: 1 })
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceHomeError)
+    expect(result.context.announcement).toEqual({ title: '내야 땅볼 송구 실책!', detail: '홈에 안전하게 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
   })
 
   it('completes the play when a throwing error advances a third-base runner home', () => {

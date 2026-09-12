@@ -1,8 +1,27 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BATTING_CATEGORIES,
+  BATTING_EVENTS,
   PROBABILISTIC_BATTING_CHOICES,
   resolveProbabilisticBattingChoice,
 } from './battingEvents'
+
+describe('battingEvents - 타석 카테고리', () => {
+  it('안타, 범타, 삼진/볼넷의 세 가지 카테고리가 정의되어 있어야 한다', () => {
+    const ids = BATTING_CATEGORIES.map((c) => c.id)
+    expect(ids).toEqual(['hit', 'out', 'strikeoutWalk'])
+
+    const labels = BATTING_CATEGORIES.map((c) => c.label)
+    expect(labels).toEqual(['안타', '범타', '삼진/볼넷'])
+  })
+
+  it('모든 타격 이벤트가 하나 이상의 카테고리에 매핑되어 있어야 한다', () => {
+    const allCategoryEventIds = BATTING_CATEGORIES.flatMap((c) => c.eventIds)
+    for (const event of BATTING_EVENTS) {
+      expect(allCategoryEventIds).toContain(event.kind)
+    }
+  })
+})
 
 describe('battingEvents - 확률형 선택지', () => {
   it('세 가지 확률형 선택지가 정의되어 있어야 한다 (컨택트 스윙, 파워 스윙, 지켜본다)', () => {

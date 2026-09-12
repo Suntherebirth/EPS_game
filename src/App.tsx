@@ -1,7 +1,7 @@
-import { Bug, CheckCircle2, ChevronRight, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal } from 'lucide-react'
+import { Bug, CheckCircle2, ChevronLeft, ChevronRight, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
-import { BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
+import { BATTING_CATEGORIES, BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingCategory, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
 import { PLAY_RESULT_CODES, PLAY_RESULT_ITEMS, resolvePlayResultCode } from './game/playResultCodes'
 import {
   createRandomSituation,
@@ -21,8 +21,10 @@ import {
   resolveAnnouncementDetailSceneId,
   resolveAnnouncementDetailView,
   resolveAnnouncementImageBase,
+  resolveSceneId,
   resolveSceneImage,
   resolveSceneImageFilename,
+  resolveSceneTransition,
   resolveViewImage,
   resolveViewImageFilename,
   shouldShareDetailSceneForTitle,
@@ -37,9 +39,7 @@ type BattingInputMode = 'direct' | 'probabilistic'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
 type Stats = { runs: number; hits: number; outs: number }
 
-// 후속 타자 내야 땅볼의 자동 처리 결과는 타석 결산/파이널 리포트에 노출하지 않는다
-const HIDDEN_PLAY_RESULT_ITEMS: string[] = [PLAY_RESULT_ITEMS.followUpGroundOut, PLAY_RESULT_ITEMS.followUpGroundForceOut]
-const filterHiddenPlayResultItems = (items: string[]) => items.filter((item) => !HIDDEN_PLAY_RESULT_ITEMS.includes(item))
+const filterHiddenPlayResultItems = (items: string[], hideFollowUpGroundOut: boolean) => items.filter((item) => item !== PLAY_RESULT_ITEMS.followUpGroundForceOut && (!hideFollowUpGroundOut || item !== PLAY_RESULT_ITEMS.followUpGroundOut))
 
 const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
 const ANNOUNCEMENT_AUDIT_TAB_STORAGE_KEY = 'eps:announcement-check:tab:v1'
@@ -136,7 +136,7 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, preserveImage, backgroundDimmingDelay, backgroundDimmingKey, hideBroadcastBug }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: AdvanceConcept; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string; hideBroadcastBug?: boolean }) {
+function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, sceneTransition, preserveImage, backgroundDimmingDelay, backgroundDimmingKey, hideBroadcastBug }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: AdvanceConcept; sceneTransition?: string; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string; hideBroadcastBug?: boolean }) {
   const [backgroundDimmedToken, setBackgroundDimmedToken] = useState('')
   const backgroundDimmingToken = `${backgroundDimmingKey ?? ''}:${backgroundDimmingDelay ?? ''}`
 
@@ -148,7 +148,7 @@ function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabe
 
   return <section className={`media-stage ${backgroundDimmedToken === backgroundDimmingToken && backgroundDimmingDelay !== undefined ? 'background-dimmed' : ''}`} aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
-    {!videoUrl && imageUrl && <img src={imageUrl} alt="" className={preserveImage ? 'preserve-image' : arrivalEffect ? `arrival-${arrivalEffect}` : ''} key={imageUrl} />}
+    {!videoUrl && imageUrl && <img src={imageUrl} alt="" className={`${preserveImage ? 'preserve-image' : ''} ${sceneTransition ? `scene-transition-${sceneTransition}` : ''} ${arrivalEffect ? `arrival-${arrivalEffect}` : ''}`} key={imageUrl} />}
     {!videoUrl && missingImageName && <div className="media-image-fallback" aria-live="polite"><span>{missingImageName}</span></div>}
     {viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
     <div className={`broadcast-bug ${isPlateEntry ? 'plate-entry-flash' : ''} ${hideBroadcastBug ? 'completion-hidden' : ''}`}>
@@ -244,6 +244,7 @@ function App() {
   const [appMode, setAppMode] = useState<AppMode>('game')
   const [adminMode, setAdminMode] = useState(false)
   const [battingInputMode, setBattingInputModeState] = useState<BattingInputMode>(() => loadBattingInputMode())
+  const [selectedBattingCategory, setSelectedBattingCategory] = useState<BattingCategory | null>(null)
   const [announcementAuditCases] = useState(() => createAnnouncementAuditCases())
   const [announcementCaseStatuses, setAnnouncementCaseStatuses] = useState<Record<string, AnnouncementAuditStatus>>(() => loadAnnouncementCaseStatuses())
   const [announcementAuditTab, setAnnouncementAuditTabState] = useState<AnnouncementAuditTab>(() => loadAnnouncementAuditTab())
@@ -285,8 +286,10 @@ function App() {
   const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
   const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
   const playResultVisible = phase === 'between' && sceneIsFinalStep
-  const playResultItems = (scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result])
-    .filter((item) => !HIDDEN_PLAY_RESULT_ITEMS.includes(item ?? ''))
+  const playResultItems = filterHiddenPlayResultItems(
+    scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result ?? ''],
+    scenario.context.flags.followUpGroundOut === true,
+  )
   const playResultTotal = playResultItems.reduce((total, item) => total + (resolvePlayResultCode(item ?? '').score ?? 0), 0)
   const playResultTotalTone = playResultTotal > 0 ? 'positive' : playResultTotal < 0 ? 'negative' : 'zero'
   const sceneCurrentStage = sceneAnnouncementStages[sceneStep]
@@ -338,6 +341,7 @@ function App() {
   }, [replay?.playing, replay?.index, replay?.frames.length])
 
   const restartAt = (nextSituation: Situation) => {
+    setSelectedBattingCategory(null)
     setSituation(nextSituation)
     setSituationPlayerBase(null)
     setPlateStartSituation(nextSituation)
@@ -346,6 +350,7 @@ function App() {
   }
 
   const resetGame = () => {
+    setSelectedBattingCategory(null)
     setPlateAppearance(1)
     setStats({ runs: 0, hits: 0, outs: 0 })
     setRecords([])
@@ -354,7 +359,7 @@ function App() {
   }
 
   const completeScenario = (state: ScenarioState) => {
-    const result = filterHiddenPlayResultItems(state.context.completionRecords).join('\n') || state.context.selectedLabel || '플레이 완료'
+    const result = filterHiddenPlayResultItems(state.context.completionRecords, state.context.flags.followUpGroundOut === true).join('\n') || state.context.selectedLabel || '플레이 완료'
     setPlayResultReady(false)
     setStats((current) => ({
       runs: current.runs + state.context.runs,
@@ -373,11 +378,13 @@ function App() {
   }
 
   const setBattingInputMode = (mode: BattingInputMode) => {
+    setSelectedBattingCategory(null)
     setBattingInputModeState(mode)
     saveBattingInputMode(mode)
   }
 
   const acceptState = (next: ScenarioState) => {
+    setSelectedBattingCategory(null)
     const terminal = OFFENSE_CORE_PACK.nodes[next.nodeId].type === 'terminal'
     setSituation({ outs: scenario.context.outs, bases: scenario.context.bases as Base[] })
     setSituationPlayerBase(scenario.context.playerBase)
@@ -516,6 +523,8 @@ function App() {
   const showPlayResult = playResultVisible && playResultReady
   const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : showPlayResult ? 0 : undefined
   const arrivalEffect = sceneIsFinalStep ? resolveAdvanceConcept(currentAnnouncement ?? displayedState.context.announcement) : undefined
+  const nextSceneId = currentAnnouncement ? resolveSceneId(currentAnnouncement) : undefined
+  const sceneTransition = resolveSceneTransition({ view: sceneIsFinalStep ? sceneDetailView : sceneImageView, sceneId: nextSceneId, advance: arrivalEffect })
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random'
       ? '관리자: 후속 타자 결과를 지정하세요.'
@@ -544,7 +553,7 @@ function App() {
   return <main className="app-shell">
     <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} sceneTransition={sceneTransition} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
         {overlayMessages.length > 0 && <aside className={`result-notice ${overlayMessages.at(-1)?.tone ?? 'neutral'}`} aria-live="polite" key={replaying ? `replay:${replayFrame?.stepIndex ?? 'live'}` : sceneSequenceKey}>
           <span>{replaying ? '아나운스 재생' : '방금 일어난 일'}</span>
@@ -570,13 +579,16 @@ function App() {
         {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' || node.type === 'batting' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
         {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && (
-          <div className={`choices batting-choices ${battingInputMode === 'probabilistic' && !adminMode ? 'probabilistic-choices' : 'direct-choices'} ${adminMode && node.mode === 'random' ? 'admin-batting-choices' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>
+          <div className={`batting-container ${adminMode && node.mode === 'random' ? 'admin-batting-container' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>
             {!adminMode && (
               <div className="batting-mode-toggle" role="radiogroup" aria-label="타격 모드 선택">
                 <button
                   type="button"
                   className={`mode-toggle-chip ${battingInputMode === 'probabilistic' ? 'active' : ''}`}
-                  onClick={() => setBattingInputMode('probabilistic')}
+                  onClick={() => {
+                    setSelectedBattingCategory(null)
+                    setBattingInputMode('probabilistic')
+                  }}
                 >
                   확률형
                 </button>
@@ -590,25 +602,73 @@ function App() {
               </div>
             )}
             {battingInputMode === 'probabilistic' && !adminMode ? (
-              PROBABILISTIC_BATTING_CHOICES.map((choice) => (
-                <button type="button" onClick={() => chooseProbabilisticBatting(choice.id)} key={choice.id}>
-                  <span>
-                    <strong>{choice.label}</strong>
-                    <small>{choice.description}</small>
-                  </span>
-                  <ChevronRight size={18} />
-                </button>
-              ))
+              <div className="choices probabilistic-choices">
+                {PROBABILISTIC_BATTING_CHOICES.map((choice) => (
+                  <button type="button" onClick={() => chooseProbabilisticBatting(choice.id)} key={choice.id}>
+                    <span>
+                      <strong>{choice.label}</strong>
+                      <small>{choice.description}</small>
+                    </span>
+                    <ChevronRight size={18} />
+                  </button>
+                ))}
+              </div>
+            ) : selectedBattingCategory === null ? (
+              <div className="choices batting-category-choices">
+                {BATTING_CATEGORIES.map((category) => {
+                  const matchingEvents = BATTING_EVENTS.filter(
+                    (event) =>
+                      category.eventIds.includes(event.kind) &&
+                      node.eventIds.includes(event.kind) &&
+                      (node.mode === 'random' ? adminMode : true)
+                  )
+                  if (matchingEvents.length === 0) return null
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBattingCategory(category.id)}
+                      key={category.id}
+                      className="category-choice-button"
+                    >
+                      <span>
+                        <strong>{category.label}</strong>
+                        <small>{category.description}</small>
+                      </span>
+                      <ChevronRight size={18} />
+                    </button>
+                  )
+                })}
+              </div>
             ) : (
-              BATTING_EVENTS.filter((event) => node.eventIds.includes(event.kind) && (node.mode === 'random' ? adminMode : ['single', 'double', 'triple', 'homeRun', 'walk', 'hitByPitch', 'strikeout', 'groundOut', 'infieldFly', 'flyOut'].includes(event.kind))).map((event) => (
-                <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}>
-                  <span>
-                    <strong>{event.label}</strong>
-                    <small>{event.description}</small>
-                  </span>
-                  <ChevronRight size={18} />
-                </button>
-              ))
+              <div className="batting-subcategory-wrapper">
+                <div className="batting-subcategory-header">
+                  <button
+                    type="button"
+                    className="category-back-chip"
+                    onClick={() => setSelectedBattingCategory(null)}
+                    aria-label="카테고리 선택으로 돌아가기"
+                  >
+                    <ChevronLeft size={16} />
+                    <span>카테고리: {BATTING_CATEGORIES.find((c) => c.id === selectedBattingCategory)?.label}</span>
+                  </button>
+                </div>
+                <div className="choices batting-subcategory-choices">
+                  {BATTING_EVENTS.filter(
+                    (event) =>
+                      node.eventIds.includes(event.kind) &&
+                      (node.mode === 'random' ? adminMode : true) &&
+                      BATTING_CATEGORIES.find((c) => c.id === selectedBattingCategory)?.eventIds.includes(event.kind)
+                  ).map((event) => (
+                    <button type="button" onClick={() => chooseBatting(event.kind)} key={event.kind}>
+                      <span>
+                        <strong>{event.label}</strong>
+                        <small>{event.description}</small>
+                      </span>
+                      <ChevronRight size={18} />
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}

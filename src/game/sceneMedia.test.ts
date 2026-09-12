@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { buildAnnouncementImageTrail, resolveAnnouncementDetailSceneId, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveViewImageFilename, shouldShareDetailSceneForTitle, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
+import { buildAnnouncementImageTrail, resolveAnnouncementDetailSceneId, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveSceneTransition, resolveViewImageFilename, shouldShareDetailSceneForTitle, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
 
 describe('scene media fallback names', () => {
+  it('opens runner viewpoints from the center', () => {
+    expect(resolveSceneTransition({ view: 'runner:first', sceneId: 'advance-clear' })).toBe('runner-reveal')
+    expect(resolveSceneTransition({ view: 'runner:third', sceneId: 'home-in-positive' })).toBe('runner-reveal')
+  })
+
+  it('uses impact for dangerous or defensive scenes and lift for positive plays', () => {
+    expect(resolveSceneTransition({ view: 'result', sceneId: 'out-strikeout' })).toBe('impact')
+    expect(resolveSceneTransition({ view: 'batter', sceneId: 'error-infield-fielding' })).toBe('impact')
+    expect(resolveSceneTransition({ view: 'batter', sceneId: 'hit-single', advance: 'safe' })).toBe('lift')
+  })
+
   it('returns the expected filename for an infield ground ball event', () => {
     expect(resolveSceneImageFilename({ title: '내야 땅볼 발생!', scene: undefined }, 1)).toBe('ball-ground-infield.png')
   })
@@ -14,6 +25,12 @@ describe('scene media fallback names', () => {
 
   it('returns the shared outfield fly ball filename for a follow-up batter', () => {
     expect(resolveSceneImageFilename({ title: '후속타자의 외야 뜬공 발생!', scene: undefined }, 1)).toBe('ball-fly-outfield.png')
+  })
+
+  it('uses the regular batting imagery for follow-up strikeouts, walks, and hit by pitches', () => {
+    expect(resolveSceneImageFilename({ title: '후속타자의 삼진!', scene: undefined }, 1)).toBe('out-strikeout.png')
+    expect(resolveSceneImageFilename({ title: '후속타자의 볼넷!', scene: undefined }, 1)).toBe('walk.png')
+    expect(resolveSceneImageFilename({ title: '후속타자의 사구!', scene: undefined }, 1)).toBe('hit-by-pitch.png')
   })
 
   it('returns the dedicated fielder movement filename for an outfield fly ball detail', () => {
