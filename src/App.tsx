@@ -131,7 +131,7 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, preserveImage, backgroundDimmingDelay, backgroundDimmingKey }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: AdvanceConcept; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string }) {
+function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, preserveImage, backgroundDimmingDelay, backgroundDimmingKey, hideBroadcastBug }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: AdvanceConcept; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string; hideBroadcastBug?: boolean }) {
   const [backgroundDimmedToken, setBackgroundDimmedToken] = useState('')
   const backgroundDimmingToken = `${backgroundDimmingKey ?? ''}:${backgroundDimmingDelay ?? ''}`
 
@@ -146,7 +146,7 @@ function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabe
     {!videoUrl && imageUrl && <img src={imageUrl} alt="" className={preserveImage ? 'preserve-image' : arrivalEffect ? `arrival-${arrivalEffect}` : ''} key={imageUrl} />}
     {!videoUrl && missingImageName && <div className="media-image-fallback" aria-live="polite"><span>{missingImageName}</span></div>}
     {viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
-    <div className={`broadcast-bug ${isPlateEntry ? 'plate-entry-flash' : ''}`}>
+    <div className={`broadcast-bug ${isPlateEntry ? 'plate-entry-flash' : ''} ${hideBroadcastBug ? 'completion-hidden' : ''}`}>
       <div className="broadcast-plate"><span>공격</span><strong>{plateAppearance}<small>/3</small></strong></div>
       <div className="broadcast-runners"><BaseDiamond bases={situation.bases} playerBase={playerBase} /></div>
       <div className="broadcast-outs"><span>OUT</span><div>{[0, 1, 2].map((out) => <i className={out < situation.outs ? 'on' : ''} key={out} />)}</div></div>
@@ -235,6 +235,7 @@ function App() {
   const [scenario, setScenario] = useState<ScenarioState>(() => startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: adminMode }))
   const [stats, setStats] = useState<Stats>({ runs: 0, hits: 0, outs: 0 })
   const [records, setRecords] = useState<RecordEntry[]>([])
+  const [playResultReady, setPlayResultReady] = useState(false)
 
   const replayFrame = replay ? replay.frames[replay.index] : null
   const displayedState = replayFrame?.state ?? scenario
@@ -479,7 +480,8 @@ function App() {
   const canAct = phase === 'playing' && (sceneIsFinalStep || adminMode && sceneNode.type === 'chance')
   const isNormalChoiceOverlayVisible = canAct && !replaying && node.type === 'choice' && !isSurpriseEvent && availableChoices.length > 0
   const playResultVisible = phase === 'between' && sceneIsFinalStep
-  const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : playResultVisible ? 0 : undefined
+  const showPlayResult = playResultVisible && playResultReady
+  const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : showPlayResult ? 0 : undefined
   const arrivalEffect = sceneIsFinalStep ? resolveAdvanceConcept(currentAnnouncement ?? displayedState.context.announcement) : undefined
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random'
@@ -504,10 +506,17 @@ function App() {
     },
   }
 
+  useEffect(() => {
+    setPlayResultReady(false)
+    if (!playResultVisible) return
+    const timer = window.setTimeout(() => setPlayResultReady(true), 550)
+    return () => window.clearTimeout(timer)
+  }, [playResultVisible])
+
   return <main className="app-shell">
     <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openAuditFromGame} aria-label="아나운스 텍스트 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('announcementCheck')}>체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openAuditFromGame}><Bug size={14} /> 이 텍스트 체크하기</button>}<label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${playResultVisible}`} />
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
         {overlayMessages.length > 0 && <aside className={`result-notice ${overlayMessages.at(-1)?.tone ?? 'neutral'}`} aria-live="polite" key={replaying ? `replay:${replayFrame?.stepIndex ?? 'live'}` : sceneSequenceKey}>
           <span>{replaying ? '아나운스 재생' : '방금 일어난 일'}</span>
@@ -577,7 +586,15 @@ function App() {
         )}
         {canAct && !replaying && node.type === 'choice' && <div className={`choices runner-choices ${availableChoices.length === 1 ? 'single-choice' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{availableChoices.map((choice) => <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`} onClick={(event) => event.stopPropagation()}><span>관리자 콘솔 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>)}</div></div>}
-        {playResultVisible && <div className="play-result"><p className="eyebrow">PLAY COMPLETE</p><h3>{records.at(-1)?.result}</h3><p>{plateAppearance === 3 ? '모든 타석이 끝났습니다.' : '다음 타석은 새로운 상황에서 시작합니다.'}</p><button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button></div>}
+        {showPlayResult && <section className="play-result" aria-live="polite">
+          <h2>이번 타석 결산</h2>
+          <div className="play-result-record" aria-label="플레이 점수 기록">
+            <div className="play-result-columns"><span>항목</span><span>코드</span><span>점수</span></div>
+            {(scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result]).map((item, index) => <div className="play-result-entry" key={`${item}:${index}`}><strong>{item}</strong><span /><span /></div>)}
+            <div className="play-result-total"><span>점수 합계</span><b /></div>
+          </div>
+          <button className="primary-button" type="button" onClick={continueGame}>{plateAppearance === 3 ? '결과 보기' : '다음 타석'} <ChevronRight size={18} /></button>
+        </section>}
       </section>
     </div>
     {replay && <div className="replay-controls" role="group" aria-label="아나운스 재생 컨트롤">
