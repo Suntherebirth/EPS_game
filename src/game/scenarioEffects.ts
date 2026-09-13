@@ -3,7 +3,7 @@ import { resolveAdvanceTone } from './advanceConcept'
 import { ANNOUNCEMENTS } from './announcementMessages'
 import { BATTING_EVENTS } from './battingEvents'
 import { isRunnerForced } from './gameSetup'
-import { PLAY_RESULT_ITEMS } from './playResultCodes'
+import { PLAY_RESULT_ITEMS, resolveGroundBallResultItem, type GroundBallStrength } from './playResultCodes'
 import { formatCurrentPlayerText, formatScenarioAdvanceFailureText, formatScenarioText } from './scenarioText'
 
 const cloneContext = (context: ScenarioContext): ScenarioContext => ({
@@ -44,6 +44,13 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     const message = formatScenarioText(effect.message, next.playerBase) ?? effect.message
     next.records.push(message)
     if (effect.showInCompletion ?? true) next.completionRecords.push(message)
+  }
+  if (effect.type === 'recordGroundBallResult') {
+    const strength = next.flags.groundBallStrength
+    if (strength !== 'hard' && strength !== 'soft') throw new Error('내야 땅볼 타구 강도가 없습니다.')
+    const message = resolveGroundBallResultItem(strength as GroundBallStrength, effect.result)
+    next.records.push(message)
+    next.completionRecords.push(message)
   }
   if (effect.type === 'setPlayerBase') next.playerBase = effect.value
   if (effect.type === 'announce') {
@@ -187,7 +194,16 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.flags.followUpGroundOut = true
     next.outs = Math.min(3, next.outs + 1)
     next.records.push(playerIsForced ? '후속 타자 내야 땅볼, 포스 아웃' : '후속 타자 내야 땅볼 아웃')
-    next.completionRecords.push(playerIsForced ? PLAY_RESULT_ITEMS.followUpGroundForceOut : PLAY_RESULT_ITEMS.followUpGroundOut)
+      if (playerIsForced) {
+        next.completionRecords.push(PLAY_RESULT_ITEMS.followUpGroundForceOut)
+      } else {
+        const strength = next.flags.groundBallStrength
+        next.completionRecords.push(
+          strength === 'hard' || strength === 'soft'
+            ? resolveGroundBallResultItem(strength, 'out')
+            : PLAY_RESULT_ITEMS.followUpGroundOut,
+        )
+      }
     if (playerIsForced && playerBase !== null) {
       next.bases = next.bases.filter((base) => base !== playerBase)
       next.playerBase = null

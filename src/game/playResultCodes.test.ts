@@ -74,6 +74,54 @@ describe('playResultCodes', () => {
     })
   })
 
+  it('maps infield ground-ball results by contact strength', () => {
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundSafeSoft)).toEqual({
+      item: '내야 땅볼 세이프 (약한 타구)',
+      code: 'B-G-S',
+      score: 0.5,
+      description: 'Batting-Ground-Safe',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundOutSoft)).toEqual({
+      item: '내야 땅볼 아웃 (약한 타구)',
+      code: 'B-G-O',
+      score: -1.0,
+      description: 'Batting-Ground-Out',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundSafeHard)).toEqual({
+      item: '내야 땅볼 세이프 (강한 타구)',
+      code: 'B-G-S-H',
+      score: 1.0,
+      description: 'Batting-Ground-Safe-Hard',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundOutHard)).toEqual({
+      item: '내야 땅볼 아웃 (강한 타구)',
+      code: 'B-G-O-H',
+      score: 0.0,
+      description: 'Batting-Ground-Out-Hard',
+    })
+  })
+
+  it('maps fielding-error advances to BR-FE with zero points', () => {
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceSecondError)).toEqual({
+      item: '2루 진루 (상대 실책)',
+      code: 'BR-FE',
+      score: 0.0,
+      description: 'Base Running-Fielding Error',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceThirdError)).toEqual({
+      item: '3루 진루 (상대 실책)',
+      code: 'BR-FE',
+      score: 0.0,
+      description: 'Base Running-Fielding Error',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceHomeError)).toEqual({
+      item: '홈 진루 (상대 실책)',
+      code: 'BR-FE',
+      score: 0.0,
+      description: 'Base Running-Fielding Error',
+    })
+  })
+
   it('maps home out to BR-E-2 code', () => {
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceFailure)).toEqual({
       item: '홈 진루 실패',

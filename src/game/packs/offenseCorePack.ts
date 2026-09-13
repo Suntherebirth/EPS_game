@@ -151,8 +151,8 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.contact.check': {
       id: 'ground.infield.contact.check', type: 'chance', view: 'batter', title: '내야 땅볼 타구 강도 판정', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'hardGroundBall', label: '강한 땅볼', weight: RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.hard.check' } },
-        { id: 'softGroundBall', label: '약한 땅볼', weight: 1 - RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.soft.check' } },
+        { id: 'hardGroundBall', label: '강한 땅볼', weight: RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.hard.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'hard' }] } },
+        { id: 'softGroundBall', label: '약한 땅볼', weight: 1 - RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.soft.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'soft' }] } },
       ],
     },
     'ground.infield.hard.check': {
@@ -226,25 +226,25 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     },
     'ground.infield.fieldingError': {
       id: 'ground.infield.fieldingError', type: 'event', view: 'runner:first', title: '내야수 포구 실책',
-      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundFieldingError }, { type: 'announce', ...ANNOUNCEMENTS.infieldFieldingError }],
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'announce', ...ANNOUNCEMENTS.infieldFieldingError }],
       transition: { to: 'runner.route' },
     },
     'ground.infield.hard.throw.check': {
       id: 'ground.infield.hard.throw.check', type: 'chance', view: 'batter', title: '강한 땅볼 1루 송구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'throwOut', label: '송구 아웃', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).throwOut, transition: { to: 'ground.infield.clean.route' } },
-        { id: 'throwSafe', label: '송구 세이프', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).throwSafe, transition: { to: 'runner.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowSafe }, { type: 'announce', title: '내야 땅볼 송구 세이프!', detail: '정상 송구가 도착했지만 타자 주자가 먼저 1루를 밟았습니다.', advance: 'normal' }] } },
-        { id: 'clearThrowingError', label: '명백한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).clearThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowingError }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorClear }] } },
-        { id: 'ambiguousThrowingError', label: '애매한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).ambiguousThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowingError }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorAmbiguous }] } },
+        { id: 'throwSafe', label: '송구 세이프', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).throwSafe, transition: { to: 'runner.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'announce', title: '내야 땅볼 송구 세이프!', detail: '정상 송구가 도착했지만 타자 주자가 먼저 1루를 밟았습니다.', advance: 'normal' }] } },
+        { id: 'clearThrowingError', label: '명백한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).clearThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorClear }] } },
+        { id: 'ambiguousThrowingError', label: '애매한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).ambiguousThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorAmbiguous }] } },
       ],
     },
     'ground.infield.soft.throw.check': {
       id: 'ground.infield.soft.throw.check', type: 'chance', view: 'batter', title: '약한 땅볼 1루 송구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'throwOut', label: '송구 아웃', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).throwOut, transition: { to: 'ground.infield.clean.route' } },
-        { id: 'throwSafe', label: '송구 세이프', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).throwSafe, transition: { to: 'runner.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowSafe }, { type: 'announce', title: '내야 땅볼 송구 세이프!', detail: '정상 송구가 도착했지만 타자 주자가 먼저 1루를 밟았습니다.', advance: 'normal' }] } },
-        { id: 'clearThrowingError', label: '명백한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).clearThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowingError }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorClear }] } },
-        { id: 'ambiguousThrowingError', label: '애매한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).ambiguousThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.groundThrowingError }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorAmbiguous }] } },
+        { id: 'throwSafe', label: '송구 세이프', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).throwSafe, transition: { to: 'runner.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'announce', title: '내야 땅볼 송구 세이프!', detail: '정상 송구가 도착했지만 타자 주자가 먼저 1루를 밟았습니다.', advance: 'normal' }] } },
+        { id: 'clearThrowingError', label: '명백한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).clearThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorClear }] } },
+        { id: 'ambiguousThrowingError', label: '애매한 송구 실책', weight: groundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).ambiguousThrowingError, transition: { to: 'followUp.ground.throwingError.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.groundThrowingErrorAmbiguous }] } },
       ],
     },
     'fly.outfield.route': {
@@ -333,7 +333,11 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       effects: [{ type: 'addOuts', value: 1 }, { type: 'record', message: PLAY_RESULT_ITEMS.strikeout }, { type: 'announce', ...SCENARIO_TEXT.defense.strikeout, tone: 'negative' }],
       transition: { to: 'plate.complete' },
     },
-    'out.ground.generic': completeEvent('out.ground.generic', SCENARIO_TEXT.defense.groundOut, [{ type: 'addOuts', value: 1 }], PLAY_RESULT_ITEMS.groundOut),
+    'out.ground.generic': {
+      id: 'out.ground.generic', type: 'event', view: 'result', title: SCENARIO_TEXT.defense.groundOut.title,
+      effects: [{ type: 'addOuts', value: 1 }, { type: 'recordGroundBallResult', result: 'out' }, { type: 'announce', title: SCENARIO_TEXT.defense.groundOut.title, detail: ANNOUNCEMENTS.playComplete }],
+      transition: { to: 'plate.complete' },
+    },
     'out.infieldFly.generic': completeEvent('out.infieldFly.generic', SCENARIO_TEXT.defense.infieldFlyOut, [{ type: 'addOuts', value: 1 }], PLAY_RESULT_ITEMS.infieldFlyOut),
     'out.fly.generic': completeEvent('out.fly.generic', SCENARIO_TEXT.defense.flyOut, [{ type: 'addOuts', value: 1 }], PLAY_RESULT_ITEMS.flyOut),
   },

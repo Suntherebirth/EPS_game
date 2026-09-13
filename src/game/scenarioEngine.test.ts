@@ -159,7 +159,28 @@ describe('offense core scenario pack', () => {
     const throwSafe = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, hardThrowing, 'throwSafe', { manualChance: true })
     expect(throwSafe.nodeId).toBe('runner.first.decide')
     expect(throwSafe.context).toMatchObject({ bases: [1], playerBase: 1, hits: 0 })
-    expect(throwSafe.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundThrowSafe)
+    expect(throwSafe.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundSafeHard)
+  })
+
+  it('records infield ground balls by contact strength and out or safe result', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const contact = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+
+    const hardFielding = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, contact, 'hardGroundBall', { manualChance: true })
+    const hardFieldingError = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, hardFielding, 'fieldingError', { manualChance: true })
+    expect(hardFieldingError.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundSafeHard)
+
+    const softFielding = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, contact, 'softGroundBall', { manualChance: true })
+    const softThrowing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, softFielding, 'cleanPlay', { manualChance: true })
+    const softSafe = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, softThrowing, 'throwSafe', { manualChance: true })
+    expect(softSafe.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundSafeSoft)
+
+    const hardThrowing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, hardFielding, 'cleanPlay', { manualChance: true })
+    const hardOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, hardThrowing, 'throwOut', { manualChance: true })
+    expect(hardOut.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundOutHard)
+
+    const softOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, softThrowing, 'throwOut', { manualChance: true })
+    expect(softOut.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundOutSoft)
   })
 
   it('offers stay or advance after an ambiguous infield ground throwing error at the plate', () => {
@@ -911,7 +932,7 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
     expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceHomeError)
-    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '상대 내야수 땅볼 포구 실책으로 안전하게 홈에 들어왔습니다.', tone: 'positive', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' })
+    expect(result.context.announcement).toEqual({ title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '상대 내야수 땅볼 포구 실책으로 안전하게 홈에 들어왔습니다.', tone: 'neutral', detailScene: 'home-in-neutral' })
   })
 
   it('records a home advance and safe wording when a third-base runner is forced home by a follow-up ground throwing error', () => {
@@ -1192,12 +1213,15 @@ describe('offense core scenario pack', () => {
   })
 
   it('uses a 70 percent chance for an ambiguous outfield drop advance', () => {
-    vi.spyOn(Math, 'random').mockReturnValueOnce(0.15).mockReturnValueOnce(0.69)
-    const initial = startScenario(OFFENSE_CORE_PACK, context())
-    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single')
-    const result = chooseScenarioOption(OFFENSE_CORE_PACK, single, 'advanceSecond')
+    expect(RUNNING_CHANCES.advanceOnAmbiguousDrop).toBe(0.7)
 
-    expect(single.nodeId).toBe('runner.first.ambiguousDrop.decide')
+    const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
+    const single = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
+    const ambiguousDrop = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, single, 'ambiguousDrop', { manualChance: true })
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, ambiguousDrop, 'advanceSecond', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
+
+    expect(ambiguousDrop.nodeId).toBe('runner.first.ambiguousDrop.decide')
     expect(result.nodeId).toBe('runner.second.decide')
     expect(result.context.announcement).toEqual({ title: '2루 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 2루 추가 진루에 성공했습니다.', tone: 'positive', advance: 'bold', detailScene: 'advance-ambiguous-safe', titleImageMode: 'same-as-detail-scene' })
   })
@@ -1409,5 +1433,18 @@ describe('offense core scenario pack', () => {
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwSuccess, 'success', { manualChance: true })
 
     expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdETB)
+  })
+
+  it('records ETB and a base-running out for risky advances after an ambiguous outfield error', () => {
+    const initial = { nodeId: 'runner.battingAdvance.outfield.check', context: { ...context(0, [2]), playerBase: 2 } }
+    const ambiguousDrop = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'ambiguousDrop', { manualChance: true })
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, ambiguousDrop, 'advance', { manualChance: true })
+    const success = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'success', { manualChance: true })
+
+    expect(success.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdETB)
+
+    const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
+
+    expect(failure.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdFailure)
   })
 })

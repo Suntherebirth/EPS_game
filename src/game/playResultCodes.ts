@@ -15,9 +15,10 @@ export const PLAY_RESULT_ITEMS = {
 
   outfieldFieldingErrorSingle: '외야수 뜬공 실책',
   infieldFieldingErrorSingle: '내야수 뜬공 실책',
-  groundFieldingError: '내야 땅볼 포구 실책',
-  groundThrowingError: '내야 땅볼 송구 실책',
-  groundThrowSafe: '내야 땅볼 송구 세이프',
+  groundOutHard: '내야 땅볼 아웃 (강한 타구)',
+  groundSafeHard: '내야 땅볼 세이프 (강한 타구)',
+  groundOutSoft: '내야 땅볼 아웃 (약한 타구)',
+  groundSafeSoft: '내야 땅볼 세이프 (약한 타구)',
   advanceSecondFailure: '2루 진루 실패',
   advanceThirdFailure: '3루 진루 실패',
   homeAdvanceFailure: '홈 진루 실패',
@@ -51,6 +52,14 @@ export const PLAY_RESULT_ITEMS = {
 
 export type PlayResultItemKey = keyof typeof PLAY_RESULT_ITEMS
 
+export type GroundBallStrength = 'hard' | 'soft'
+export type GroundBallResult = 'out' | 'safe'
+
+export const resolveGroundBallResultItem = (strength: GroundBallStrength, result: GroundBallResult): string =>
+  strength === 'hard'
+    ? result === 'out' ? PLAY_RESULT_ITEMS.groundOutHard : PLAY_RESULT_ITEMS.groundSafeHard
+    : result === 'out' ? PLAY_RESULT_ITEMS.groundOutSoft : PLAY_RESULT_ITEMS.groundSafeSoft
+
 export type PlayResultCodeEntry = {
   /** completionRecords 에 기록되는 항목 문구 (표시되는 그대로) */
   item: string
@@ -79,11 +88,18 @@ const PLAY_RESULT_CODE_OVERRIDES: Partial<Record<PlayResultItemKey, PlayResultCo
   flyOutNoScore: { code: 'B-OF-O', score: 0.0, description: 'Batting-Outfield Fly-Out' },
   sacrificeFly: { code: 'B-OF-SF', score: 0.5, description: 'Batting-Outfield Sacrifice Fly' },
   groundSacrifice: { code: 'B-G-SF', score: 0.5, description: 'Batting-Ground-Sacrifice' },
+  groundSafeSoft: { code: 'B-G-S', score: 0.5, description: 'Batting-Ground-Safe' },
+  groundOutSoft: { code: 'B-G-O', score: -1.0, description: 'Batting-Ground-Out' },
+  groundSafeHard: { code: 'B-G-S-H', score: 1.0, description: 'Batting-Ground-Safe-Hard' },
+  groundOutHard: { code: 'B-G-O-H', score: 0.0, description: 'Batting-Ground-Out-Hard' },
   advanceSecondFailure: { code: 'BR-E-1', score: -1.5, description: 'Base Running-Out at 2B/3B' },
   advanceThirdFailure: { code: 'BR-E-1', score: -1.5, description: 'Base Running-Out at 2B/3B' },
   advanceSecondETB: { code: 'BR-ETB-1', score: 1.0, description: 'Base Running-Extra Base ETB at 2B/3B' },
   advanceThirdETB: { code: 'BR-ETB-1', score: 1.0, description: 'Base Running-Extra Base ETB at 2B/3B' },
   homeAdvanceETB: { code: 'BR-ETB-2', score: 1.5, description: 'Base Running-Extra Base ETB at Home' },
+  advanceSecondError: { code: 'BR-FE', score: 0.0, description: 'Base Running-Fielding Error' },
+  advanceThirdError: { code: 'BR-FE', score: 0.0, description: 'Base Running-Fielding Error' },
+  advanceHomeError: { code: 'BR-FE', score: 0.0, description: 'Base Running-Fielding Error' },
   stealSecondSuccess: { code: 'BR-2nd', score: 1.0, description: 'Base Running-Steal 2B Success' },
   stealThirdSuccess: { code: 'BR-3rd', score: 1.0, description: 'Base Running-Steal 3B Success' },
   stealSecondFailure: { code: 'BR-E-1', score: -1.5, description: 'Base Running-Steal Out at 2B/3B' },
