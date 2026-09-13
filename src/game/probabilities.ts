@@ -1,21 +1,21 @@
 export const RUNNING_CHANCES = {
   // 외야/내야 포구 실책
   // 외야수가 타구를 명백하게 완전히 뒤로 빠뜨릴 확률
-  outfieldDropClear: 0.1,
+  outfieldDropClear: 0.2,
   // 외야수가 타구를 애매하게 뒤로 빠뜨릴 확률
-  outfieldDropAmbiguous: 0.15,
+  outfieldDropAmbiguous: 0.3,
   // 내야 땅볼에서 내야수가 포구 실책을 할 확률
-  infieldGroundFieldingError: 0.08,
+  infieldGroundFieldingError: 0.2,
   // 내야 땅볼 중 강한 타구가 나오는 확률
   infieldGroundHardContact: 0.5,
   // 강한 땅볼에서 내야수가 포구 실책을 할 확률
   infieldGroundHardFieldingError: 0.3,
   // 약한 땅볼에서 내야수가 포구 실책을 할 확률
-  infieldGroundSoftFieldingError: 0.04,
+  infieldGroundSoftFieldingError: 0.3,
   // 내야 땅볼에서 포구 성공 후 1루 송구 실책이 날 확률
-  infieldGroundThrowingError: 0.08,
+  infieldGroundThrowingError: 0.4,
   // 정상 송구가 도착한 뒤 타자 주자의 빠른 발로 세이프가 되는 확률
-  infieldGroundThrowSafe: 0.1,
+  infieldGroundThrowSafe: 0.2,
   // 내야 뜬공에서 내야수 처리 실패로 떨어뜨리는 확률은 외야 드롭 확률을 함께 사용한다.
 
   // 내야 땅볼 정상 수비 후 아웃 결과 분기
@@ -34,9 +34,9 @@ export const RUNNING_CHANCES = {
 
   // 주루 시도 성공률
   // 내야 땅볼 송구 순간 2루 주자의 3루 진루 또는 3루 주자의 홈 쇄도 성공률
-  advanceOnGroundBallToThird: 0.7,
+  advanceOnGroundBallToThird: 0.8,
   // 애매한 외야 플라이에서 태그업 성공률
-  advanceOnAmbiguousSacrificeFly: 0.6,
+  advanceOnAmbiguousSacrificeFly: 0.5,
   // 외야 플라이가 애매한 깊이로 잡힐 가중치
   outfieldFlyDepthAmbiguous: 0.5,
   // 외야 플라이가 명백하게 깊게 잡힐 가중치
@@ -50,13 +50,13 @@ export const RUNNING_CHANCES = {
   // 포수가 공을 애매하게 뒤로 빠뜨리는 폭투 확률
   wildPitchAmbiguous: 0.15,
   // 애매한 폭투를 이용한 추가 진루 성공률
-  advanceOnAmbiguousWildPitch: 0.7,
+  advanceOnAmbiguousWildPitch: 0.8,
 
   // 낫아웃
   // 삼진 후 포수가 공을 명백하게 완전히 뒤로 빠뜨릴 확률
-  droppedThirdStrikeClear: 0.08,
+  droppedThirdStrikeClear: 0.1,
   // 삼진 후 포수가 공을 애매하게 뒤로 빠뜨릴 확률
-  droppedThirdStrikeAmbiguous: 0.12,
+  droppedThirdStrikeAmbiguous: 0.2,
   // 명백한 낫아웃 상황에서 전력 질주 시 1루 진루 성공률
   runHardOnClearDroppedStrike: 1,
   // 명백한 낫아웃 상황에서 천천히 뛸 때 1루 진루 성공률
@@ -68,19 +68,19 @@ export const RUNNING_CHANCES = {
 
   // 도루와 일반 진루
   // 1루 주자의 2루 도루 성공률
-  stealSecond: 0.72,
+  stealSecond: 0.80,
   // 2루 주자의 3루 도루 성공률
-  stealThird: 0.68,
+  stealThird: 0.65,
   // 보수적인 추가 진루 성공률
-  safeAdvance: 0.94,
+  safeAdvance: 0.99,
   // 공격적인 추가 진루 성공률
   aggressiveAdvance: 0.7,
 
   // 후속 내야 땅볼 송구 실책 후 추가 진루
   // 명백하게 빠진 송구를 보고 한 베이스 더 진루할 성공률
-  followUpGroundThrowClearExtraAdvance: 0.5,
+  followUpGroundThrowClearExtraAdvance: 0.9,
   // 애매하게 빠진 송구를 보고 한 베이스 더 진루할 성공률
-  followUpGroundThrowAmbiguousExtraAdvance: 0.3,
+  followUpGroundThrowAmbiguousExtraAdvance: 0.5,
 } as const
 
 export const BATTING_EVENT_RANDOM_WEIGHTS = {

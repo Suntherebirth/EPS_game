@@ -1,4 +1,4 @@
-import { Bug, CheckCircle2, ChevronLeft, ChevronRight, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, AlertCircle, Layers } from 'lucide-react'
+import { Bug, CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, AlertCircle, Layers } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
 import { createChoiceAuditCases, getChoiceBranchAuditCaseId, replayChoiceAuditCase, type ChoiceAuditCase } from './game/choiceAudit'
@@ -26,6 +26,7 @@ import {
   resolveSceneImage,
   resolveSceneImageFilename,
   resolveSceneTransition,
+  getSceneImageUrls,
   resolveViewImage,
   resolveViewImageFilename,
   shouldShareDetailSceneForTitle,
@@ -41,6 +42,29 @@ type ChoiceAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
 type BattingInputMode = 'direct' | 'probabilistic'
 type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
 type Stats = { runs: number; hits: number; outs: number }
+type ImagePreloadState = 'idle' | 'loading' | 'complete'
+
+const formatDataSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes}B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
+}
+
+const getResourceTransferSize = (url: string, previousEntryCount: number) => {
+  const entries = performance.getEntriesByName(url, 'resource') as PerformanceResourceTiming[]
+  const entry = entries[entries.length - 1]
+  return entries.length > previousEntryCount ? entry?.transferSize ?? 0 : 0
+}
+
+const preloadSceneImage = (url: string, previousEntryCount: number) => new Promise<number>((resolve) => {
+  const image = new Image()
+  image.decoding = 'async'
+  image.onload = () => {
+    void image.decode().catch(() => undefined).finally(() => resolve(getResourceTransferSize(url, previousEntryCount)))
+  }
+  image.onerror = () => resolve(getResourceTransferSize(url, previousEntryCount))
+  image.src = url
+})
 
 const filterHiddenPlayResultItems = (items: string[], hideFollowUpGroundOut: boolean) => items.filter((item) => item !== PLAY_RESULT_ITEMS.followUpGroundForceOut && (!hideFollowUpGroundOut || item !== PLAY_RESULT_ITEMS.followUpGroundOut))
 
@@ -376,6 +400,32 @@ function App() {
   const [stats, setStats] = useState<Stats>({ runs: 0, hits: 0, outs: 0 })
   const [records, setRecords] = useState<RecordEntry[]>([])
   const [playResultReady, setPlayResultReady] = useState(false)
+  const [imagePreloadState, setImagePreloadState] = useState<ImagePreloadState>('idle')
+  const [imagePreloadProgress, setImagePreloadProgress] = useState({ loaded: 0, total: 0, bytes: 0 })
+
+  const preloadAllSceneImages = async () => {
+    if (imagePreloadState === 'loading') return
+    const urls = getSceneImageUrls()
+    const previousEntryCounts = new Map(urls.map((url) => [url, performance.getEntriesByName(url, 'resource').length]))
+    setImagePreloadState('loading')
+    setImagePreloadProgress({ loaded: 0, total: urls.length, bytes: 0 })
+
+    let nextIndex = 0
+    let loaded = 0
+    let bytes = 0
+    const worker = async () => {
+      while (nextIndex < urls.length) {
+        const url = urls[nextIndex]
+        nextIndex += 1
+        bytes += await preloadSceneImage(url, previousEntryCounts.get(url) ?? 0)
+        loaded += 1
+        setImagePreloadProgress({ loaded, total: urls.length, bytes })
+      }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(4, urls.length) }, () => worker()))
+    setImagePreloadState('complete')
+  }
 
   const replayFrame = replay ? replay.frames[replay.index] : null
   const displayedState = replayFrame?.state ?? scenario
@@ -700,7 +750,7 @@ function App() {
   if (appMode === 'codeMapping') return <CodeMappingMode onBack={() => setAppMode('game')} />
 
   return <main className="app-shell">
-    <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openChoiceAuditFromGame} aria-label="선택지 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('choiceCheck')}>선택지 체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openChoiceAuditFromGame}><Bug size={14} /> 선택지 체크</button>}{adminMode && <button className="secondary-button" type="button" onClick={() => setAppMode('choiceCheck')}><Bug size={14} /> 선택지 체크</button>}<button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
+    <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openChoiceAuditFromGame} aria-label="선택지 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('choiceCheck')}>선택지 체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openChoiceAuditFromGame}><Bug size={14} /> 선택지 체크</button>}{adminMode && <button className="secondary-button" type="button" onClick={() => setAppMode('choiceCheck')}><Bug size={14} /> 선택지 체크</button>}<button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><div className="image-preload-control"><button className="secondary-button" type="button" onClick={() => void preloadAllSceneImages()} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} sceneTransition={sceneTransition} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>

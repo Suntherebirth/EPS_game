@@ -31,6 +31,9 @@ const EVENT_IMAGES = Object.fromEntries(
   ).map(([path, url]) => [path.split('/').pop()!.replace(/\.[^.]+$/, ''), url]),
 )
 
+/** 현재 게임에서 사용할 수 있는 모든 장면 이미지 URL을 중복 없이 반환한다. */
+export const getSceneImageUrls = (): string[] => [...new Set([...Object.values(VIEW_IMAGES), ...Object.values(EVENT_IMAGES)])]
+
 /**
  * 아나운스 문구 → 연출 이미지 ID.
  * 이펙트에 `scene`을 직접 지정하면 이 표보다 우선한다. 같은 문구를 다른 연출로 나눠야 하면 `scene`을 쓴다.

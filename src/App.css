@@ -430,6 +430,9 @@ button { font: inherit; }
 }
 .secondary-button { min-height: 38px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: #faf9f5; font-size: 12px; font-weight: 800; cursor: pointer; }
 .secondary-button:hover { border-color: var(--red); color: var(--red); }
+.secondary-button:disabled { opacity: .65; cursor: wait; }
+.image-preload-control { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.image-preload-control small { color: var(--muted); font-size: 10px; font-weight: 700; white-space: nowrap; }
 
 .progress-strip { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-top: 0; }
 .progress-strip > div { min-width: 0; padding: 15px 18px; display: grid; grid-template-columns: 28px 1fr; align-items: center; column-gap: 10px; border-right: 1px solid var(--line); }
@@ -534,6 +537,8 @@ button { font: inherit; }
   .app-shell { width: 100%; padding: 0 0 1.5rem; }
   .brand-bar { padding: 0 1rem; border-top: 0; }
   .brand-title { min-width: 0; }
+  .header-controls { flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+  .image-preload-control { align-items: stretch; }
   .game-grid { --overlay-edge-x: 4%; --overlay-edge-y: 4%; height: auto; border-inline: 0; }
   .media-stage { min-height: 55svh; height: 55svh; padding: 1.75rem 1.375rem; }
   .media-view-label { top: var(--overlay-edge-y); left: var(--overlay-edge-x); }
