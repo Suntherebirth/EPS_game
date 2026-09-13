@@ -10,8 +10,6 @@ export type BattingEventId =
   | 'walk'
   | 'hitByPitch'
   | 'strikeout'
-  | 'infieldHit'
-  | 'infieldError'
   | 'groundOut'
   | 'infieldFly'
   | 'flyOut'
@@ -43,8 +41,6 @@ export const BATTING_EVENTS: Play[] = [
   battingEvent('double', '2루타', '타자주자가 2루에 진출한다', '장타로 2루까지 진출합니다.', 2, 0, true, BATTING_EVENT_RANDOM_WEIGHTS.double),
   battingEvent('triple', '3루타', '타자주자가 3루에 진출한다', '타구가 외야 깊숙한 곳까지 굴러갑니다.', 3, 0, true, BATTING_EVENT_RANDOM_WEIGHTS.triple),
   battingEvent('homeRun', '홈런', '모든 주자가 홈으로 들어온다', '타구가 담장을 넘어갑니다.', 4, 0, true, BATTING_EVENT_RANDOM_WEIGHTS.homeRun),
-  battingEvent('infieldHit', '내야안타', '빠른 발로 1루에서 세이프된다', '내야수가 처리하기 전에 1루를 밟습니다.', 1, 0, true, BATTING_EVENT_RANDOM_WEIGHTS.infieldHit),
-  battingEvent('infieldError', '내야수 땅볼 실책', '수비 실책으로 1루에 진출한다', '내야수가 땅볼 처리에 실패했습니다.', 1, 0, false, BATTING_EVENT_RANDOM_WEIGHTS.infieldError),
   battingEvent('walk', '볼넷', '타자주자가 걸어서 1루에 진출한다', '네 개의 볼을 골라 1루에 진출합니다.', 1, 0, false, BATTING_EVENT_RANDOM_WEIGHTS.walk),
   battingEvent('hitByPitch', '사구', '몸에 맞는 공으로 1루에 진출한다', '몸에 맞는 공으로 1루에 진출합니다.', 1, 0, false, BATTING_EVENT_RANDOM_WEIGHTS.hitByPitch),
   battingEvent('strikeout', '삼진', '아웃 카운트가 하나 올라간다', '타자가 삼진으로 물러납니다.', 0, 1, false, BATTING_EVENT_RANDOM_WEIGHTS.strikeout),
@@ -67,13 +63,13 @@ export const BATTING_CATEGORIES: BattingCategoryConfig[] = [
     id: 'hit',
     label: '안타',
     description: '1루타 · 2루타 · 3루타 · 홈런',
-    eventIds: ['single', 'double', 'triple', 'homeRun', 'infieldHit'],
+    eventIds: ['single', 'double', 'triple', 'homeRun'],
   },
   {
     id: 'out',
     label: '범타',
     description: '내야 땅볼 · 외야 뜬공 · 내야 뜬공',
-    eventIds: ['groundOut', 'flyOut', 'infieldFly', 'infieldError'],
+    eventIds: ['groundOut', 'flyOut', 'infieldFly'],
   },
   {
     id: 'strikeoutWalk',
@@ -106,7 +102,6 @@ export const PROBABILISTIC_BATTING_CHOICES: ProbabilisticChoiceConfig[] = [
     detail: '공을 정확히 맞히는 데 집중합니다. 안타와 내야 안타 확률이 높습니다.',
     outcomes: [
       { eventId: 'single', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.single },
-      { eventId: 'infieldHit', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.infieldHit },
       { eventId: 'double', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.double },
       { eventId: 'groundOut', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.groundOut },
       { eventId: 'flyOut', weight: PROBABILISTIC_BATTING_WEIGHTS.contact.flyOut },

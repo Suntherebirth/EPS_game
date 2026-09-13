@@ -12,12 +12,12 @@ export const PLAY_RESULT_ITEMS = {
   hitByPitch: '사구',
   droppedThirdStrikeAdvance: '낫아웃 1루 진루',
   droppedThirdStrikeOut: '낫아웃 아웃',
-  infieldHit: '내야안타',
-  infieldFieldingError: '내야수 땅볼 실책',
+
   outfieldFieldingErrorSingle: '외야수 뜬공 실책',
   infieldFieldingErrorSingle: '내야수 뜬공 실책',
   groundFieldingError: '내야 땅볼 포구 실책',
   groundThrowingError: '내야 땅볼 송구 실책',
+  groundThrowSafe: '내야 땅볼 송구 세이프',
   advanceSecondFailure: '2루 진루 실패',
   advanceThirdFailure: '3루 진루 실패',
   homeAdvanceFailure: '홈 진루 실패',
@@ -46,6 +46,7 @@ export const PLAY_RESULT_ITEMS = {
   groundDoublePlay: '내야 땅볼 (더블 플레이)',
   sacrificeFly: '희생플라이',
   flyOutNoScore: '외야 뜬공 아웃',
+  groundSacrifice: '내야 땅볼 (타점)',
 } as const satisfies Record<string, string>
 
 export type PlayResultItemKey = keyof typeof PLAY_RESULT_ITEMS
@@ -77,6 +78,7 @@ const PLAY_RESULT_CODE_OVERRIDES: Partial<Record<PlayResultItemKey, PlayResultCo
   flyOut: { code: 'B-OF-O', score: 0.0, description: 'Batting-Outfield Fly-Out' },
   flyOutNoScore: { code: 'B-OF-O', score: 0.0, description: 'Batting-Outfield Fly-Out' },
   sacrificeFly: { code: 'B-OF-SF', score: 0.5, description: 'Batting-Outfield Sacrifice Fly' },
+  groundSacrifice: { code: 'B-G-SF', score: 0.5, description: 'Batting-Ground-Sacrifice' },
   advanceSecondFailure: { code: 'BR-E-1', score: -1.5, description: 'Base Running-Out at 2B/3B' },
   advanceThirdFailure: { code: 'BR-E-1', score: -1.5, description: 'Base Running-Out at 2B/3B' },
   advanceSecondETB: { code: 'BR-ETB-1', score: 1.0, description: 'Base Running-Extra Base ETB at 2B/3B' },

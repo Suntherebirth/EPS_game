@@ -210,7 +210,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
       next.records.push('내야 땅볼, 선행 주자 아웃')
       next.completionRecords.push(PLAY_RESULT_ITEMS.groundLeadRunnerOut)
     }
-    setAnnouncement(next, ANNOUNCEMENTS.groundLeadRunnerOut(isForced))
+    setAnnouncement(next, ANNOUNCEMENTS.groundLeadRunnerOut(isForced, next.outs))
   }
 
   if (effect.type === 'applyGroundDoublePlay') {

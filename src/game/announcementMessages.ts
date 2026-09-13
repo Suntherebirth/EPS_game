@@ -86,12 +86,14 @@ export const ANNOUNCEMENTS = {
     if (playerBase === 2) return shareDetailScene(message('후속타자의 내야 땅볼, 정상 수비!', '내야수 송구 순간 3루 진루를 시도할 수 있습니다.'), 'ground-throw-ready')
     return shareDetailScene(message('후속타자의 내야 땅볼 아웃!', '현재 베이스에 머뭅니다.'), 'ground-first-base-catch')
   },
-  groundLeadRunnerOut: (isForced: boolean) => message(
+  groundLeadRunnerOut: (isForced: boolean, outs: number) => message(
     isForced ? '내야 땅볼 포스 아웃!' : '내야 땅볼 선행 주자 아웃!',
-    '선행 주자가 아웃되고 타자 주자가 1루에 진출했습니다.',
+    outs === 3
+      ? '선행 주자가 아웃되며 이닝이 종료되었습니다.'
+      : '선행 주자가 아웃되고 타자 주자가 1루에 진출했습니다.',
     'negative',
   ),
-  groundForceOut: () => ANNOUNCEMENTS.groundLeadRunnerOut(true),
+  groundForceOut: (outs: number) => ANNOUNCEMENTS.groundLeadRunnerOut(true, outs),
   groundThrowingErrorClear: { ...message(SCENARIO_TEXT.defense.throwingErrorClear.title, SCENARIO_TEXT.defense.throwingErrorClear.detail, 'positive', 'error-first-base-catch-clear') },
   groundThrowingErrorAmbiguous: { ...message(SCENARIO_TEXT.defense.throwingErrorAmbiguous.title, SCENARIO_TEXT.defense.throwingErrorAmbiguous.detail, 'caution', 'error-first-base-catch-ambiguous') },
   followUpGroundThrowingErrorClear: shareDetailScene(message('내야 땅볼 송구 실책!', '1루수 뒤로 송구가 완전히 빠졌습니다. 추가 진루를 시도할 수 있습니다.', 'positive'), 'error-first-base-catch-clear'),

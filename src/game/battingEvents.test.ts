@@ -52,7 +52,7 @@ describe('battingEvents - 확률형 선택지', () => {
   })
 
   it('컨택트 스윙 선택지는 적절한 타격 결과를 무작위 추첨한다', () => {
-    // weight: single(35), infieldHit(10), double(10), groundOut(20), flyOut(15), strikeout(10)
+    // weight: single(35), double(10), groundOut(20), flyOut(15), strikeout(10)
     expect(resolveProbabilisticBattingChoice('contact', () => 0.05)).toBe('single')
     expect(resolveProbabilisticBattingChoice('contact', () => 0.95)).toBe('strikeout')
   })

@@ -6,8 +6,16 @@ export const RUNNING_CHANCES = {
   outfieldDropAmbiguous: 0.15,
   // 내야 땅볼에서 내야수가 포구 실책을 할 확률
   infieldGroundFieldingError: 0.08,
+  // 내야 땅볼 중 강한 타구가 나오는 확률
+  infieldGroundHardContact: 0.5,
+  // 강한 땅볼에서 내야수가 포구 실책을 할 확률
+  infieldGroundHardFieldingError: 0.3,
+  // 약한 땅볼에서 내야수가 포구 실책을 할 확률
+  infieldGroundSoftFieldingError: 0.04,
   // 내야 땅볼에서 포구 성공 후 1루 송구 실책이 날 확률
   infieldGroundThrowingError: 0.08,
+  // 정상 송구가 도착한 뒤 타자 주자의 빠른 발로 세이프가 되는 확률
+  infieldGroundThrowSafe: 0.1,
   // 내야 뜬공에서 내야수 처리 실패로 떨어뜨리는 확률은 외야 드롭 확률을 함께 사용한다.
 
   // 내야 땅볼 정상 수비 후 아웃 결과 분기
@@ -85,10 +93,6 @@ export const BATTING_EVENT_RANDOM_WEIGHTS = {
   triple: 2,
   // 홈런 발생 가중치
   homeRun: 5,
-  // 내야안타 발생 가중치
-  infieldHit: 6,
-  // 내야수 땅볼 실책 발생 가중치
-  infieldError: 3,
   // 볼넷 발생 가중치
   walk: 9,
   // 사구 발생 가중치
@@ -107,7 +111,6 @@ export const PROBABILISTIC_BATTING_WEIGHTS = {
   // 확률형 타격 선택지별 결과 발생 상대 가중치
   contact: {
     single: 35,
-    infieldHit: 10,
     double: 10,
     groundOut: 20,
     flyOut: 15,
