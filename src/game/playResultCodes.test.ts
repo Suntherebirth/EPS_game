@@ -99,6 +99,18 @@ describe('playResultCodes', () => {
       score: 0.0,
       description: 'Batting-Ground-Out-Hard',
     })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundLeadRunnerOutSoft)).toEqual({
+      item: '내야 땅볼 선행주자 아웃 (약한 타구)',
+      code: 'B-G-O',
+      score: -1.0,
+      description: 'Batting-Ground-Out',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundLeadRunnerOutHard)).toEqual({
+      item: '내야 땅볼 선행주자 아웃 (강한 타구)',
+      code: 'B-G-O-H',
+      score: 0.0,
+      description: 'Batting-Ground-Out-Hard',
+    })
   })
 
   it('maps fielding-error advances to BR-FE with zero points', () => {

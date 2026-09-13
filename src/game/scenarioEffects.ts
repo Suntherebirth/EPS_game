@@ -194,16 +194,6 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.flags.followUpGroundOut = true
     next.outs = Math.min(3, next.outs + 1)
     next.records.push(playerIsForced ? '후속 타자 내야 땅볼, 포스 아웃' : '후속 타자 내야 땅볼 아웃')
-      if (playerIsForced) {
-        next.completionRecords.push(PLAY_RESULT_ITEMS.followUpGroundForceOut)
-      } else {
-        const strength = next.flags.groundBallStrength
-        next.completionRecords.push(
-          strength === 'hard' || strength === 'soft'
-            ? resolveGroundBallResultItem(strength, 'out')
-            : PLAY_RESULT_ITEMS.followUpGroundOut,
-        )
-      }
     if (playerIsForced && playerBase !== null) {
       next.bases = next.bases.filter((base) => base !== playerBase)
       next.playerBase = null
@@ -221,11 +211,15 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     next.outs = Math.min(3, next.outs + 1)
     if (isForced) {
       next.records.push('내야 땅볼, 선행 주자 포스 아웃')
-      next.completionRecords.push(PLAY_RESULT_ITEMS.groundLeadRunnerForceOut)
     } else {
       next.records.push('내야 땅볼, 선행 주자 아웃')
-      next.completionRecords.push(PLAY_RESULT_ITEMS.groundLeadRunnerOut)
     }
+    const strength = next.flags.groundBallStrength
+    next.completionRecords.push(
+      strength === 'hard'
+        ? PLAY_RESULT_ITEMS.groundLeadRunnerOutHard
+        : PLAY_RESULT_ITEMS.groundLeadRunnerOutSoft,
+    )
     setAnnouncement(next, ANNOUNCEMENTS.groundLeadRunnerOut(isForced, next.outs))
   }
 

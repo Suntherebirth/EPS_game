@@ -241,6 +241,18 @@ describe('offense core scenario pack', () => {
 
     expect(leadRunnerOut.context.announcement?.title).toBe('내야 땅볼 선행 주자 아웃!')
     expect(leadRunnerOut.context.records).toContain('내야 땅볼, 선행 주자 아웃')
+    expect(leadRunnerOut.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundLeadRunnerOutHard)
+  })
+
+  it('records soft lead runner ground out in completion records', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1, [2]), { manualChance: true })
+    const contact = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'groundOut', { manualChance: true })
+    const fielding = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, contact, 'softGroundBall', { manualChance: true })
+    const throwing = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwing, 'throwOut', { manualChance: true })
+    const leadRunnerOut = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, cleanPlay, 'leadRunnerOut', { manualChance: true })
+
+    expect(leadRunnerOut.context.completionRecords).toContain(PLAY_RESULT_ITEMS.groundLeadRunnerOutSoft)
   })
 
   it('prioritizes the first-base runner on a ground ball with runners on first and third', () => {
@@ -395,8 +407,10 @@ describe('offense core scenario pack', () => {
     expect(tagUp.nodeId).toBe('runner.third.sacrificeFly.ambiguous.advance')
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 2, bases: [], runs: 1, playerBase: null })
-    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.homeAdvanceETB)
-    expect(result.context.completionRecords).not.toContain(PLAY_RESULT_ITEMS.sacrificeFly)
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceETB])
+
+    const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'out', { manualChance: true })
+    expect(failure.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceFailure])
   })
 
   it('keeps a third-base runner active after staying on an outfield fly with one out', () => {
@@ -433,7 +447,9 @@ describe('offense core scenario pack', () => {
 
     expect(success.nodeId).toBe('plate.complete')
     expect(success.context).toMatchObject({ outs: 1, bases: [], runs: 1, playerBase: null })
+    expect(success.context.completionRecords).toEqual([])
     expect(failure.context).toMatchObject({ outs: 2, bases: [], runs: 0, playerBase: null })
+    expect(failure.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceFailure])
   })
 
   it('offers second-base runner choices after a clear outfield error on a fly ball', () => {
@@ -1432,7 +1448,19 @@ describe('offense core scenario pack', () => {
     const throwSuccess = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwChoice, 'throwOut', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwSuccess, 'success', { manualChance: true })
 
-    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdETB)
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdETB])
+  })
+
+  it('records only home ETB when a third-base runner scores during a follow-up ground ball', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [3]), playerBase: 3 }, { manualChance: true })
+    const contact = selectScenarioBattingEvent(OFFENSE_CORE_PACK, { ...initial, nodeId: 'followUp.batting.resolve' }, 'groundOut', { manualChance: true })
+    const fielding = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, contact, 'hardGroundBall', { manualChance: true })
+    const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwChoice = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })
+    const throwSuccess = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwChoice, 'throwOut', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwSuccess, 'success', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceETB])
   })
 
   it('records ETB and a base-running out for risky advances after an ambiguous outfield error', () => {

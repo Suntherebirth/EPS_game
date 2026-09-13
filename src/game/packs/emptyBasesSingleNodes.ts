@@ -314,7 +314,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'runner.third.sacrificeFly.ambiguous.advance', type: 'chance', view: 'runner:third', title: '홈 태그업',
     outcomes: [
       { id: 'success', label: '홈 태그업 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceETB }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpSuccess, advance: 'bold', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' }] } },
-      { id: 'out', label: '홈 태그업 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
+      { id: 'out', label: '홈 태그업 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceFailure }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
     ],
   },
   'runner.third.sacrificeFly.deep.decide': {
@@ -329,7 +329,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'runner.third.sacrificeFly.deep.advance', type: 'chance', view: 'runner:third', title: '홈 태그업', tags: ['player-position-view'],
     outcomes: [
       { id: 'success', label: '홈 태그업 성공', weight: 1, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpSafeSuccess, tone: 'neutral', titleImageMode: 'same-as-detail-scene' }] } },
-      { id: 'out', label: '홈 태그업 실패', weight: 0, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'announce', ...SCENARIO_TEXT.running.deepTagUpFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
+      { id: 'out', label: '홈 태그업 실패', weight: 0, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceFailure }, { type: 'announce', ...SCENARIO_TEXT.running.deepTagUpFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
     ],
   },
   'followUp.ground.contact.check': {
