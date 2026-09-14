@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OFFENSE_CORE_PACK } from './packs/offenseCorePack'
 import { RUNNING_CHANCES } from './probabilities'
-import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, startScenario } from './scenarioEngine'
+import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './scenarioEngine'
 import { applyScenarioEffect, finalizeScenarioEffects } from './scenarioEffects'
 import { validateScenarioPack, type ScenarioContext } from './scenario'
 import { ANNOUNCEMENTS } from './announcementMessages'
@@ -850,6 +850,27 @@ describe('offense core scenario pack', () => {
     expect(result.context.announcementHistory.at(-1)?.announcement).toEqual(ANNOUNCEMENTS.groundThrowSuccess)
   })
 
+  it('offers a home-rush choice to a third-base player with two outs', () => {
+    const state = settleScenario(OFFENSE_CORE_PACK, {
+      nodeId: 'followUp.ground.advanceOpportunity.route',
+      context: { ...context(2, [3]), playerBase: 3, flags: { groundContact: 'hard' } },
+    }, { manualChance: true })
+
+    expect(state.nodeId).toBe('runner.third.groundOut.decide')
+    expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, state).map((choice) => choice.id)).toEqual(['stayThird', 'advanceHome'])
+  })
+
+  it('keeps only home-rush failure after an ambiguous throwing error at two outs', () => {
+    const state = {
+      nodeId: 'followUp.ground.throw.extra.ambiguous.decide',
+      context: { ...context(2, [1, 3]), playerBase: 3 },
+    }
+    const advance = chooseScenarioOption(OFFENSE_CORE_PACK, state, 'advance', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advance, 'out', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceFailure])
+  })
+
   it('scores a third-base runner who successfully advances home on a clean ground ball', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
@@ -953,7 +974,7 @@ describe('offense core scenario pack', () => {
     const advanceChoice = chooseScenarioOption(OFFENSE_CORE_PACK, clearMiss, 'advance', { manualChance: true })
     const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, advanceChoice, 'success', { manualChance: true })
 
-    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdETB)
+    expect(result.context.completionRecords).toContain(PLAY_RESULT_ITEMS.advanceThirdError)
   })
 
   it('asks for another extra-advance decision after a runner started on the throw and the throw misses', () => {
@@ -970,7 +991,7 @@ describe('offense core scenario pack', () => {
     const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, decision, 'advanceThird', { manualChance: true })
     const extra = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'clearThrowingError', { manualChance: true })
 
-    expect(extra.nodeId).toBe('followUp.ground.throw.extra.clear.decide')
+    expect(extra.nodeId).toBe('followUp.ground.throw.extra.clear.attempt.decide')
     expect(extra.context).toMatchObject({ bases: [1, 3], playerBase: 3 })
     expect(getAvailableScenarioChoices(OFFENSE_CORE_PACK, extra).map((choice) => choice.id)).toEqual(['stayOnBase', 'advance'])
     const advance = chooseScenarioOption(OFFENSE_CORE_PACK, extra, 'advance', { manualChance: true })
@@ -1544,13 +1565,17 @@ describe('offense core scenario pack', () => {
     'runner.battingAdvance.ambiguousDrop.advance',
     'followUp.ground.throw.extra.clear.advance',
     'followUp.ground.throwingError.ambiguous.advance',
+    'followUp.ground.throw.extra.clear.attempt.advance',
   ])('records risky current-player advance outcomes at %s', (nodeId) => {
     const initial = { nodeId, context: { ...context(0, [1, 2]), playerBase: 2 } }
 
     const success = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'success', { manualChance: true })
     const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'out', { manualChance: true })
 
-    expect(success.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdETB])
+    const expectedSuccess = nodeId === 'followUp.ground.throw.extra.clear.advance'
+      ? PLAY_RESULT_ITEMS.advanceThirdError
+      : PLAY_RESULT_ITEMS.advanceThirdETB
+    expect(success.context.completionRecords).toEqual([expectedSuccess])
     expect(failure.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdFailure])
   })
 
