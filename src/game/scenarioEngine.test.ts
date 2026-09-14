@@ -378,7 +378,46 @@ describe('offense core scenario pack', () => {
     expect(fielding.nodeId).toBe('fly.outfield.runnerThird.check')
     expect(depth.nodeId).toBe('plate.complete')
     expect(depth.context).toMatchObject({ outs: 2, bases: [], runs: 1, playerBase: null })
-    expect(depth.context.completionRecords).toContain('희생플라이')
+    expect(depth.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.sacrificeFly])
+  })
+
+  it('excludes AI tag-up extra-base running from the current batter summary', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1, [1, 2, 3]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousFly', { manualChance: true })
+    const tagUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, depth, 'tagUp', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'success', { manualChance: true })
+
+    expect(result.nodeId).toBe('plate.complete')
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.sacrificeFly])
+  })
+
+  it('records an ambiguous AI sacrifice-fly runner staying at third as an outfield fly out', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1, [3]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousFly', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, depth, 'stayThird', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.flyOutNoScore])
+  })
+
+  it('records an ambiguous AI sacrifice-fly tag-up out as an outfield fly out', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, context(1, [3]), { manualChance: true })
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousFly', { manualChance: true })
+    const tagUp = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, depth, 'tagUp', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'out', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.flyOutNoScore])
+  })
+
+  it('excludes a player refusal to tag up on an ambiguous fly from the plate summary', () => {
+    const initial = { nodeId: 'batting.select', context: { ...context(1, [3]), playerBase: 3 } }
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'ambiguousFly', { manualChance: true })
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'stayThird', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([])
   })
 
   it('allows the player to decide tag-up for a third-base runner on a deep outfield fly when the player is a runner', () => {
@@ -393,6 +432,16 @@ describe('offense core scenario pack', () => {
     expect(tagUp.nodeId).toBe('runner.third.sacrificeFly.deep.advance')
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 2, bases: [], runs: 1, playerBase: null })
+  })
+
+  it('records ETB home advance when the player tags up on a deep fly', () => {
+    const initial = { nodeId: 'batting.select', context: { ...context(1, [3]), playerBase: 3 } }
+    const fielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'flyOut', { manualChance: true })
+    const depth = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'deepFly', { manualChance: true })
+    const tagUp = chooseScenarioOption(OFFENSE_CORE_PACK, depth, 'tagUp', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, tagUp, 'success', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceNormalSacrificeFly])
   })
 
   it('records ETB home advance when a third-base runner tags up on an ambiguous fly and succeeds', () => {
@@ -447,7 +496,7 @@ describe('offense core scenario pack', () => {
 
     expect(success.nodeId).toBe('plate.complete')
     expect(success.context).toMatchObject({ outs: 1, bases: [], runs: 1, playerBase: null })
-    expect(success.context.completionRecords).toEqual([])
+    expect(success.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceNormalSacrificeFly])
     expect(failure.context).toMatchObject({ outs: 2, bases: [], runs: 0, playerBase: null })
     expect(failure.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.homeAdvanceFailure])
   })

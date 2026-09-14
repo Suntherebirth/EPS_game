@@ -72,6 +72,12 @@ describe('playResultCodes', () => {
       score: 1.5,
       description: 'Base Running-Extra Base ETB at Home',
     })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceNormalSacrificeFly)).toEqual({
+      item: '홈 당연 진루 (외야 희생플라이)',
+      code: '',
+      score: 0.0,
+      description: 'Base Running-Normal Advance on Sacrifice Fly',
+    })
   })
 
   it('maps infield ground-ball results by contact strength', () => {

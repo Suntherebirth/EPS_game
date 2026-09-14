@@ -229,7 +229,14 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'runner.third.sacrificeFly.ambiguous.auto', type: 'chance', view: 'runner:third', title: '애매한 외야 플라이', tags: ['composite-event-step'],
     outcomes: [
       { id: 'stayThird', label: '3루에 머무름', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'runner.route', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'announce', title: '애매한 외야 플라이, 3루에 머뭅니다.', detail: '태그업을 시도하지 않았습니다.' }] } },
-      { id: 'tagUp', label: '홈으로 태그업 시도', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'runner.third.sacrificeFly.ambiguous.advance', effects: [{ type: 'announce', title: '애매한 외야 플라이, 태그업을 시도합니다.', detail: `태그업 시도 확률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly * 100)}%`, detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'tagUp', label: '홈으로 태그업 시도', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'runner.third.sacrificeFly.ambiguous.auto.advance', effects: [{ type: 'announce', title: '애매한 외야 플라이, 태그업을 시도합니다.', detail: `태그업 시도 확률 ${Math.round(RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly * 100)}%`, detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' }] } },
+    ],
+  },
+  'runner.third.sacrificeFly.ambiguous.auto.advance': {
+    id: 'runner.third.sacrificeFly.ambiguous.auto.advance', type: 'chance', view: 'runner:third', title: '홈 태그업',
+    outcomes: [
+      { id: 'success', label: '홈 태그업 성공', weight: RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpSuccess, advance: 'bold', detailScene: 'home-in-positive', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'out', label: '홈 태그업 실패', weight: 1 - RUNNING_CHANCES.advanceOnAmbiguousSacrificeFly, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
     ],
   },
   'runner.third.sacrificeFly.deep.route': {
@@ -328,7 +335,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
   'runner.third.sacrificeFly.deep.advance': {
     id: 'runner.third.sacrificeFly.deep.advance', type: 'chance', view: 'runner:third', title: '홈 태그업', tags: ['player-position-view'],
     outcomes: [
-      { id: 'success', label: '홈 태그업 성공', weight: 1, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpSafeSuccess, tone: 'neutral', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'success', label: '홈 태그업 성공', weight: 1, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: true }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceNormalSacrificeFly }, { type: 'announce', ...SCENARIO_TEXT.running.tagUpSafeSuccess, tone: 'neutral', titleImageMode: 'same-as-detail-scene' }] } },
       { id: 'out', label: '홈 태그업 실패', weight: 0, transition: { to: 'plate.complete', effects: [{ type: 'applySacrificeFlyOut', score: false }, { type: 'moveRunner', from: 3, to: 'out' }, { type: 'record', message: PLAY_RESULT_ITEMS.homeAdvanceFailure }, { type: 'announce', ...SCENARIO_TEXT.running.deepTagUpFailure, tone: 'negative', scene: 'home-advance-failure' }] } },
     ],
   },
