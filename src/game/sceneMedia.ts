@@ -53,8 +53,10 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '후속타자의 볼넷!': 'walk',
   '후속타자의 사구!': 'hit-by-pitch',
 
-  '내야 땅볼 발생!': 'ball-ground-infield',
-  '후속타자의 내야 땅볼 발생!': 'ball-ground-infield',
+  '강한 내야 땅볼 발생!': 'ball-ground-infield',
+  '약한 내야 땅볼 발생!': 'ball-ground-infield',
+  '후속타자의 강한 내야 땅볼 발생!': 'ball-ground-infield',
+  '후속타자의 약한 내야 땅볼 발생!': 'ball-ground-infield',
   '내야 뜬공 발생!': 'ball-fly-outfield',
   '외야 뜬공 발생!': 'ball-fly-outfield',
   '후속타자의 외야 뜬공 발생!': 'ball-fly-outfield',
@@ -80,6 +82,7 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
   '후속타자의 내야 땅볼, 정상 수비!': 'ground-throw-ready',
 
   '상대 내야수가 땅볼 포구에 실패했습니다!': 'error-infield-fielding',
+  '강습 타구가 내야수를 뚫고 외야로 굴러갑니다!': 'error-infield-fielding',
   '내야수 땅볼 실책!': 'error-infield-fielding',
   '내야 땅볼 송구 실책!': 'error-infield-throwing',
   '상대 내야수가 뜬공 포구에 실패했습니다!': 'error-outfield-drop',

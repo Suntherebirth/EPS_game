@@ -198,7 +198,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     mode: 'random',
     eventIds: [...FOLLOW_UP_EVENTS],
     routes: [
-      { to: 'followUp.ground.contact.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '후속타자의 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield-fielder-moving' }] },
+      { to: 'followUp.ground.contact.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
       { to: 'followUp.fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '후속타자의 외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-fly-outfield-fielder-moving' }] },
       { to: 'followUp.batting.apply', when: [{ field: 'battingEvent', operator: 'in', value: [...FOLLOW_UP_EVENTS] }] },
     ],
@@ -345,15 +345,15 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'batter',
     title: '후속 내야 땅볼 타구 강도 판정',
     outcomes: [
-      { id: 'hardGroundBall', label: '강한 땅볼', weight: RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'followUp.ground.hard.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'hard' }] } },
-      { id: 'softGroundBall', label: '약한 땅볼', weight: 1 - RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'followUp.ground.soft.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'soft' }] } },
+      { id: 'hardGroundBall', label: '강한 땅볼', weight: RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'followUp.ground.hard.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'hard' }, { type: 'announce', title: '후속타자의 강한 내야 땅볼 발생!', detail: '내야수가 잡기 쉽지 않은 타구입니다.', detailScene: 'ball-ground-infield-fielder-moving' }] } },
+      { id: 'softGroundBall', label: '약한 땅볼', weight: 1 - RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'followUp.ground.soft.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'soft' }, { type: 'announce', title: '후속타자의 약한 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield-fielder-moving' }] } },
     ],
   },
   'followUp.ground.hard.check': {
     id: 'followUp.ground.hard.check', tags: ['composite-event-step'], type: 'chance', view: 'batter', title: '후속 강한 땅볼 포구 판정',
     outcomes: [
-      { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'followUp.ground.fieldingError' } },
-      { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'followUp.ground.advanceOpportunity.route', effects: [{ type: 'setFlag', key: 'groundContact', value: 'hard' }, { type: 'announce', ...ANNOUNCEMENTS.groundFieldingSuccess }] } },
+      { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'followUp.ground.hard.fieldingError' } },
+      { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'followUp.ground.advanceOpportunity.route', effects: [{ type: 'setFlag', key: 'groundContact', value: 'hard' }, { type: 'announce', title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' }] } },
     ],
   },
   'followUp.ground.soft.check': {
@@ -423,6 +423,14 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     view: 'runner:first',
     title: '내야수 포구 실책',
     effects: [{ type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'announcePlayerAdvance', title: '상대 내야수가 땅볼 포구에 실패했습니다!', detail: '한 베이스 진루했습니다.', homeDetail: '상대 내야수 땅볼 포구 실책으로 안전하게 {destination}에 들어왔습니다.', tone: 'neutral' }],
+    transition: { to: 'runner.route' },
+  },
+  'followUp.ground.hard.fieldingError': {
+    id: 'followUp.ground.hard.fieldingError',
+    type: 'event',
+    view: 'runner:first',
+    title: '내야수 포구 실책',
+    effects: [{ type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'announcePlayerAdvance', title: '강습 타구가 내야수를 뚫고 외야로 굴러갑니다!', detail: '한 베이스 진루했습니다.', homeDetail: '상대 내야수 땅볼 포구 실책으로 안전하게 {destination}에 들어왔습니다.', tone: 'neutral' }],
     transition: { to: 'runner.route' },
   },
   'followUp.ground.hard.throw.check': {

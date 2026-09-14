@@ -51,7 +51,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'excludes', value: [1] }] },
         { to: 'strikeout.catcher.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }, { field: 'outs', operator: 'eq', value: 2 }] },
         { to: 'out.strikeout.generic', when: [{ field: 'battingEvent', operator: 'eq', value: 'strikeout' }] },
-        { to: 'ground.infield.contact.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }], effects: [{ type: 'announce', title: '내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield-fielder-moving' }] },
+        { to: 'ground.infield.contact.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'groundOut' }] },
         { to: 'infieldFly.rule.out', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }, { field: 'outs', operator: 'lt', value: 2 }, { field: 'bases', operator: 'includes', value: [1, 2] }] },
         { to: 'fly.infield.check', when: [{ field: 'battingEvent', operator: 'eq', value: 'infieldFly' }], effects: [{ type: 'announce', title: '내야 뜬공 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' }] },
         { to: 'fly.outfield.route', when: [{ field: 'battingEvent', operator: 'eq', value: 'flyOut' }], effects: [{ type: 'announce', title: '외야 뜬공 발생!', detail: '외야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-fly-outfield-fielder-moving' }] },
@@ -151,15 +151,15 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.contact.check': {
       id: 'ground.infield.contact.check', type: 'chance', view: 'batter', title: '내야 땅볼 타구 강도 판정', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'hardGroundBall', label: '강한 땅볼', weight: RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.hard.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'hard' }] } },
-        { id: 'softGroundBall', label: '약한 땅볼', weight: 1 - RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.soft.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'soft' }] } },
+        { id: 'hardGroundBall', label: '강한 땅볼', weight: RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.hard.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'hard' }, { type: 'announce', title: '강한 내야 땅볼 발생!', detail: '내야수가 잡기 쉽지 않은 타구입니다.', detailScene: 'ball-ground-infield-fielder-moving' }] } },
+        { id: 'softGroundBall', label: '약한 땅볼', weight: 1 - RUNNING_CHANCES.infieldGroundHardContact, transition: { to: 'ground.infield.soft.check', effects: [{ type: 'setFlag', key: 'groundBallStrength', value: 'soft' }, { type: 'announce', title: '약한 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield-fielder-moving' }] } },
       ],
     },
     'ground.infield.hard.check': {
       id: 'ground.infield.hard.check', type: 'chance', view: 'batter', title: '강한 땅볼 포구 판정', tags: ['composite-event-step'],
       outcomes: [
-        { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'ground.infield.fieldingError' } },
-        { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'ground.infield.hard.throw.check', effects: [{ type: 'announce', ...ANNOUNCEMENTS.groundFieldingSuccess }] } },
+        { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'ground.infield.hard.fieldingError' } },
+        { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'ground.infield.hard.throw.check', effects: [{ type: 'announce', title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' }] } },
       ],
     },
     'ground.infield.soft.check': {
@@ -227,6 +227,11 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
     'ground.infield.fieldingError': {
       id: 'ground.infield.fieldingError', type: 'event', view: 'runner:first', title: '내야수 포구 실책',
       effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'announce', ...ANNOUNCEMENTS.infieldFieldingError }],
+      transition: { to: 'runner.route' },
+    },
+    'ground.infield.hard.fieldingError': {
+      id: 'ground.infield.hard.fieldingError', type: 'event', view: 'runner:first', title: '내야수 포구 실책',
+      effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'setPlayerBase', value: 1 }, { type: 'recordGroundBallResult', result: 'safe' }, { type: 'announce', title: '강습 타구가 내야수를 뚫고 외야로 굴러갑니다!', detail: '실책으로 1루에 출루했습니다.' }],
       transition: { to: 'runner.route' },
     },
     'ground.infield.hard.throw.check': {

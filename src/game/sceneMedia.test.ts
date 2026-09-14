@@ -14,7 +14,7 @@ describe('scene media fallback names', () => {
   })
 
   it('returns the expected filename for an infield ground ball event', () => {
-    expect(resolveSceneImageFilename({ title: '내야 땅볼 발생!', scene: undefined }, 1)).toBe('ball-ground-infield.png')
+    expect(resolveSceneImageFilename({ title: '강한 내야 땅볼 발생!', scene: undefined }, 1)).toBe('ball-ground-infield.png')
   })
 
   it('falls back to outfield fly imagery for infield fly announcements and errors', () => {
@@ -38,7 +38,7 @@ describe('scene media fallback names', () => {
   })
 
   it('returns the dedicated fielder movement filename for an infield ground ball detail', () => {
-    expect(resolveSceneImageFilename({ title: '내야 땅볼 발생!', scene: 'ball-ground-infield-fielder-moving' }, 1)).toBe('ball-ground-infield-fielder-moving.png')
+    expect(resolveSceneImageFilename({ title: '약한 내야 땅볼 발생!', scene: 'ball-ground-infield-fielder-moving' }, 1)).toBe('ball-ground-infield-fielder-moving.png')
   })
 
   it('returns the expected filename for the batter view', () => {
@@ -123,7 +123,7 @@ describe('scene media fallback names', () => {
   })
 
   it('shares follow-up ground-ball detail imagery with the title step', () => {
-    expect(shouldShareDetailSceneForTitle({ title: '후속타자의 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield-fielder-moving' })).toBe(false)
+    expect(shouldShareDetailSceneForTitle({ title: '후속타자의 강한 내야 땅볼 발생!', detail: '내야수가 타구를 처리하러 이동합니다.', detailScene: 'ball-ground-infield-fielder-moving' })).toBe(false)
     expect(shouldShareDetailSceneForTitle({ title: '상대 내야수가 땅볼 포구에 성공했습니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' })).toBe(true)
     expect(shouldShareDetailSceneForTitle({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })).toBe(true)
     expect(shouldShareDetailSceneForTitle({ title: '홈 쇄도를 시도합니다.', detail: '상대 내야수가 송구하는 순간 홈으로 쇄도합니다.', detailScene: 'ground-home-rush', titleImageMode: 'same-as-detail-scene' })).toBe(true)
