@@ -41,7 +41,7 @@ export type ScenarioEffect =
   | { type: 'advanceRunner'; from: number; to: number }
   | { type: 'setFlag'; key: string; value: boolean | number | string }
   | { type: 'record'; message: string; showInCompletion?: boolean }
-  | { type: 'recordGroundBallResult'; result: 'out' | 'safe' }
+  | { type: 'recordGroundBallResult'; result: 'out' | 'safe'; showInCompletion?: boolean }
 
 export type ScenarioTransition = {
   to: ScenarioNodeId

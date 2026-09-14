@@ -1055,6 +1055,106 @@ describe('offense core scenario pack', () => {
     expect(result.context.completionRecords).not.toContain('후속 타자 삼진')
   })
 
+  it('excludes a following batter hit and automatic runner advance from the player summary', () => {
+    const initial = {
+      nodeId: 'followUp.batting.resolve',
+      context: { ...context(0, [1]), playerBase: 1 },
+    }
+
+    const result = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'double', { manualChance: true })
+
+    expect(result.context).toMatchObject({ bases: [2, 3], playerBase: 3, hits: 1 })
+    expect(result.context.completionRecords).toEqual([])
+  })
+
+  it('excludes a following batter ground-ball safe result from the player summary', () => {
+    const initial = {
+      nodeId: 'followUp.ground.hard.throw.check',
+      context: { ...context(0, [2]), playerBase: 2, flags: { groundBallStrength: 'hard' } },
+    }
+
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'throwSafe', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([])
+  })
+
+  it('excludes another runner advance after the player reaches first', () => {
+    const initial = {
+      nodeId: 'runner.second.outfieldError.clear.decide',
+      context: { ...context(0, [1, 2]), playerBase: 1 },
+    }
+
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, initial, 'advanceThird', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([])
+  })
+
+  it('includes the player clear outfield-error advance in the player summary', () => {
+    const initial = {
+      nodeId: 'runner.first.clearDrop.decide',
+      context: { ...context(0, [1]), playerBase: 1 },
+    }
+
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, initial, 'advanceSecond', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceSecondError])
+  })
+
+  it('includes the player clear outfield-error advance home in the player summary', () => {
+    const initial = {
+      nodeId: 'runner.third.outfieldError.clear.decide',
+      context: { ...context(0, [3]), playerBase: 3 },
+    }
+
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, initial, 'advanceHome', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceHomeError])
+  })
+
+  it('includes the player clear follow-up throwing-error advance in the player summary', () => {
+    const initial = {
+      nodeId: 'followUp.ground.throwingError.clear.decide',
+      context: { ...context(0, [1, 2]), playerBase: 2 },
+    }
+
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, initial, 'advance', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdError])
+  })
+
+  it('includes the player clear advance after a follow-up hit error in the player summary', () => {
+    const initial = {
+      nodeId: 'runner.battingAdvance.clearDrop.decide',
+      context: { ...context(0, [1, 2]), playerBase: 2 },
+    }
+
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, initial, 'advance', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdError])
+  })
+
+  it('includes the player clear wild-pitch advance in the player summary', () => {
+    const initial = {
+      nodeId: 'runner.wildPitch.clear.decide',
+      context: { ...context(0, [1]), playerBase: 1 },
+    }
+
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, initial, 'advance', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceSecondError])
+  })
+
+  it('includes the player missed clear extra-advance chance in the player summary', () => {
+    const initial = {
+      nodeId: 'followUp.ground.throw.extra.clear.decide',
+      context: { ...context(0, [1, 2]), playerBase: 2 },
+    }
+
+    const result = chooseScenarioOption(OFFENSE_CORE_PACK, initial, 'stayOnBase', { manualChance: true })
+
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdMissed])
+  })
+
   it('keeps the follow-up fly-out detail before a separate side-change announcement', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(2), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
@@ -1378,6 +1478,31 @@ describe('offense core scenario pack', () => {
     expect(result.nodeId).toBe('runner.first.decide')
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1 })
     expect(result.context.announcement).toEqual({ title: '폭투가 나왔지만 진루하지 않았습니다.', detail: '명백히 진루 가능한 찬스를 놓쳤습니다.', tone: 'negative', advance: 'blocked', scene: 'wild-pitch-clear' })
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.single, PLAY_RESULT_ITEMS.advanceSecondMissed])
+  })
+
+  it('records risky wild-pitch advance success and failure for the player', () => {
+    const initial = { nodeId: 'runner.wildPitch.ambiguous.advance', context: { ...context(0, [1]), playerBase: 1 } }
+
+    const success = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'success', { manualChance: true })
+    const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'out', { manualChance: true })
+
+    expect(success.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceSecondETB])
+    expect(failure.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceSecondFailure])
+  })
+
+  it.each([
+    'runner.battingAdvance.ambiguousDrop.advance',
+    'followUp.ground.throw.extra.clear.advance',
+    'followUp.ground.throwingError.ambiguous.advance',
+  ])('records risky current-player advance outcomes at %s', (nodeId) => {
+    const initial = { nodeId, context: { ...context(0, [1, 2]), playerBase: 2 } }
+
+    const success = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'success', { manualChance: true })
+    const failure = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, initial, 'out', { manualChance: true })
+
+    expect(success.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdETB])
+    expect(failure.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdFailure])
   })
 
   it('scores an existing third-base runner on a wild pitch while the player stays at first', () => {
@@ -1386,6 +1511,7 @@ describe('offense core scenario pack', () => {
     const result = chooseScenarioOption(OFFENSE_CORE_PACK, wildPitch, 'stayOnBase', { manualChance: true })
 
     expect(result.context).toMatchObject({ bases: [1], playerBase: 1, runs: 1 })
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceSecondMissed])
   })
 
   it('advances other runners and scores one run on a wild pitch with the bases loaded', () => {

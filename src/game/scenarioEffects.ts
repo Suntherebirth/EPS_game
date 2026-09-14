@@ -50,7 +50,7 @@ export const applyScenarioEffect = (context: ScenarioContext, effect: ScenarioEf
     if (strength !== 'hard' && strength !== 'soft') throw new Error('내야 땅볼 타구 강도가 없습니다.')
     const message = resolveGroundBallResultItem(strength as GroundBallStrength, effect.result)
     next.records.push(message)
-    next.completionRecords.push(message)
+    if (effect.showInCompletion ?? true) next.completionRecords.push(message)
   }
   if (effect.type === 'setPlayerBase') next.playerBase = effect.value
   if (effect.type === 'announce') {
