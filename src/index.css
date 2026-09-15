@@ -1,7 +1,7 @@
 :root {
   font-family: 'Noto Sans KR', sans-serif;
   color: #15201b;
-  background-color: #e7e5dc;
+  background-color: #e6d3a4;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -11,9 +11,12 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background-color: #e7e5dc;
-  background-image: radial-gradient(#cac8bf 0.75px, transparent 0.75px);
-  background-size: 9px 9px;
+  background-color: #e6d3a4;
+  background-image:
+    radial-gradient(1400px circle at 8% -10%, rgba(255, 250, 232, .55), transparent 52%),
+    linear-gradient(155deg, #f2e4bf 0%, #e6d3a4 42%, #cba76c 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 button:focus-visible {

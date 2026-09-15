@@ -440,7 +440,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     title: '후속 내야 땅볼 송구 판정',
     outcomes: [
       { id: 'throwOut', label: '송구 아웃', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).throwOut, transition: { to: 'followUp.ground.throw.success.route' } },
-      { id: 'throwSafe', label: '송구 세이프', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).throwSafe, transition: { to: 'runner.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'recordGroundBallResult', result: 'safe', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '후속 타자 내야 땅볼 송구 세이프!', detail: '정상 송구가 도착했지만 타자 주자가 먼저 1루를 밟았습니다.', advance: 'normal' }] } },
+      { id: 'throwSafe', label: '송구 세이프', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).throwSafe, transition: { to: 'followUp.ground.throw.safe.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'recordGroundBallResult', result: 'safe', showInCompletion: false }] } },
       { id: 'clearThrowingError', label: '명백한 송구 실책', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).clearThrowingError, transition: { to: 'followUp.ground.throw.error.route', effects: [{ type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }] } },
       { id: 'ambiguousThrowingError', label: '애매한 송구 실책', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundHardFieldingError).ambiguousThrowingError, transition: { to: 'followUp.ground.throw.error.route', effects: [{ type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }] } },
     ],
@@ -449,9 +449,19 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'followUp.ground.soft.throw.check', type: 'chance', view: 'batter', title: '후속 약한 땅볼 송구 판정',
     outcomes: [
       { id: 'throwOut', label: '송구 아웃', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).throwOut, transition: { to: 'followUp.ground.throw.success.route' } },
-      { id: 'throwSafe', label: '송구 세이프', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).throwSafe, transition: { to: 'runner.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'recordGroundBallResult', result: 'safe', showInCompletion: false }, { type: 'announcePlayerAdvance', title: '후속 타자 내야 땅볼 송구 세이프!', detail: '정상 송구가 도착했지만 타자 주자가 먼저 1루를 밟았습니다.', advance: 'normal' }] } },
+      { id: 'throwSafe', label: '송구 세이프', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).throwSafe, transition: { to: 'followUp.ground.throw.safe.route', effects: [{ type: 'applyHit', batterTo: 1, creditHit: false }, { type: 'recordGroundBallResult', result: 'safe', showInCompletion: false }] } },
       { id: 'clearThrowingError', label: '명백한 송구 실책', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).clearThrowingError, transition: { to: 'followUp.ground.throw.error.route', effects: [{ type: 'setFlag', key: 'groundThrowMiss', value: 'clear' }] } },
       { id: 'ambiguousThrowingError', label: '애매한 송구 실책', weight: followUpGroundThrowOutcomes(RUNNING_CHANCES.infieldGroundSoftFieldingError).ambiguousThrowingError, transition: { to: 'followUp.ground.throw.error.route', effects: [{ type: 'setFlag', key: 'groundThrowMiss', value: 'ambiguous' }] } },
+    ],
+  },
+  'followUp.ground.throw.safe.route': {
+    id: 'followUp.ground.throw.safe.route',
+    type: 'router',
+    view: 'result',
+    title: '송구 세이프 후 주루 처리',
+    routes: [
+      { to: 'runner.route', when: [{ field: 'flag', operator: 'eq', key: 'groundAdvanceIntent', value: 'attempt' }, { field: 'playerBase', operator: 'eq', value: 3 }], effects: [{ type: 'record', message: PLAY_RESULT_ITEMS.advanceThirdETB }, { type: 'announce', ...SCENARIO_TEXT.running.advanceThirdSuccess, title: '후속 타자 내야 땅볼 3루 진루 성공!', advance: 'bold', detailScene: 'advance-ambiguous-safe', titleImageMode: 'same-as-detail-scene' }] },
+      { to: 'runner.route', effects: [{ type: 'announcePlayerAdvance', title: '후속 타자 내야 땅볼 송구 세이프!', detail: '정상 송구가 도착했지만 타자 주자가 먼저 1루를 밟았습니다.', advance: 'normal' }] },
     ],
   },
   'followUp.ground.throw.success.route': {

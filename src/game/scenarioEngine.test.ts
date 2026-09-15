@@ -807,6 +807,19 @@ describe('offense core scenario pack', () => {
     expect(result.context).toMatchObject({ bases: [3], playerBase: 3 })
   })
 
+  it('records only a third-base ETB advance when a second-base runner starts and the follow-up throw is safe', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [2]), playerBase: 2 }, { manualChance: true })
+    const contact = selectScenarioBattingEvent(OFFENSE_CORE_PACK, { ...initial, nodeId: 'followUp.batting.resolve' }, 'groundOut', { manualChance: true })
+    const fielding = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, contact, 'hardGroundBall', { manualChance: true })
+    const ready = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, ready, 'advanceThird', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'throwSafe', { manualChance: true })
+
+    expect(result.nodeId).toBe('runner.third.decide')
+    expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 3 })
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdETB])
+  })
+
   it('offers a home-plate advance attempt for a third-base runner after a clean ground ball with zero or one out', () => {
     for (const outs of [0, 1]) {
       const initial = startScenario(OFFENSE_CORE_PACK, context(outs), { manualChance: true })

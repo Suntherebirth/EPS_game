@@ -1,9 +1,9 @@
-import { Bug, CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, AlertCircle, Layers } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, getReplayOptions, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
-import { createChoiceAuditCases, getChoiceBranchAuditCaseId, replayChoiceAuditCase, type ChoiceAuditCase } from './game/choiceAudit'
+import logoImage from './assets/eg_logo-header.png'
+import { getAnnouncementMessages, getReplayOptions, type AnnouncementReplayFrame } from './game/announcementAudit'
 import { BATTING_CATEGORIES, BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingCategory, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
-import { PLAY_RESULT_CODES, matchAnnouncementToResultCode, resolvePlayResultCode } from './game/playResultCodes'
+import { PLAY_RESULT_CODES, PLAY_RESULT_ITEMS, matchAnnouncementToResultCode, resolvePlayResultCode } from './game/playResultCodes'
 import {
   createRandomSituation,
   createScenarioContext,
@@ -37,11 +37,7 @@ import {
 import './App.css'
 
 type Phase = 'playing' | 'between' | 'finished'
-type AppMode = 'game' | 'announcementCheck' | 'choiceCheck' | 'codeMapping'
-type AnnouncementAuditStatus = 'needsReview' | 'ok'
-type AnnouncementAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
-type ChoiceAuditStatus = 'needsReview' | 'ok'
-type ChoiceAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
+type AppMode = 'game' | 'codeMapping'
 type BattingInputMode = 'direct' | 'probabilistic'
 type RecordEntry = {
   number: number
@@ -75,10 +71,6 @@ const preloadSceneImage = (url: string, previousEntryCount: number) => new Promi
   image.src = url
 })
 
-const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
-const ANNOUNCEMENT_AUDIT_TAB_STORAGE_KEY = 'eps:announcement-check:tab:v1'
-const CHOICE_AUDIT_STORAGE_KEY = 'eps:choice-check:completed:v1'
-const CHOICE_AUDIT_TAB_STORAGE_KEY = 'eps:choice-check:tab:v1'
 const BATTING_INPUT_MODE_STORAGE_KEY = 'eps:batting-input-mode:v1'
 
 const loadBattingInputMode = (): BattingInputMode => {
@@ -97,120 +89,6 @@ const saveBattingInputMode = (mode: BattingInputMode) => {
     // ignore
   }
 }
-
-const loadAnnouncementCaseStatuses = () => {
-  try {
-    const value = localStorage.getItem(ANNOUNCEMENT_AUDIT_STORAGE_KEY)
-    const parsed = value ? JSON.parse(value) : {}
-    if (Array.isArray(parsed)) {
-      return Object.fromEntries(parsed.filter((item): item is string => typeof item === 'string').map((id) => [id, 'ok' as const]))
-    }
-    if (!parsed || typeof parsed !== 'object') return {}
-    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, AnnouncementAuditStatus] => entry[1] === 'needsReview' || entry[1] === 'ok'))
-  } catch {
-    return {}
-  }
-}
-
-const saveAnnouncementCaseStatuses = (statuses: Record<string, AnnouncementAuditStatus>) => {
-  localStorage.setItem(ANNOUNCEMENT_AUDIT_STORAGE_KEY, JSON.stringify(statuses))
-}
-
-const loadAnnouncementAuditTab = (): AnnouncementAuditTab => {
-  const value = localStorage.getItem(ANNOUNCEMENT_AUDIT_TAB_STORAGE_KEY)
-  return value === 'all' || value === 'needsReview' || value === 'ok' ? value : 'pending'
-}
-
-const saveAnnouncementAuditTab = (tab: AnnouncementAuditTab) => {
-  localStorage.setItem(ANNOUNCEMENT_AUDIT_TAB_STORAGE_KEY, tab)
-}
-
-const loadChoiceCaseStatuses = (): Record<string, ChoiceAuditStatus> => {
-  try {
-    const value = localStorage.getItem(CHOICE_AUDIT_STORAGE_KEY)
-    const parsed = value ? JSON.parse(value) : {}
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, ChoiceAuditStatus] => entry[1] === 'needsReview' || entry[1] === 'ok'))
-  } catch {
-    return {}
-  }
-}
-
-const saveChoiceCaseStatuses = (statuses: Record<string, ChoiceAuditStatus>) => {
-  try {
-    localStorage.setItem(CHOICE_AUDIT_STORAGE_KEY, JSON.stringify(statuses))
-  } catch {
-    // 상태는 현재 화면에서 계속 표시하고, 저장소를 사용할 수 없는 환경에서는 세션 상태로 동작한다.
-  }
-}
-
-const loadChoiceAuditTab = (): ChoiceAuditTab => {
-  try {
-    const value = localStorage.getItem(CHOICE_AUDIT_TAB_STORAGE_KEY)
-    return value === 'pending' || value === 'needsReview' || value === 'ok' ? value : 'all'
-  } catch {
-    return 'all'
-  }
-}
-
-const saveChoiceAuditTab = (tab: ChoiceAuditTab) => {
-  try {
-    localStorage.setItem(CHOICE_AUDIT_TAB_STORAGE_KEY, tab)
-  } catch {
-    // ignore
-  }
-}
-
-const copyTextToClipboard = async (text: string) => {
-  if (navigator.clipboard) {
-    await navigator.clipboard.writeText(text)
-    return
-  }
-  const textarea = document.createElement('textarea')
-  textarea.value = text
-  textarea.style.position = 'fixed'
-  textarea.style.opacity = '0'
-  document.body.append(textarea)
-  textarea.select()
-  document.execCommand('copy')
-  textarea.remove()
-}
-
-const formatAnnouncementBugReport = (item: AnnouncementAuditCase) => {
-  const messages = item.messages.map((message, index) => [
-    `${index + 1}. ${message.title}`,
-    `   detail: ${message.detail}`,
-    `   tone: ${message.tone ?? 'neutral'}, category: ${message.category}`,
-  ].join('\n')).join('\n')
-
-  return [
-    'EPS Baseball Sim 아나운스 텍스트 버그 리포트',
-    '',
-    `시작 상황: ${describeSituation(item.start)}`,
-    `결과 상태: ${item.situation}`,
-    `표시 시점: ${item.viewLabel}${item.isSurprise ? ' / 돌발 이벤트' : ''}`,
-    `플레이 흐름: ${item.actionLabel}`,
-    `주자 상태: outs=${item.outs}, bases=[${item.bases.join(', ')}], playerBase=${item.playerBase ?? 'none'}`,
-    '',
-    '현재 화면에 이렇게 표시됩니다:',
-    messages,
-    '',
-    '이 상황에 맞게 더 자연스러운 한국어 아나운스 문구로 수정하려고 합니다.',
-    '관련 코드는 위 title/detail 문구를 기준으로 src/game/announcementMessages.ts, src/game/scenarioEffects.ts, src/game/packs/offenseCorePack.ts, src/game/packs/emptyBasesSingleNodes.ts 쪽에서 찾으면 됩니다.',
-  ].join('\n')
-}
-
-const formatChoiceBugReport = (item: ChoiceAuditCase) => [
-  'EPS Baseball Sim 선택 분기 버그 리포트',
-  '',
-  `시작 상황: ${describeSituation(item.start)}`,
-  `분기 시점: ${item.situation}`,
-  `노드: ${item.nodeTitle} (${item.nodeId})`,
-  `제시된 선택지 목록: ${item.actions.map((act) => act.label).join(', ')}`,
-  `재현 경로: ${item.steps.length > 0 ? item.steps.map((step) => step.label).join(' -> ') : '시작 선택 분기'}`,
-  '',
-  '관련 코드는 위 노드 ID를 기준으로 src/game/packs/ 아래 시나리오 팩에서 찾을 수 있습니다.',
-].join('\n')
 
 function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number | null }) {
   return <div className="diamond" aria-label={describeBases(bases)}>
@@ -260,7 +138,7 @@ function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabe
 
 function CodeMappingMode({ onBack }: { onBack: () => void }) {
   return <main className="app-shell audit-page">
-    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
+    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><img className="brand-logo" src={logoImage} alt="" /><span>EPS Simulator</span></button><div className="header-controls"><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
     <section className="audit-summary">
       <p className="eyebrow">CODE MAPPING TEST</p>
       <h1>타석 결산 항목-코드-점수 매핑</h1>
@@ -287,144 +165,11 @@ function TapContinueButton({ stepKey, onClick }: { stepKey: string; onClick: () 
   return <button type="button" className="tap-continue-button" onClick={(event) => { event.stopPropagation(); onClick() }} aria-label="다음 장면 보기">탭하여 계속 <ChevronRight size={15} aria-hidden="true" /></button>
 }
 
-function AnnouncementCheckMode({ cases, caseStatuses, activeTab, highlightedCaseId, onChangeTab, onSetStatus, onSimulate, onBack }: { cases: AnnouncementAuditCase[]; caseStatuses: Record<string, AnnouncementAuditStatus>; activeTab: AnnouncementAuditTab; highlightedCaseId: string | null; onChangeTab: (tab: AnnouncementAuditTab) => void; onSetStatus: (id: string, status: AnnouncementAuditStatus | null) => void; onSimulate: (item: AnnouncementAuditCase) => void; onBack: () => void }) {
-  const [copiedReportId, setCopiedReportId] = useState<string | null>(null)
-  const visibleCases = activeTab === 'all' ? cases : cases.filter((item) => activeTab === 'pending' ? !caseStatuses[item.id] : caseStatuses[item.id] === activeTab)
-  const pendingCount = cases.filter((item) => !caseStatuses[item.id]).length
-  const needsReviewCount = cases.filter((item) => caseStatuses[item.id] === 'needsReview').length
-  const okCount = cases.filter((item) => caseStatuses[item.id] === 'ok').length
-
-  useEffect(() => {
-    if (!highlightedCaseId) return
-    document.getElementById(`audit-card:${highlightedCaseId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }, [highlightedCaseId])
-
-  const copyBugReport = async (item: AnnouncementAuditCase) => {
-    await copyTextToClipboard(formatAnnouncementBugReport(item))
-    setCopiedReportId(item.id)
-    window.setTimeout(() => setCopiedReportId((current) => current === item.id ? null : current), 1600)
-  }
-
-  return <main className="app-shell audit-page">
-    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
-    <section className="audit-summary">
-      <p className="eyebrow">ANNOUNCEMENT CHECK</p>
-      <h1>아나운스 텍스트 체크</h1>
-      <p>같은 표시 상황과 같은 메시지 흐름은 하나로 묶었습니다.</p>
-      <div className="audit-metrics"><div><strong>{cases.length}</strong><span>전체</span></div><div><strong>{pendingCount}</strong><span>미판정</span></div><div><strong>{needsReviewCount}</strong><span>검토 필요</span></div><div><strong>{okCount}</strong><span>문제 없음</span></div></div>
-      <div className="audit-tabs" role="tablist" aria-label="아나운스 체크 필터">
-        <button className={activeTab === 'pending' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'pending'} onClick={() => onChangeTab('pending')}>미판정</button>
-        <button className={activeTab === 'all' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'all'} onClick={() => onChangeTab('all')}>전체보기</button>
-        <button className={activeTab === 'needsReview' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'needsReview'} onClick={() => onChangeTab('needsReview')}>검토필요</button>
-        <button className={activeTab === 'ok' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'ok'} onClick={() => onChangeTab('ok')}>문제없음</button>
-      </div>
-    </section>
-    <section className="audit-list" aria-label="아나운스 체크 목록">
-      {visibleCases.map((item) => {
-        const status = caseStatuses[item.id]
-        return <article className={`audit-card ${status ?? ''} ${item.isSurprise ? 'surprise' : ''} ${highlightedCaseId === item.id ? 'highlighted' : ''}`} key={item.id} id={`audit-card:${item.id}`}>
-          <div className="audit-card-meta"><span>시작: {describeSituation(item.start)}</span><span>결과: {item.situation}</span><span>{item.viewLabel}</span>{item.isSurprise && <b>돌발 이벤트</b>}{status === 'needsReview' && <b className="review-chip">검토 필요</b>}{status === 'ok' && <b className="ok-chip">문제 없음</b>}</div>
-          <div className="audit-message-flow">
-            {item.messages.map((message, index) => {
-              const resultCode = matchAnnouncementToResultCode(message)
-              const scoreTone = resultCode?.score === null || resultCode?.score === undefined ? 'unscored' : resultCode.score > 0 ? 'positive' : resultCode.score < 0 ? 'negative' : 'zero'
-              const scoreText = resultCode?.score !== null && resultCode?.score !== undefined ? (resultCode.score > 0 ? `+${resultCode.score}` : `${resultCode.score}`) : ''
-
-              return <div className={`audit-message ${message.category === 'surprise' ? 'surprise-message' : ''} ${message.tone ?? 'neutral'}`} key={`${message.title}:${message.detail}:${index}`}>
-                {index > 0 && <span>그리고</span>}
-                <div className="audit-message-title-row">
-                  <strong>{message.title}</strong>
-                  {resultCode && resultCode.code && (
-                    <span className={`announcement-code-badge play-result-score-${scoreTone}`}>
-                      <b>{resultCode.code}</b>
-                    </span>
-                  )}
-                </div>
-                <div className="audit-message-detail-row"><p>{message.detail}</p>{scoreText !== '' && <span className={`announcement-score play-result-score-${scoreTone}`}>{scoreText}점</span>}</div>
-              </div>
-            })}
-          </div>
-          <div className="audit-card-footer"><small>{item.actionLabel}</small><div className="audit-card-actions"><button className="secondary-button" type="button" onClick={() => onSimulate(item)}><Play size={16} /> 시뮬레이션</button><button className="secondary-button" type="button" onClick={() => void copyBugReport(item)}><Bug size={16} /> {copiedReportId === item.id ? '복사됨' : '버그 리포트'}</button><button className={status === 'needsReview' ? 'primary-button review-button' : 'secondary-button review-button'} type="button" onClick={() => onSetStatus(item.id, status === 'needsReview' ? null : 'needsReview')}>검토 필요</button><button className={status === 'ok' ? 'primary-button ok-button' : 'secondary-button ok-button'} type="button" onClick={() => onSetStatus(item.id, status === 'ok' ? null : 'ok')}>{status === 'ok' ? '문제 없음 해제' : <><CheckCircle2 size={17} /> 문제 없음</>}</button></div></div>
-        </article>
-      })}
-      {visibleCases.length === 0 && <div className="audit-empty"><strong>해당 탭에 아나운스가 없습니다.</strong><p>전체보기에서 항목을 검토 필요 또는 문제 없음으로 표시할 수 있습니다.</p></div>}
-    </section>
-  </main>
-}
-
-function BranchAuditBar({ caseId, status, onSetStatus }: { caseId: string; status?: ChoiceAuditStatus; onSetStatus: (id: string, status: ChoiceAuditStatus | null) => void }) {
-  const setStatus = (nextStatus: ChoiceAuditStatus) => {
-    onSetStatus(caseId, status === nextStatus ? null : nextStatus)
-  }
-
-  return <div className="branch-audit-bar" onClick={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()}>
-    <span aria-label="분기 검토"><Layers size={13} /></span>
-    <div className="branch-audit-buttons">
-      <button className={status === 'needsReview' ? 'active review' : 'review'} type="button" aria-pressed={status === 'needsReview'} onClick={() => setStatus('needsReview')} title="이 분기를 검토 필요로 표시"><AlertCircle size={12} /> 검토</button>
-      <button className={status === 'ok' ? 'active ok' : 'ok'} type="button" aria-pressed={status === 'ok'} onClick={() => setStatus('ok')} title="이 분기에 문제가 없음을 표시"><CheckCircle2 size={12} /> OK</button>
-    </div>
-  </div>
-}
-
-function ChoiceCheckMode({ cases, caseStatuses, activeTab, onChangeTab, onSetStatus, onSimulate, onBack }: { cases: ChoiceAuditCase[]; caseStatuses: Record<string, ChoiceAuditStatus>; activeTab: ChoiceAuditTab; onChangeTab: (tab: ChoiceAuditTab) => void; onSetStatus: (id: string, status: ChoiceAuditStatus | null) => void; onSimulate: (item: ChoiceAuditCase) => void; onBack: () => void }) {
-  const [copiedCaseId, setCopiedCaseId] = useState<string | null>(null)
-  const visibleCases = activeTab === 'all' ? cases : cases.filter((item) => activeTab === 'pending' ? !caseStatuses[item.id] : caseStatuses[item.id] === activeTab)
-  const pendingCount = cases.filter((item) => !caseStatuses[item.id]).length
-  const needsReviewCount = cases.filter((item) => caseStatuses[item.id] === 'needsReview').length
-  const okCount = cases.filter((item) => caseStatuses[item.id] === 'ok').length
-
-  const copyBugReport = async (item: ChoiceAuditCase) => {
-    await copyTextToClipboard(formatChoiceBugReport(item))
-    setCopiedCaseId(item.id)
-    window.setTimeout(() => setCopiedCaseId((current) => current === item.id ? null : current), 1600)
-  }
-
-  return <main className="app-shell audit-page">
-    <header className="brand-bar audit-header"><button className="brand-title" type="button" onClick={onBack}><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls"><button className="icon-button" type="button" onClick={onBack} title="게임으로 돌아가기" aria-label="게임으로 돌아가기"><RotateCcw size={18} /></button></div></header>
-    <section className="audit-summary">
-      <p className="eyebrow">CHOICE CHECK</p>
-      <h1>선택 분기 테스트</h1>
-      <p>선택지들이 뜨는 모든 도달 가능한 분기(상황 + 선택지 세트)를 이전 선택 경로별로 검토합니다.</p>
-      <div className="audit-metrics"><div><strong>{cases.length}</strong><span>전체</span></div><div><strong>{pendingCount}</strong><span>미선택</span></div><div><strong>{needsReviewCount}</strong><span>검토 필요</span></div><div><strong>{okCount}</strong><span>문제 없음</span></div></div>
-      <div className="audit-tabs" role="tablist" aria-label="선택지 체크 필터">
-        <button className={activeTab === 'all' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'all'} onClick={() => onChangeTab('all')}>전체보기</button>
-        <button className={activeTab === 'pending' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'pending'} onClick={() => onChangeTab('pending')}>미선택</button>
-        <button className={activeTab === 'needsReview' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'needsReview'} onClick={() => onChangeTab('needsReview')}>검토필요</button>
-        <button className={activeTab === 'ok' ? 'active' : ''} type="button" role="tab" aria-selected={activeTab === 'ok'} onClick={() => onChangeTab('ok')}>문제없음</button>
-      </div>
-    </section>
-    <section className="audit-list" aria-label="선택지 체크 목록">
-      {visibleCases.map((item) => {
-        const status = caseStatuses[item.id]
-        return <article className={`audit-card choice-audit-card ${status ?? ''}`} key={item.id}>
-          <div className="audit-card-meta"><span>{item.situation}</span><span>{item.nodeTitle} ({item.nodeId})</span><span>{item.nodeType}</span>{status === 'needsReview' && <b className="review-chip">검토 필요</b>}{status === 'ok' && <b className="ok-chip">문제 없음</b>}</div>
-          <div className="choice-audit-action">
-            <strong>제시되는 선택지 목록 ({item.actions.length}개):</strong>
-            <div className="choice-action-tags">
-              {item.actions.map((act) => <span className="choice-action-tag" key={act.id}>{act.label}</span>)}
-            </div>
-          </div>
-          <p className="choice-audit-path">{item.steps.length > 0 ? item.steps.map((step) => step.label).join(' -> ') : '시작 시점에서 바로 분기'}</p>
-          <div className="audit-card-footer"><small>시작: {describeSituation(item.start)}</small><div className="audit-card-actions"><button className="secondary-button" type="button" onClick={() => onSimulate(item)}><Play size={16} /> 재현</button><button className="secondary-button" type="button" onClick={() => void copyBugReport(item)}><Bug size={16} /> {copiedCaseId === item.id ? '복사됨' : '버그 리포트'}</button><button className={status === 'needsReview' ? 'primary-button review-button' : 'secondary-button review-button'} type="button" onClick={() => onSetStatus(item.id, status === 'needsReview' ? null : 'needsReview')}>검토 필요</button><button className={status === 'ok' ? 'primary-button ok-button' : 'secondary-button ok-button'} type="button" onClick={() => onSetStatus(item.id, status === 'ok' ? null : 'ok')}>{status === 'ok' ? '문제 없음 해제' : <><CheckCircle2 size={17} /> 문제 없음</>}</button></div></div>
-        </article>
-      })}
-      {visibleCases.length === 0 && <div className="audit-empty"><strong>해당 탭에 선택 분기가 없습니다.</strong><p>전체보기에서 분기를 검토 필요 또는 문제 없음으로 표시할 수 있습니다.</p></div>}
-    </section>
-  </main>
-}
-
 function App() {
   const [appMode, setAppMode] = useState<AppMode>('game')
   const [adminMode, setAdminMode] = useState(false)
   const [battingInputMode, setBattingInputModeState] = useState<BattingInputMode>(() => loadBattingInputMode())
   const [selectedBattingCategory, setSelectedBattingCategory] = useState<BattingCategory | null>(null)
-  const [announcementAuditCases] = useState(() => createAnnouncementAuditCases())
-  const [announcementCaseStatuses, setAnnouncementCaseStatuses] = useState<Record<string, AnnouncementAuditStatus>>(() => loadAnnouncementCaseStatuses())
-  const [announcementAuditTab, setAnnouncementAuditTabState] = useState<AnnouncementAuditTab>(() => loadAnnouncementAuditTab())
-  const [choiceAuditCases] = useState(() => createChoiceAuditCases())
-  const [choiceCaseStatuses, setChoiceCaseStatuses] = useState<Record<string, ChoiceAuditStatus>>(() => loadChoiceCaseStatuses())
-  const [choiceAuditTab, setChoiceAuditTabState] = useState<ChoiceAuditTab>(() => loadChoiceAuditTab())
-  const [highlightedAuditCaseId, setHighlightedAuditCaseId] = useState<string | null>(null)
   const [replay, setReplay] = useState<{ frames: AnnouncementReplayFrame[]; index: number; playing: boolean } | null>(null)
   const [replayReturnPhase, setReplayReturnPhase] = useState<Phase | null>(null)
   const [plateAppearance, setPlateAppearance] = useState(1)
@@ -641,60 +386,6 @@ function App() {
     }
   }
 
-  const setAnnouncementCaseStatus = (id: string, status: AnnouncementAuditStatus | null) => {
-    setAnnouncementCaseStatuses((current) => {
-      const next = { ...current }
-      if (status) next[id] = status
-      else delete next[id]
-      saveAnnouncementCaseStatuses(next)
-      return next
-    })
-  }
-
-  const setAnnouncementAuditTab = (tab: AnnouncementAuditTab) => {
-    saveAnnouncementAuditTab(tab)
-    setAnnouncementAuditTabState(tab)
-  }
-
-  const setChoiceCaseStatus = (id: string, status: ChoiceAuditStatus | null) => {
-    setChoiceCaseStatuses((current) => {
-      const next = { ...current }
-      if (status) next[id] = status
-      else delete next[id]
-      saveChoiceCaseStatuses(next)
-      return next
-    })
-  }
-
-  const getLiveBranchCaseId = () => getChoiceBranchAuditCaseId(scenario)
-
-  const setChoiceAuditTab = (tab: ChoiceAuditTab) => {
-    saveChoiceAuditTab(tab)
-    setChoiceAuditTabState(tab)
-  }
-
-  const openChoiceAuditFromGame = () => {
-    const matchedId = findMatchingCaseId(scenario)
-    setReplay(null)
-    setReplayReturnPhase(null)
-    setHighlightedAuditCaseId(matchedId)
-    if (matchedId) setChoiceAuditTab('all')
-    setAppMode('choiceCheck')
-  }
-
-  const simulateAuditCase = (item: AnnouncementAuditCase) => {
-    const frames = replayAnnouncementCase(item)
-    const last = frames.at(-1)!.state
-    setAdminMode(true)
-    setAppMode('game')
-    setSituation({ outs: last.context.outs, bases: last.context.bases as Base[] })
-    setScenario(last)
-    setPhase('playing')
-    setReplayReturnPhase(null)
-    setReplay({ frames, index: 0, playing: false })
-    setHighlightedAuditCaseId(item.id)
-  }
-
   const closeReplay = () => {
     setReplay(null)
     if (replayReturnPhase) {
@@ -707,34 +398,11 @@ function App() {
     if (!record.frames || record.frames.length === 0) return
     const firstState = record.frames[0]?.state ?? scenario
     setReplayReturnPhase('finished')
-    setHighlightedAuditCaseId(null)
     setPlateAppearance(record.number)
     setSituation({ outs: firstState.context.outs, bases: firstState.context.bases as Base[] })
     setScenario(firstState)
     setPhase('playing')
     setReplay({ frames: record.frames, index: 0, playing: false })
-  }
-
-  const completeReplayAudit = (status: AnnouncementAuditStatus) => {
-    if (!highlightedAuditCaseId) return
-    setAnnouncementCaseStatus(highlightedAuditCaseId, status)
-    closeReplay()
-    setAnnouncementAuditTab('pending')
-    setAppMode('announcementCheck')
-  }
-
-  const simulateChoiceAuditCase = (item: ChoiceAuditCase) => {
-    const state = replayChoiceAuditCase(item)
-    setSelectedBattingCategory(null)
-    setReplay(null)
-    setReplayReturnPhase(null)
-    setAdminMode(true)
-    setAppMode('game')
-    setSituation({ outs: state.context.outs, bases: state.context.bases as Base[] })
-    setSituationPlayerBase(state.context.playerBase)
-    setPlateStartSituation(item.start)
-    setScenario(state)
-    setPhase('playing')
   }
 
   const continueGame = () => {
@@ -753,10 +421,6 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [playResultVisible])
 
-  if (appMode === 'announcementCheck') return <AnnouncementCheckMode cases={announcementAuditCases} caseStatuses={announcementCaseStatuses} activeTab={announcementAuditTab} highlightedCaseId={highlightedAuditCaseId} onChangeTab={setAnnouncementAuditTab} onSetStatus={setAnnouncementCaseStatus} onSimulate={simulateAuditCase} onBack={() => setAppMode('game')} />
-
-  if (appMode === 'choiceCheck') return <ChoiceCheckMode cases={choiceAuditCases} caseStatuses={choiceCaseStatuses} activeTab={choiceAuditTab} onChangeTab={setChoiceAuditTab} onSetStatus={setChoiceCaseStatus} onSimulate={simulateChoiceAuditCase} onBack={() => setAppMode('game')} />
-
   if (phase === 'finished') {
     const grandTotal = records.reduce((grandSum, record) => {
       const plateSum = (record.items ?? []).reduce((sum, item) => sum + (resolvePlayResultCode(item ?? '').score ?? 0), 0)
@@ -769,8 +433,8 @@ function App() {
       <main className="app-shell result-page">
         <header className="brand-bar">
           <div className="brand-title">
-            <b className="brand-mark">EPS</b>
-            <span>BASEBALL SIM</span>
+            <img className="brand-logo" src={logoImage} alt="" />
+            <span>EPS Simulator</span>
           </div>
           <div className="header-controls">
             <button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button>
@@ -934,7 +598,7 @@ function App() {
   if (appMode === 'codeMapping') return <CodeMappingMode onBack={() => setAppMode('game')} />
 
   return <main className="app-shell">
-    <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openChoiceAuditFromGame} aria-label="선택지 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('choiceCheck')}>선택지 체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openChoiceAuditFromGame}><Bug size={14} /> 선택지 체크</button>}{adminMode && <button className="secondary-button" type="button" onClick={() => setAppMode('choiceCheck')}><Bug size={14} /> 선택지 체크</button>}<button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><div className="image-preload-control"><button className="secondary-button" type="button" onClick={() => void preloadAllSceneImages()} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
+    <header className="brand-bar"><div className="brand-title"><img className="brand-logo" src={logoImage} alt="" /><span>EPS Simulator</span></div><div className="header-controls"><button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><div className="image-preload-control"><button className="secondary-button" type="button" onClick={() => void preloadAllSceneImages()} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} transition={transition} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
@@ -945,9 +609,12 @@ function App() {
               {overlayMessages.map((message, index) => {
                 const showMessageDetail = replaying || index < sceneEventIndex || (index === sceneEventIndex && sceneIsDetailStep)
                 const matchedResultCode = matchAnnouncementToResultCode(message)
+                const isSacrificeFlyAnnouncement = message.title.includes('태그업 성공!')
+                  && displayedState.context.completionRecords.includes(PLAY_RESULT_ITEMS.sacrificeFly)
+                const announcementResultCode = matchedResultCode ?? (isSacrificeFlyAnnouncement ? resolvePlayResultCode(PLAY_RESULT_ITEMS.sacrificeFly) : null)
                 const isFollowUpAnnouncement = message.title.includes('후속 타자') || message.title.includes('후속타자') || message.title === '뜬공 처리 성공!'
-                const resultCode = !isFollowUpAnnouncement && matchedResultCode && displayedState.context.completionRecords.includes(matchedResultCode.item)
-                  ? matchedResultCode
+                const resultCode = !isFollowUpAnnouncement && announcementResultCode && displayedState.context.completionRecords.includes(announcementResultCode.item)
+                  ? announcementResultCode
                   : null
                 const scoreTone = resultCode?.score === null || resultCode?.score === undefined ? 'unscored' : resultCode.score > 0 ? 'positive' : resultCode.score < 0 ? 'negative' : 'zero'
                 const scoreText = resultCode?.score !== null && resultCode?.score !== undefined ? (resultCode.score > 0 ? `+${resultCode.score}` : `${resultCode.score}`) : ''
@@ -1072,10 +739,6 @@ function App() {
         {canAct && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`} onClick={(event) => event.stopPropagation()}><span>관리자 콘솔 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => (
           <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>
         ))}</div></div>}
-        {canAct && !replaying && adminMode && (node.type === 'choice' || node.type === 'batting' || node.type === 'chance') && (() => {
-          const caseId = getLiveBranchCaseId()
-          return <BranchAuditBar caseId={caseId} status={choiceCaseStatuses[caseId]} onSetStatus={setChoiceCaseStatus} />
-        })()}
         {showPlayResult && <section className="play-result" aria-live="polite">
           <h2>이번 타석 결산</h2>
           <div className="play-result-record" aria-label="플레이 점수 기록">
@@ -1097,17 +760,10 @@ function App() {
         <button type="button" onClick={() => setReplay((current) => current && { ...current, playing: false, index: Math.max(0, current.index - 1) })} disabled={replay.index === 0}><SkipBack size={16} /> 이전 단계</button>
         <button className={replay.playing ? 'replay-auto-on' : ''} type="button" onClick={() => setReplay((current) => current && { ...current, playing: !current.playing })}>{replay.playing ? <Pause size={16} /> : <Play size={16} />} {replay.playing ? '자동 재생 중' : '자동 재생'}</button>
         <button type="button" onClick={() => setReplay((current) => current && { ...current, playing: false, index: Math.min(current.frames.length - 1, current.index + 1) })} disabled={replayAtEnd}>다음 단계 <SkipForward size={16} /></button>
-        {replayAtEnd ? (
-          replayReturnPhase ? (
-            <button className="replay-ok-button" type="button" onClick={closeReplay}>
-              <CheckCircle2 size={16} /> 결산으로 돌아가기
-            </button>
-          ) : (
-            <>
-              <button className="replay-review-button" type="button" onClick={() => completeReplayAudit('needsReview')}>검토 필요</button>
-              <button className="replay-ok-button" type="button" onClick={() => completeReplayAudit('ok')}><CheckCircle2 size={16} /> 문제 없음</button>
-            </>
-          )
+        {replayAtEnd && replayReturnPhase ? (
+          <button className="replay-ok-button" type="button" onClick={closeReplay}>
+            <CheckCircle2 size={16} /> 결산으로 돌아가기
+          </button>
         ) : (
           <button type="button" onClick={closeReplay}>재생 종료</button>
         )}
