@@ -80,12 +80,13 @@
 
 `MediaStage`(`src/App.tsx`)는 `videoUrl`이 있을 때만 영상을 재생하고, 그 외에는 `src/game/sceneMedia.ts`가 만든 이미지 시퀀스를 순서대로 표시합니다. 시점 이미지·이벤트 이미지 매핑은 모두 `sceneMedia.ts` 한 파일에서 관리하며, `App.tsx`에는 야구 규칙 분기를 두지 않습니다.
 
-## 기존 에셋 현황
+## 아이콘 및 파비콘 에셋 현황
 
-| 경로 | 종류 | 상태 |
+| 경로 | 종류 | 용도 |
 | --- | --- | --- |
-| `src/assets/hero.png` | PNG, 343 x 361 | 사용되지 않음 (참고용) |
-| `src/assets/react.svg` | SVG | Vite 스타터 기본 파일, 미사용 |
-| `src/assets/vite.svg` | SVG | Vite 스타터 기본 파일, 미사용 |
-| `public/favicon.svg` | SVG | 브라우저 파비콘 |
-| `public/icons.svg` | SVG | 미사용 |
+| `public/favicon.ico` | ICO (48x48) | 기본 브라우저 파비콘 |
+| `public/icons/favicon-48.png` | PNG (48x48) | PNG 파비콘 |
+| `public/icons/apple-touch-icon.png` | PNG (180x180) | iOS 홈 화면 바로가기/웹앱 아이콘 |
+| `public/apple-touch-icon.png` | PNG (180x180) | iOS 기본 루트 폴백 아이콘 |
+| `public/icons/icon-192.png` | PNG (192x192) | PWA 웹 매니페스트 아이콘 |
+| `public/icons/icon-512.png` | PNG (512x512) | PWA 웹 매니페스트 아이콘 |

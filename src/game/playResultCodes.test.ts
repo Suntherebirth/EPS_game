@@ -221,6 +221,7 @@ describe('playResultCodes', () => {
     expect(matchAnnouncementToResultCode({ title: '외야 뜬공 아웃!' })?.code).toBe('B-OF-O')
     expect(matchAnnouncementToResultCode({ title: '상대 외야수가 뜬공 포구에 실패했습니다!' })?.code).toBe('B-OF-O')
     expect(matchAnnouncementToResultCode({ title: '2루 도루 성공!' })?.code).toBe('BR-2nd')
+    expect(matchAnnouncementToResultCode({ title: '3루 도루 성공!', detail: '위험을 감수하고 3루 도루에 성공했습니다.' })?.code).toBe('BR-3rd')
     expect(matchAnnouncementToResultCode({ title: '2루 진루 실패', detail: '2루에서 아웃되었습니다.' })?.code).toBe('BR-E-1')
     expect(matchAnnouncementToResultCode({ title: '3루 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 3루에 도착했습니다.' })?.code).toBe('BR-ETB-1')
   })

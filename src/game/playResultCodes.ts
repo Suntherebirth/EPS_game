@@ -143,10 +143,10 @@ export const matchAnnouncementToResultCode = (announcement?: { title?: string; d
   if (direct.code) return direct
 
   // 2. 도루
-  if (title.includes('2루 도루 성공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondSuccess)
-  if (title.includes('2루 도루 실패')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondFailure)
-  if (title.includes('3루 도루 성공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealThirdSuccess)
-  if (title.includes('3루 도루 실패')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealThirdFailure)
+  if (title.includes('2루 도루 성공') || (title.includes('2루 진루 성공') && detail.includes('2루 도루에 성공')) || (title.includes('2루 진루 성공') && detail.includes('도루에 성공'))) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondSuccess)
+  if (title.includes('2루 도루 실패') || (title.includes('2루 도루') && detail.includes('2루에서 아웃')) || (title.includes('2루') && detail.includes('도루에 실패'))) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondFailure)
+  if (title.includes('3루 도루 성공') || (title.includes('3루 진루 성공') && detail.includes('3루 도루에 성공')) || (title.includes('3루 진루 성공') && detail.includes('도루에 성공'))) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealThirdSuccess)
+  if (title.includes('3루 도루 실패') || (title.includes('3루 도루') && detail.includes('3루에서 아웃')) || (title.includes('3루') && detail.includes('도루에 실패'))) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealThirdFailure)
 
   // 3. 진루 실패/아웃
   if (title.includes('홈 진루 실패') || detail.includes('홈에서 아웃')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceFailure)

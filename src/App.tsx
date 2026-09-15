@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import logoImage from './assets/eg_logo-header.png'
 import { getAnnouncementMessages, getReplayOptions, type AnnouncementReplayFrame } from './game/announcementAudit'
@@ -48,11 +48,18 @@ type RecordEntry = {
   frames: AnnouncementReplayFrame[]
 }
 type ImagePreloadState = 'idle' | 'loading' | 'complete'
+const ESTIMATED_SCENE_IMAGE_BYTES = 56_756_975
 
 const formatDataSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes}B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
+}
+
+const formatAnnouncementScore = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return ''
+  if (value === 0) return '0.0'
+  return value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1)
 }
 
 const getResourceTransferSize = (url: string, previousEntryCount: number) => {
@@ -186,6 +193,7 @@ function App() {
   const [playResultReady, setPlayResultReady] = useState(false)
   const [imagePreloadState, setImagePreloadState] = useState<ImagePreloadState>('idle')
   const [imagePreloadProgress, setImagePreloadProgress] = useState({ loaded: 0, total: 0, bytes: 0 })
+  const [isImagePreloadDialogOpen, setIsImagePreloadDialogOpen] = useState(false)
 
   const preloadAllSceneImages = async () => {
     if (imagePreloadState === 'loading') return
@@ -209,6 +217,12 @@ function App() {
 
     await Promise.all(Array.from({ length: Math.min(4, urls.length) }, () => worker()))
     setImagePreloadState('complete')
+  }
+
+  const requestImagePreload = () => setIsImagePreloadDialogOpen(true)
+  const confirmImagePreload = () => {
+    setIsImagePreloadDialogOpen(false)
+    void preloadAllSceneImages()
   }
 
   const replayFrame = replay ? replay.frames[replay.index] : null
@@ -597,8 +611,9 @@ function App() {
 
   if (appMode === 'codeMapping') return <CodeMappingMode onBack={() => setAppMode('game')} />
 
-  return <main className="app-shell">
-    <header className="brand-bar"><div className="brand-title"><img className="brand-logo" src={logoImage} alt="" /><span>EPS Simulator</span></div><div className="header-controls"><button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><div className="image-preload-control"><button className="secondary-button" type="button" onClick={() => void preloadAllSceneImages()} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
+  return <>
+    <main className="app-shell">
+    <header className="brand-bar"><div className="brand-title"><img className="brand-logo" src={logoImage} alt="" /><span>EPS Simulator</span></div><div className="header-controls"><button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><div className="image-preload-control"><button className="secondary-button" type="button" onClick={requestImagePreload} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} transition={transition} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
@@ -617,20 +632,33 @@ function App() {
                   ? announcementResultCode
                   : null
                 const scoreTone = resultCode?.score === null || resultCode?.score === undefined ? 'unscored' : resultCode.score > 0 ? 'positive' : resultCode.score < 0 ? 'negative' : 'zero'
-                const scoreText = resultCode?.score !== null && resultCode?.score !== undefined ? (resultCode.score > 0 ? `+${resultCode.score}` : `${resultCode.score}`) : ''
+                const scoreText = resultCode?.score !== null && resultCode?.score !== undefined ? formatAnnouncementScore(resultCode.score) : ''
 
                 return <div className="message-flow-entry" key={`${message.title}:${message.detail}:${index}`}>
                   {index > 0 && <span className="message-flow-connector" style={{ animationDelay: `${0.31 + (index - 1) * 0.43}s` }}>그리고</span>}
                   <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`} style={{ animationDelay: `${0.1 + index * 0.43}s` }}>
                     <div className="message-title-row">
                       <strong>{message.title}</strong>
-                      {resultCode && resultCode.code && (
-                        <span className={`announcement-code-badge play-result-score-${scoreTone}`}>
-                          <b>{resultCode.code}</b>
-                        </span>
+                      {(resultCode?.code || scoreText !== '') && (
+                        <div className="message-title-badges">
+                          {resultCode && resultCode.code && (
+                            <span className={`announcement-code-badge play-result-score-${scoreTone}`}>
+                              <b>{resultCode.code}</b>
+                            </span>
+                          )}
+                          {scoreText !== '' && (
+                            <span className={`announcement-score-badge play-result-score-${scoreTone}`} aria-label={`점수 ${scoreText}`}>
+                              <span>{scoreText}</span>
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                    {showMessageDetail && <div className="message-detail-row"><p>{message.detail}</p>{scoreText !== '' && <span className={`announcement-score play-result-score-${scoreTone}`}>{scoreText}점</span>}</div>}
+                    {showMessageDetail && (
+                      <div className="message-detail-row">
+                        <p>{message.detail}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               })}
@@ -770,7 +798,20 @@ function App() {
       </div>
     </div>}
     <footer className="progress-strip">{[1, 2, 3].map((item) => <div className={item < plateAppearance || phase === 'between' && item === plateAppearance ? 'complete' : item === plateAppearance ? 'active' : ''} key={item}><span>0{item}</span><i /><p>{records[item - 1]?.result ?? (item === plateAppearance ? '진행 중' : '대기')}</p></div>)}</footer>
-  </main>
+    </main>
+    {isImagePreloadDialogOpen && <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setIsImagePreloadDialogOpen(false) }}>
+      <section className="preload-dialog" role="dialog" aria-modal="true" aria-labelledby="preload-dialog-title">
+        <button className="dialog-close-button" type="button" onClick={() => setIsImagePreloadDialogOpen(false)} aria-label="이미지 준비 확인창 닫기"><X size={18} /></button>
+        <Download className="preload-dialog-icon" size={24} aria-hidden="true" />
+        <p className="eyebrow">IMAGE CACHE</p>
+        <h2 id="preload-dialog-title">이미지를 미리 준비할까요?</h2>
+        <p>게임 중 장면 전환이 부드럽도록 모든 장면 이미지를 한 번에 로딩합니다.</p>
+        <div className="preload-dialog-estimate"><span>예상 데이터 소모량</span><strong>약 {formatDataSize(ESTIMATED_SCENE_IMAGE_BYTES)}</strong></div>
+        <small>실제 사용량은 브라우저 캐시와 네트워크 압축에 따라 달라질 수 있습니다.</small>
+        <div className="preload-dialog-actions"><button className="secondary-button" type="button" onClick={() => setIsImagePreloadDialogOpen(false)}>취소</button><button className="primary-button" type="button" onClick={confirmImagePreload}><Download size={15} />이미지 준비</button></div>
+      </section>
+    </div>}
+  </>
 }
 
 export default App
