@@ -40,8 +40,13 @@ type AnnouncementAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
 type ChoiceAuditStatus = 'needsReview' | 'ok'
 type ChoiceAuditTab = 'pending' | 'all' | 'needsReview' | 'ok'
 type BattingInputMode = 'direct' | 'probabilistic'
-type RecordEntry = { number: number; situation: string; decision: string; result: string; runs: number }
-type Stats = { runs: number; hits: number; outs: number }
+type RecordEntry = {
+  number: number
+  situation: string
+  decision: string
+  result: string
+  items: string[]
+}
 type ImagePreloadState = 'idle' | 'loading' | 'complete'
 
 const formatDataSize = (bytes: number) => {
@@ -395,7 +400,6 @@ function App() {
   const [situationPlayerBase, setSituationPlayerBase] = useState<number | null>(null)
   const [plateStartSituation, setPlateStartSituation] = useState(situation)
   const [scenario, setScenario] = useState<ScenarioState>(() => startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: adminMode }))
-  const [stats, setStats] = useState<Stats>({ runs: 0, hits: 0, outs: 0 })
   const [records, setRecords] = useState<RecordEntry[]>([])
   const [playResultReady, setPlayResultReady] = useState(false)
   const [imagePreloadState, setImagePreloadState] = useState<ImagePreloadState>('idle')
@@ -514,26 +518,23 @@ function App() {
   const resetGame = () => {
     setSelectedBattingCategory(null)
     setPlateAppearance(1)
-    setStats({ runs: 0, hits: 0, outs: 0 })
     setRecords([])
     setReplay(null)
     restartAt(createRandomSituation())
   }
 
   const completeScenario = (state: ScenarioState) => {
-    const result = state.context.completionRecords.join('\n') || state.context.selectedLabel || '플레이 완료'
+    const items = state.context.completionRecords.length > 0
+      ? [...state.context.completionRecords]
+      : [state.context.selectedLabel || '플레이 완료']
+    const result = items.join('\n')
     setPlayResultReady(false)
-    setStats((current) => ({
-      runs: current.runs + state.context.runs,
-      hits: current.hits + state.context.hits,
-      outs: current.outs + Math.max(0, state.context.outs - plateStartSituation.outs),
-    }))
     setRecords((current) => [...current, {
       number: plateAppearance,
       situation: describeSituation(plateStartSituation),
       decision: state.context.selectedLabel ?? '타격',
       result,
-      runs: state.context.runs,
+      items,
     }])
     setScenario(state)
     setPhase('between')
@@ -666,16 +667,95 @@ function App() {
 
   if (appMode === 'choiceCheck') return <ChoiceCheckMode cases={choiceAuditCases} caseStatuses={choiceCaseStatuses} activeTab={choiceAuditTab} onChangeTab={setChoiceAuditTab} onSetStatus={setChoiceCaseStatus} onSimulate={simulateChoiceAuditCase} onBack={() => setAppMode('game')} />
 
-  if (phase === 'finished') return <main className="app-shell result-page">
-    <header className="brand-bar"><span><b className="brand-mark">EPS</b> BASEBALL SIM</span></header>
-    <section className="result-hero"><p className="eyebrow">FINAL REPORT</p><h1>공격 시뮬레이션 종료</h1><p>세 번의 선택이 만든 경기 결과입니다.</p>
-      <div className="final-score"><div><strong>{stats.runs}</strong><span>득점</span></div><div><strong>{stats.hits}</strong><span>안타</span></div><div><strong>{stats.outs}</strong><span>아웃</span></div></div>
-    </section>
-    <section className="record-list">{records.map((record) => <article className="record-row" key={record.number}>
-      <span className="record-number">0{record.number}</span><div><strong>{record.decision}</strong><small>{record.situation}</small></div><p>{record.result}</p><b className={record.runs ? 'scored' : ''}>+{record.runs}</b>
-    </article>)}</section>
-    <button className="primary-button restart" type="button" onClick={resetGame}><RotateCcw size={18} /> 새 경기</button>
-  </main>
+  if (phase === 'finished') {
+    const grandTotal = records.reduce((grandSum, record) => {
+      const plateSum = (record.items ?? []).reduce((sum, item) => sum + (resolvePlayResultCode(item ?? '').score ?? 0), 0)
+      return grandSum + plateSum
+    }, 0)
+    const grandTotalTone = grandTotal > 0 ? 'positive' : grandTotal < 0 ? 'negative' : 'zero'
+    const formattedGrandTotal = grandTotal > 0 ? `+${grandTotal}` : `${grandTotal}`
+
+    return (
+      <main className="app-shell result-page">
+        <header className="brand-bar">
+          <div className="brand-title">
+            <b className="brand-mark">EPS</b>
+            <span>BASEBALL SIM</span>
+          </div>
+          <div className="header-controls">
+            <button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button>
+            <button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기">
+              <RotateCcw size={18} />
+            </button>
+          </div>
+        </header>
+
+        <section className="final-report-hero">
+          <div className="final-hero-left">
+            <p className="eyebrow">FINAL REPORT</p>
+            <h1>최종 결산</h1>
+            <p className="final-hero-desc">각 타석별 발생 항목과 채점 결과를 집계한 최종 리포트입니다.</p>
+          </div>
+          <div className={`final-grand-total-box play-result-score-${grandTotalTone}`}>
+            <span className="grand-total-label">최종 누적 점수</span>
+            <strong className="grand-total-value">{formattedGrandTotal}</strong>
+            <span className="grand-total-unit">TOTAL SCORE</span>
+          </div>
+        </section>
+
+        <section className="final-plate-grid" aria-label="타석별 상세 결산">
+          {records.map((record) => {
+            const items = record.items ?? (record.result ? record.result.split('\n') : [])
+            const plateTotal = items.reduce((sum, item) => sum + (resolvePlayResultCode(item ?? '').score ?? 0), 0)
+            const plateTotalTone = plateTotal > 0 ? 'positive' : plateTotal < 0 ? 'negative' : 'zero'
+            const formattedPlateTotal = plateTotal > 0 ? `+${plateTotal}` : `${plateTotal}`
+
+            return (
+              <article className="final-plate-card" key={record.number}>
+                <div className="final-plate-header">
+                  <strong className="final-plate-title">타석 {record.number}</strong>
+                </div>
+
+                <div className="play-result-record" aria-label={`0${record.number} 타석 결산 표`}>
+                  <div className="play-result-columns">
+                    <span>항목</span>
+                    <span>코드</span>
+                    <span>점수</span>
+                  </div>
+                  {items.map((item, idx) => {
+                    const resolved = resolvePlayResultCode(item ?? '')
+                    const scoreTone = resolved.score === null ? 'unscored' : resolved.score > 0 ? 'positive' : resolved.score < 0 ? 'negative' : 'zero'
+                    const scoreText = resolved.score !== null ? (resolved.score > 0 ? `+${resolved.score}` : `${resolved.score}`) : ''
+                    return (
+                      <div className="play-result-entry" key={`${item}:${idx}`}>
+                        <strong>{item}</strong>
+                        <span className={`play-result-code play-result-score-${scoreTone}`}>
+                          <b>{resolved.code}</b>
+                        </span>
+                        <span className={`play-result-score-${scoreTone}`}>
+                          {scoreText}
+                        </span>
+                      </div>
+                    )
+                  })}
+                  <div className="play-result-total">
+                    <span>합계</span>
+                    <b className={`play-result-score-${plateTotalTone}`}>{formattedPlateTotal}</b>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </section>
+
+        <div className="final-action-bar">
+          <button className="primary-button restart-button" type="button" onClick={resetGame}>
+            <RotateCcw size={18} /> 새 경기 시작
+          </button>
+        </div>
+      </main>
+    )
+  }
 
   const node = sceneNode
   const replaying = replay !== null
