@@ -104,7 +104,7 @@ export const ANNOUNCEMENTS = {
   },
   followUpGroundThrowingErrorExtraAdvance: {
     clear: {
-      title: '홈 추가 진루 성공!',
+      title: '{destination} 추가 진루 성공!',
       detail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination} 추가 진루에 성공했습니다.',
       homeDetail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 완전히 빠져 {destination}에 들어왔습니다.',
       advance: 'bold' as const,
@@ -112,7 +112,7 @@ export const ANNOUNCEMENTS = {
       titleImageMode: 'same-as-detail-scene' as const,
     },
     ambiguous: {
-      title: '홈 추가 진루 성공!',
+      title: '{destination} 추가 진루 성공!',
       detail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination} 추가 진루에 성공했습니다.',
       homeDetail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 {destination}에 들어왔습니다.',
       advance: 'bold' as const,

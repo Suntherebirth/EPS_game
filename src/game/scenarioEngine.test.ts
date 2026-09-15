@@ -1001,6 +1001,26 @@ describe('offense core scenario pack', () => {
     expect(result.context).toMatchObject({ bases: [1], playerBase: null, runs: 1 })
   })
 
+  it('records and announces a third-base ETB advance when a second-base runner starts on an ambiguous throw', () => {
+    const initial = startScenario(OFFENSE_CORE_PACK, { ...context(0, [2]), playerBase: 2 }, { manualChance: true })
+    const contact = selectScenarioBattingEvent(OFFENSE_CORE_PACK, { ...initial, nodeId: 'followUp.batting.resolve' }, 'groundOut', { manualChance: true })
+    const fielding = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, contact, 'hardGroundBall', { manualChance: true })
+    const ready = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
+    const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, ready, 'advanceThird', { manualChance: true })
+    const result = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, throwCheck, 'ambiguousThrowingError', { manualChance: true })
+
+    expect(result.context).toMatchObject({ bases: [1, 3], playerBase: 3 })
+    expect(result.context.completionRecords).toEqual([PLAY_RESULT_ITEMS.advanceThirdETB])
+    expect(result.context.announcement).toEqual({
+      title: '3루 추가 진루 성공!',
+      detail: '위험을 감수하고, 이미 스타트를 끊은 상태에서 1루수 뒤로 송구가 애매하게 빠져 3루 추가 진루에 성공했습니다.',
+      tone: 'positive',
+      advance: 'bold',
+      detailScene: 'advance-ambiguous-safe',
+      titleImageMode: 'same-as-detail-scene',
+    })
+  })
+
   it('announces a home score and completes the play after a fielding error advances a third-base runner', () => {
     const initial = startScenario(OFFENSE_CORE_PACK, context(), { manualChance: true })
     const firstFielding = selectScenarioBattingEvent(OFFENSE_CORE_PACK, initial, 'single', { manualChance: true })
@@ -1057,7 +1077,7 @@ describe('offense core scenario pack', () => {
     ]))
     const expectedAnnouncement = ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.ambiguous
     expect(result.context.announcement).toEqual({
-      title: expectedAnnouncement.title,
+      title: '홈 추가 진루 성공!',
       detail: formatCurrentPlayerText(expectedAnnouncement.homeDetail, null),
       tone: 'positive',
       advance: expectedAnnouncement.advance,
