@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PLAY_RESULT_CODES, PLAY_RESULT_ITEMS, resolvePlayResultCode } from './playResultCodes'
+import { PLAY_RESULT_CODES, PLAY_RESULT_ITEMS, matchAnnouncementToResultCode, resolvePlayResultCode } from './playResultCodes'
 
 describe('playResultCodes', () => {
   it('maps 2B/3B out and steal out to BR-E-1 code', () => {
@@ -211,5 +211,17 @@ describe('playResultCodes', () => {
     const codeTableItems = PLAY_RESULT_CODES.map((entry) => entry.item)
 
     expect(codeTableItems).toEqual(expect.arrayContaining(itemValues))
+  })
+
+  it('matches announcement titles to their corresponding play result codes', () => {
+    expect(matchAnnouncementToResultCode({ title: '1루타 성공!' })?.code).toBe('B-OF-S')
+    expect(matchAnnouncementToResultCode({ title: '2루타 성공!' })?.code).toBe('B-OF-D')
+    expect(matchAnnouncementToResultCode({ title: '삼진!' })?.code).toBe('B-SO-O')
+    expect(matchAnnouncementToResultCode({ title: '외야 뜬공 발생!' })).toBeNull()
+    expect(matchAnnouncementToResultCode({ title: '외야 뜬공 아웃!' })?.code).toBe('B-OF-O')
+    expect(matchAnnouncementToResultCode({ title: '상대 외야수가 뜬공 포구에 실패했습니다!' })?.code).toBe('B-OF-O')
+    expect(matchAnnouncementToResultCode({ title: '2루 도루 성공!' })?.code).toBe('BR-2nd')
+    expect(matchAnnouncementToResultCode({ title: '2루 진루 실패', detail: '2루에서 아웃되었습니다.' })?.code).toBe('BR-E-1')
+    expect(matchAnnouncementToResultCode({ title: '3루 진루 성공!', detail: '상대 외야수 실책을 틈타 위험을 감수하고 3루에 도착했습니다.' })?.code).toBe('BR-ETB-1')
   })
 })

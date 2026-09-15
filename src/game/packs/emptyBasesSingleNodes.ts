@@ -490,22 +490,22 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     ],
   },
   'followUp.ground.throw.error.clear': {
-    id: 'followUp.ground.throw.error.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
+    id: 'followUp.ground.throw.error.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책', tags: ['player-position-view'],
     effects: [{ type: 'record', message: '{destination} 진루 (상대 실책)' }, { type: 'forceWalk' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorClear }],
     transition: { to: 'followUp.ground.throw.extra.clear.route' },
   },
   'followUp.ground.throw.error.ambiguous': {
-    id: 'followUp.ground.throw.error.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책',
+    id: 'followUp.ground.throw.error.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책', tags: ['player-position-view'],
     effects: [{ type: 'record', message: '{destination} 진루 (상대 실책)', showInCompletion: false }, { type: 'forceWalk' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorAmbiguous }],
     transition: { to: 'followUp.ground.throw.extra.ambiguous.route' },
   },
   'followUp.ground.throw.error.attempt.clear': {
-    id: 'followUp.ground.throw.error.attempt.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루',
+    id: 'followUp.ground.throw.error.attempt.clear', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루', tags: ['player-position-view'],
     effects: [{ type: 'forceWalk' }, { type: 'announce', ...ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvanceAttempt.clear }, { type: 'record', message: '{destination} 진루 (ETB)' }, { type: 'advancePlayer' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.clear }],
     transition: { to: 'followUp.ground.throw.extra.clear.attempt.route' },
   },
   'followUp.ground.throw.error.attempt.ambiguous': {
-    id: 'followUp.ground.throw.error.attempt.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루',
+    id: 'followUp.ground.throw.error.attempt.ambiguous', type: 'event', view: 'runner:first', title: '내야 땅볼 송구 실책 추가 진루', tags: ['player-position-view'],
     effects: [{ type: 'forceWalk' }, { type: 'announce', ...ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvanceAttempt.ambiguous }, { type: 'record', message: '{destination} 진루 (ETB)' }, { type: 'advancePlayer' }, { type: 'announcePlayerAdvance', ...ANNOUNCEMENTS.followUpGroundThrowingErrorExtraAdvance.ambiguous }],
     transition: { to: 'followUp.ground.throw.extra.ambiguous.route' },
   },

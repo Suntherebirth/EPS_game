@@ -132,3 +132,66 @@ const PLAY_RESULT_CODE_MAP: Record<string, PlayResultCodeEntry> = Object.fromEnt
 
 export const resolvePlayResultCode = (item: string): PlayResultCodeEntry =>
   PLAY_RESULT_CODE_MAP[item] ?? { item, code: '', score: null, description: '' }
+
+export const matchAnnouncementToResultCode = (announcement?: { title?: string; detail?: string } | null): PlayResultCodeEntry | null => {
+  if (!announcement?.title) return null
+  const title = announcement.title.replace(/[!]/g, '').trim()
+  const detail = announcement.detail ?? ''
+
+  // 1. 직접 항목명 일치
+  const direct = resolvePlayResultCode(title)
+  if (direct.code) return direct
+
+  // 2. 도루
+  if (title.includes('2루 도루 성공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondSuccess)
+  if (title.includes('2루 도루 실패')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondFailure)
+  if (title.includes('3루 도루 성공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealThirdSuccess)
+  if (title.includes('3루 도루 실패')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.stealThirdFailure)
+
+  // 3. 진루 실패/아웃
+  if (title.includes('홈 진루 실패') || detail.includes('홈에서 아웃')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceFailure)
+  if (title.includes('2루 진루 실패') || detail.includes('2루에서 아웃')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceSecondFailure)
+  if (title.includes('3루 진루 실패') || detail.includes('3루에서 아웃')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceThirdFailure)
+
+  // 4. 진루 성공 (ETB vs 상대실책 vs 당연진루)
+  if (title.includes('홈 진루 성공') || title.includes('홈 진루') || detail.includes('홈에 들어왔습니다')) {
+    if (detail.includes('위험을 감수') || detail.includes('틈타')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceETB)
+    if (detail.includes('실책') || title.includes('실책')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceHomeError)
+    if (detail.includes('희생플라이') || title.includes('희생플라이')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceNormalSacrificeFly)
+  }
+  if (title.includes('2루 진루 성공') || detail.includes('2루에 도착')) {
+    if (detail.includes('위험을 감수') || detail.includes('틈타')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceSecondETB)
+    if (detail.includes('실책') || title.includes('실책') || detail.includes('폭투')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceSecondError)
+  }
+  if (title.includes('3루 진루 성공') || detail.includes('3루에 도착')) {
+    if (detail.includes('위험을 감수') || detail.includes('틈타')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceThirdETB)
+    if (detail.includes('실책') || title.includes('실책') || detail.includes('폭투')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceThirdError)
+  }
+
+  // 5. 기회 놓침 (머문다)
+  if (title.includes('진루하지 않았습니다') || detail.includes('기회를 놓쳤습니다') || detail.includes('찬스를 놓쳤습니다')) {
+    if (detail.includes('3루') || title.includes('3루')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceThirdMissed)
+    if (detail.includes('홈') || title.includes('홈')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceMissed)
+    return resolvePlayResultCode(PLAY_RESULT_ITEMS.advanceSecondMissed)
+  }
+
+  // 6. 타격 및 아웃
+  if (title.includes('1루타')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.single)
+  if (title.includes('2루타')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.double)
+  if (title.includes('3루타')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.triple)
+  if (title.includes('홈런')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.homeRun)
+  if (title.includes('볼넷')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.walk)
+  if (title.includes('사구')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.hitByPitch)
+  if (title.includes('낫아웃 1루 진루')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.droppedThirdStrikeAdvance)
+  if (title.includes('낫아웃 아웃') || title.includes('낫아웃')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.droppedThirdStrikeOut)
+  if (title.includes('삼진')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.strikeout)
+  if (title.includes('인필드 플라이')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFlyRuleOut)
+  if (title.includes('내야 뜬공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFlyOut)
+  if (title.includes('희생플라이')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.sacrificeFly)
+  if (title.includes('외야 뜬공 아웃') || title.includes('뜬공 처리 성공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.flyOut)
+  if (title.includes('병살') || title.includes('더블 플레이')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.groundDoublePlay)
+  if (title.includes('선행 주자') || title.includes('선행주자')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.groundLeadRunnerOutHard)
+  if (title.includes('땅볼 포구에 실패') || title.includes('외야수 실책') || title.includes('뜬공 포구에 실패')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.outfieldFieldingErrorSingle)
+
+  return null
+}

@@ -1,9 +1,9 @@
 import { Bug, CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, AlertCircle, Layers } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
+import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, getReplayOptions, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
 import { createChoiceAuditCases, getChoiceBranchAuditCaseId, replayChoiceAuditCase, type ChoiceAuditCase } from './game/choiceAudit'
 import { BATTING_CATEGORIES, BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingCategory, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
-import { PLAY_RESULT_CODES, resolvePlayResultCode } from './game/playResultCodes'
+import { PLAY_RESULT_CODES, matchAnnouncementToResultCode, resolvePlayResultCode } from './game/playResultCodes'
 import {
   createRandomSituation,
   createScenarioContext,
@@ -46,6 +46,7 @@ type RecordEntry = {
   decision: string
   result: string
   items: string[]
+  frames: AnnouncementReplayFrame[]
 }
 type ImagePreloadState = 'idle' | 'loading' | 'complete'
 
@@ -306,11 +307,24 @@ function AnnouncementCheckMode({ cases, caseStatuses, activeTab, highlightedCase
         return <article className={`audit-card ${status ?? ''} ${item.isSurprise ? 'surprise' : ''} ${highlightedCaseId === item.id ? 'highlighted' : ''}`} key={item.id} id={`audit-card:${item.id}`}>
           <div className="audit-card-meta"><span>시작: {describeSituation(item.start)}</span><span>결과: {item.situation}</span><span>{item.viewLabel}</span>{item.isSurprise && <b>돌발 이벤트</b>}{status === 'needsReview' && <b className="review-chip">검토 필요</b>}{status === 'ok' && <b className="ok-chip">문제 없음</b>}</div>
           <div className="audit-message-flow">
-            {item.messages.map((message, index) => <div className={`audit-message ${message.category === 'surprise' ? 'surprise-message' : ''} ${message.tone ?? 'neutral'}`} key={`${message.title}:${message.detail}:${index}`}>
-              {index > 0 && <span>그리고</span>}
-              <strong>{message.title}</strong>
-              <p>{message.detail}</p>
-            </div>)}
+            {item.messages.map((message, index) => {
+              const resultCode = matchAnnouncementToResultCode(message)
+              const scoreTone = resultCode?.score === null || resultCode?.score === undefined ? 'unscored' : resultCode.score > 0 ? 'positive' : resultCode.score < 0 ? 'negative' : 'zero'
+              const scoreText = resultCode?.score !== null && resultCode?.score !== undefined ? (resultCode.score > 0 ? `+${resultCode.score}` : `${resultCode.score}`) : ''
+
+              return <div className={`audit-message ${message.category === 'surprise' ? 'surprise-message' : ''} ${message.tone ?? 'neutral'}`} key={`${message.title}:${message.detail}:${index}`}>
+                {index > 0 && <span>그리고</span>}
+                <div className="audit-message-title-row">
+                  <strong>{message.title}</strong>
+                  {resultCode && resultCode.code && (
+                    <span className={`announcement-code-badge play-result-score-${scoreTone}`}>
+                      <b>{resultCode.code}</b>
+                    </span>
+                  )}
+                </div>
+                <div className="audit-message-detail-row"><p>{message.detail}</p>{scoreText !== '' && <span className={`announcement-score play-result-score-${scoreTone}`}>{scoreText}점</span>}</div>
+              </div>
+            })}
           </div>
           <div className="audit-card-footer"><small>{item.actionLabel}</small><div className="audit-card-actions"><button className="secondary-button" type="button" onClick={() => onSimulate(item)}><Play size={16} /> 시뮬레이션</button><button className="secondary-button" type="button" onClick={() => void copyBugReport(item)}><Bug size={16} /> {copiedReportId === item.id ? '복사됨' : '버그 리포트'}</button><button className={status === 'needsReview' ? 'primary-button review-button' : 'secondary-button review-button'} type="button" onClick={() => onSetStatus(item.id, status === 'needsReview' ? null : 'needsReview')}>검토 필요</button><button className={status === 'ok' ? 'primary-button ok-button' : 'secondary-button ok-button'} type="button" onClick={() => onSetStatus(item.id, status === 'ok' ? null : 'ok')}>{status === 'ok' ? '문제 없음 해제' : <><CheckCircle2 size={17} /> 문제 없음</>}</button></div></div>
         </article>
@@ -394,12 +408,17 @@ function App() {
   const [choiceAuditTab, setChoiceAuditTabState] = useState<ChoiceAuditTab>(() => loadChoiceAuditTab())
   const [highlightedAuditCaseId, setHighlightedAuditCaseId] = useState<string | null>(null)
   const [replay, setReplay] = useState<{ frames: AnnouncementReplayFrame[]; index: number; playing: boolean } | null>(null)
+  const [replayReturnPhase, setReplayReturnPhase] = useState<Phase | null>(null)
   const [plateAppearance, setPlateAppearance] = useState(1)
   const [phase, setPhase] = useState<Phase>('playing')
   const [situation, setSituation] = useState<Situation>(() => createRandomSituation())
   const [situationPlayerBase, setSituationPlayerBase] = useState<number | null>(null)
   const [plateStartSituation, setPlateStartSituation] = useState(situation)
   const [scenario, setScenario] = useState<ScenarioState>(() => startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: adminMode }))
+  const [plateReplayFrames, setPlateReplayFrames] = useState<AnnouncementReplayFrame[]>(() => {
+    const initial = startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: adminMode })
+    return [{ stepIndex: 0, label: `시작 · ${describeSituation(situation)}`, state: initial, options: getReplayOptions(initial) }]
+  })
   const [records, setRecords] = useState<RecordEntry[]>([])
   const [playResultReady, setPlayResultReady] = useState(false)
   const [imagePreloadState, setImagePreloadState] = useState<ImagePreloadState>('idle')
@@ -511,7 +530,14 @@ function App() {
     setSituation(nextSituation)
     setSituationPlayerBase(null)
     setPlateStartSituation(nextSituation)
-    setScenario(startScenario(OFFENSE_CORE_PACK, createScenarioContext(nextSituation), { manualChance: adminMode }))
+    const initialScenario = startScenario(OFFENSE_CORE_PACK, createScenarioContext(nextSituation), { manualChance: adminMode })
+    setScenario(initialScenario)
+    setPlateReplayFrames([{
+      stepIndex: 0,
+      label: `시작 · ${describeSituation(nextSituation)}`,
+      state: initialScenario,
+      options: getReplayOptions(initialScenario),
+    }])
     setPhase('playing')
   }
 
@@ -520,21 +546,32 @@ function App() {
     setPlateAppearance(1)
     setRecords([])
     setReplay(null)
+    setReplayReturnPhase(null)
     restartAt(createRandomSituation())
   }
 
-  const completeScenario = (state: ScenarioState) => {
+  const completeScenario = (state: ScenarioState, replayFrames = plateReplayFrames) => {
     const items = state.context.completionRecords.length > 0
       ? [...state.context.completionRecords]
       : [state.context.selectedLabel || '플레이 완료']
     const result = items.join('\n')
     setPlayResultReady(false)
+    const finalFrames = [
+      ...replayFrames,
+      {
+        stepIndex: replayFrames.length,
+        label: '플레이 완료',
+        state,
+        options: [],
+      },
+    ]
     setRecords((current) => [...current, {
       number: plateAppearance,
       situation: describeSituation(plateStartSituation),
       decision: state.context.selectedLabel ?? '타격',
       result,
       items,
+      frames: finalFrames,
     }])
     setScenario(state)
     setPhase('between')
@@ -546,17 +583,31 @@ function App() {
     saveBattingInputMode(mode)
   }
 
-  const acceptState = (next: ScenarioState) => {
+  const acceptState = (next: ScenarioState, selectedAction?: { id: string; kind: 'batting' | 'choice' | 'chance' }) => {
     setSelectedBattingCategory(null)
     const terminal = OFFENSE_CORE_PACK.nodes[next.nodeId].type === 'terminal'
     setSituation({ outs: scenario.context.outs, bases: scenario.context.bases as Base[] })
     setSituationPlayerBase(scenario.context.playerBase)
     setScenario(next)
-    if (terminal) completeScenario(next)
+    const previous = plateReplayFrames.at(-1)
+    const selectedFrame = previous && selectedAction
+      ? { ...previous, options: previous.options.map((option) => ({ ...option, chosen: option.kind === selectedAction.kind && option.id === selectedAction.id })) }
+      : previous
+    const nextFrame = {
+      stepIndex: plateReplayFrames.length,
+      label: next.context.selectedLabel || '진행',
+      state: next,
+      options: getReplayOptions(next),
+    }
+    const nextReplayFrames = selectedFrame
+      ? [...plateReplayFrames.slice(0, -1), selectedFrame, nextFrame]
+      : [...plateReplayFrames, nextFrame]
+    setPlateReplayFrames(nextReplayFrames)
+    if (terminal) completeScenario(next, nextReplayFrames)
   }
 
   const chooseBatting = (eventId: BattingEventId, customLabel?: string) =>
-    acceptState(selectScenarioBattingEvent(OFFENSE_CORE_PACK, scenario, eventId, { manualChance: adminMode, selectedLabel: customLabel }))
+    acceptState(selectScenarioBattingEvent(OFFENSE_CORE_PACK, scenario, eventId, { manualChance: adminMode, selectedLabel: customLabel }), { id: eventId, kind: 'batting' })
 
   const chooseProbabilisticBatting = (choiceId: ProbabilisticBattingChoice) => {
     const config = PROBABILISTIC_BATTING_CHOICES.find((item) => item.id === choiceId)
@@ -565,8 +616,8 @@ function App() {
     chooseBatting(eventId, config.label)
   }
 
-  const chooseOption = (choiceId: string) => acceptState(chooseScenarioOption(OFFENSE_CORE_PACK, scenario, choiceId, { manualChance: adminMode }))
-  const chooseChanceOutcome = (outcomeId: string) => acceptState(chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, scenario, outcomeId, { manualChance: adminMode }))
+  const chooseOption = (choiceId: string) => acceptState(chooseScenarioOption(OFFENSE_CORE_PACK, scenario, choiceId, { manualChance: adminMode }), { id: choiceId, kind: 'choice' })
+  const chooseChanceOutcome = (outcomeId: string) => acceptState(chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, scenario, outcomeId, { manualChance: adminMode }), { id: outcomeId, kind: 'chance' })
   const toggleAdminMode = (enabled: boolean) => {
     setAdminMode(enabled)
     if (!enabled && OFFENSE_CORE_PACK.nodes[scenario.nodeId].type === 'chance') {
@@ -609,6 +660,7 @@ function App() {
   const openChoiceAuditFromGame = () => {
     const matchedId = findMatchingCaseId(scenario)
     setReplay(null)
+    setReplayReturnPhase(null)
     setHighlightedAuditCaseId(matchedId)
     if (matchedId) setChoiceAuditTab('all')
     setAppMode('choiceCheck')
@@ -622,14 +674,35 @@ function App() {
     setSituation({ outs: last.context.outs, bases: last.context.bases as Base[] })
     setScenario(last)
     setPhase('playing')
+    setReplayReturnPhase(null)
     setReplay({ frames, index: 0, playing: false })
     setHighlightedAuditCaseId(item.id)
+  }
+
+  const closeReplay = () => {
+    setReplay(null)
+    if (replayReturnPhase) {
+      setPhase(replayReturnPhase)
+      setReplayReturnPhase(null)
+    }
+  }
+
+  const startPlateReplay = (record: RecordEntry) => {
+    if (!record.frames || record.frames.length === 0) return
+    const firstState = record.frames[0]?.state ?? scenario
+    setReplayReturnPhase('finished')
+    setHighlightedAuditCaseId(null)
+    setPlateAppearance(record.number)
+    setSituation({ outs: firstState.context.outs, bases: firstState.context.bases as Base[] })
+    setScenario(firstState)
+    setPhase('playing')
+    setReplay({ frames: record.frames, index: 0, playing: false })
   }
 
   const completeReplayAudit = (status: AnnouncementAuditStatus) => {
     if (!highlightedAuditCaseId) return
     setAnnouncementCaseStatus(highlightedAuditCaseId, status)
-    setReplay(null)
+    closeReplay()
     setAnnouncementAuditTab('pending')
     setAppMode('announcementCheck')
   }
@@ -638,6 +711,7 @@ function App() {
     const state = replayChoiceAuditCase(item)
     setSelectedBattingCategory(null)
     setReplay(null)
+    setReplayReturnPhase(null)
     setAdminMode(true)
     setAppMode('game')
     setSituation({ outs: state.context.outs, bases: state.context.bases as Base[] })
@@ -711,9 +785,23 @@ function App() {
             const formattedPlateTotal = plateTotal > 0 ? `+${plateTotal}` : `${plateTotal}`
 
             return (
-              <article className="final-plate-card" key={record.number}>
+              <article
+                className="final-plate-card replayable-card"
+                key={record.number}
+                onClick={() => startPlateReplay(record)}
+                role="button"
+                tabIndex={0}
+                aria-label={`타석 ${record.number} 시뮬레이션 다시보기`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    startPlateReplay(record)
+                  }
+                }}
+              >
                 <div className="final-plate-header">
                   <strong className="final-plate-title">타석 {record.number}</strong>
+                  <span className="final-plate-replay-hint"><Play size={12} /> 다시보기</span>
                 </div>
 
                 <div className="play-result-record" aria-label={`0${record.number} 타석 결산 표`}>
@@ -783,8 +871,8 @@ function App() {
   const choiceDescription = node.type === 'choice' && isSurpriseEvent && currentViewBase
     ? `${currentViewBase}루 주자: 돌발 상황 대처`
     : node.type === 'choice' && node.tags?.includes('player-position-view') && currentViewBase && node.description
-    ? node.description.startsWith(`${currentViewBase}루 주자:`) ? formatScenarioText(node.description, scenario.context.playerBase) : `${currentViewBase}루 주자: ${formatScenarioText(node.description, scenario.context.playerBase)}`
-    : node.type === 'choice' ? formatScenarioText(node.description, scenario.context.playerBase) : undefined
+    ? node.description.startsWith(`${currentViewBase}루 주자:`) ? formatScenarioText(node.description, displayedState.context.playerBase) : `${currentViewBase}루 주자: ${formatScenarioText(node.description, displayedState.context.playerBase)}`
+    : node.type === 'choice' ? formatScenarioText(node.description, displayedState.context.playerBase) : undefined
   const surpriseOverlayImageUrl = surpriseOverlayAnnouncement
     ? resolveSceneImage(surpriseOverlayAnnouncement, resolveAnnouncementImageBase(surpriseOverlayAnnouncement, displayedState.context.playerBase))
     : undefined
@@ -835,11 +923,26 @@ function App() {
             <div className="message-flow">
               {overlayMessages.map((message, index) => {
                 const showMessageDetail = replaying || index < sceneEventIndex || (index === sceneEventIndex && sceneIsDetailStep)
+                const matchedResultCode = matchAnnouncementToResultCode(message)
+                const isFollowUpAnnouncement = message.title.includes('후속 타자') || message.title.includes('후속타자') || message.title === '뜬공 처리 성공!'
+                const resultCode = !isFollowUpAnnouncement && matchedResultCode && displayedState.context.completionRecords.includes(matchedResultCode.item)
+                  ? matchedResultCode
+                  : null
+                const scoreTone = resultCode?.score === null || resultCode?.score === undefined ? 'unscored' : resultCode.score > 0 ? 'positive' : resultCode.score < 0 ? 'negative' : 'zero'
+                const scoreText = resultCode?.score !== null && resultCode?.score !== undefined ? (resultCode.score > 0 ? `+${resultCode.score}` : `${resultCode.score}`) : ''
+
                 return <div className="message-flow-entry" key={`${message.title}:${message.detail}:${index}`}>
                   {index > 0 && <span className="message-flow-connector" style={{ animationDelay: `${0.31 + (index - 1) * 0.43}s` }}>그리고</span>}
                   <div className={`message-flow-message ${message.category === 'surprise' ? 'surprise-message' : 'normal-message'} ${message.tone ?? 'neutral'}`} style={{ animationDelay: `${0.1 + index * 0.43}s` }}>
-                    <strong>{message.title}</strong>
-                    {showMessageDetail && <div className="message-detail-row"><p>{message.detail}</p></div>}
+                    <div className="message-title-row">
+                      <strong>{message.title}</strong>
+                      {resultCode && resultCode.code && (
+                        <span className={`announcement-code-badge play-result-score-${scoreTone}`}>
+                          <b>{resultCode.code}</b>
+                        </span>
+                      )}
+                    </div>
+                    {showMessageDetail && <div className="message-detail-row"><p>{message.detail}</p>{scoreText !== '' && <span className={`announcement-score play-result-score-${scoreTone}`}>{scoreText}점</span>}</div>}
                   </div>
                 </div>
               })}
@@ -973,7 +1076,20 @@ function App() {
         <button type="button" onClick={() => setReplay((current) => current && { ...current, playing: false, index: Math.max(0, current.index - 1) })} disabled={replay.index === 0}><SkipBack size={16} /> 이전 단계</button>
         <button className={replay.playing ? 'replay-auto-on' : ''} type="button" onClick={() => setReplay((current) => current && { ...current, playing: !current.playing })}>{replay.playing ? <Pause size={16} /> : <Play size={16} />} {replay.playing ? '자동 재생 중' : '자동 재생'}</button>
         <button type="button" onClick={() => setReplay((current) => current && { ...current, playing: false, index: Math.min(current.frames.length - 1, current.index + 1) })} disabled={replayAtEnd}>다음 단계 <SkipForward size={16} /></button>
-        {replayAtEnd ? <><button className="replay-review-button" type="button" onClick={() => completeReplayAudit('needsReview')}>검토 필요</button><button className="replay-ok-button" type="button" onClick={() => completeReplayAudit('ok')}><CheckCircle2 size={16} /> 문제 없음</button></> : <button type="button" onClick={() => setReplay(null)}>재생 종료</button>}
+        {replayAtEnd ? (
+          replayReturnPhase ? (
+            <button className="replay-ok-button" type="button" onClick={closeReplay}>
+              <CheckCircle2 size={16} /> 결산으로 돌아가기
+            </button>
+          ) : (
+            <>
+              <button className="replay-review-button" type="button" onClick={() => completeReplayAudit('needsReview')}>검토 필요</button>
+              <button className="replay-ok-button" type="button" onClick={() => completeReplayAudit('ok')}><CheckCircle2 size={16} /> 문제 없음</button>
+            </>
+          )
+        ) : (
+          <button type="button" onClick={closeReplay}>재생 종료</button>
+        )}
       </div>
     </div>}
     <footer className="progress-strip">{[1, 2, 3].map((item) => <div className={item < plateAppearance || phase === 'between' && item === plateAppearance ? 'complete' : item === plateAppearance ? 'active' : ''} key={item}><span>0{item}</span><i /><p>{records[item - 1]?.result ?? (item === plateAppearance ? '진행 중' : '대기')}</p></div>)}</footer>

@@ -161,7 +161,7 @@ export const getAnnouncementMessages = (state: ScenarioState): AnnouncementAudit
   ]
 }
 
-const getReplayOptions = (state: ScenarioState, chosen?: AnnouncementAuditStep): AnnouncementReplayOption[] => {
+export const getReplayOptions = (state: ScenarioState, chosen?: AnnouncementAuditStep): AnnouncementReplayOption[] => {
   const node = OFFENSE_CORE_PACK.nodes[state.nodeId]
   if (!node) return []
   if (node.type === 'batting') {
