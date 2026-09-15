@@ -8,7 +8,13 @@ type AnnouncementStageMessage = Pick<ScenarioAnnouncement, 'title' | 'scene'> & 
 
 export const SCENE_FRAME_INTERVAL_MS = 680
 
-export type SceneTransition = 'runner-reveal' | 'impact' | 'lift' | 'fade'
+export type SceneTransitionPreset = 'runner-reveal' | 'impact' | 'lift' | 'fade' | 'arrival-safe' | 'arrival-normal' | 'arrival-bold' | 'arrival-blocked'
+
+export type SceneTransitionState = {
+  preset: SceneTransitionPreset
+  triggerKey: string
+  enabled: boolean
+}
 
 const VIEW_IMAGES: Partial<Record<ScenarioView, string>> = {
   batter: viewBatter,
@@ -130,8 +136,8 @@ const SCENE_BY_ANNOUNCEMENT_TITLE: Record<string, SceneId> = {
 export const resolveSceneId = (announcement: Pick<ScenarioAnnouncement, 'title' | 'scene'>): SceneId | undefined =>
   announcement.scene ?? SCENE_BY_ANNOUNCEMENT_TITLE[announcement.title]
 
-export const resolveAnnouncementImageBase = (announcement: Pick<ScenarioAnnouncement, 'sceneBase'>, playerBase: number | null): number | null =>
-  announcement.sceneBase ?? playerBase
+export const resolveAnnouncementImageBase = (announcement: Pick<ScenarioAnnouncement, 'sceneBase'> | undefined, playerBase: number | null): number | null =>
+  announcement?.sceneBase ?? playerBase
 
 export const resolveAnnouncementDetailView = (view: ScenarioView, playerBase: number | null): ScenarioView =>
   playerBase === 1 ? 'runner:first' : playerBase === 2 ? 'runner:second' : playerBase === 3 ? 'runner:third' : view
@@ -155,19 +161,32 @@ export const resolveViewImage = (view: ScenarioView): string | undefined => VIEW
 
 export const resolveViewImageFilename = (view: ScenarioView): string | undefined => VIEW_IMAGE_FILENAMES[view]
 
-export const resolveSceneTransition = ({
+export const resolveSceneTransitionState = ({
   view,
   sceneId,
   advance,
+  preserveImage = false,
+  sequenceKey = '',
 }: {
   view: ScenarioView
   sceneId?: SceneId
   advance?: 'safe' | 'normal' | 'bold' | 'blocked'
-}): SceneTransition => {
-  if (view.startsWith('runner:')) return 'runner-reveal'
-  if (advance === 'bold' || advance === 'blocked' || sceneId?.startsWith('out-') || sceneId?.startsWith('error-')) return 'impact'
-  if (advance === 'safe' || advance === 'normal' || sceneId?.startsWith('hit-') || sceneId === 'walk') return 'lift'
-  return 'fade'
+  preserveImage?: boolean
+  sequenceKey?: string
+}): SceneTransitionState => {
+  if (preserveImage) return { preset: 'fade', triggerKey: sequenceKey, enabled: false }
+
+  const preset = advance
+    ? `arrival-${advance}` as SceneTransitionPreset
+    : view.startsWith('runner:')
+      ? 'runner-reveal'
+      : sceneId?.startsWith('out-') || sceneId?.startsWith('error-')
+        ? 'impact'
+        : sceneId?.startsWith('hit-') || sceneId === 'walk'
+          ? 'lift'
+          : 'fade'
+
+  return { preset, triggerKey: sequenceKey, enabled: true }
 }
 
 const HOME_IN_DETAIL = /홈에 (?:안전하게 |그대로 )?(?:들어왔습니다|도착했습니다)|홈 (?:추가 )?진루에 성공했습니다|홈 쇄도에 성공했습니다|3루 주자가 홈에/
@@ -180,6 +199,27 @@ export const resolveAnnouncementDetailSceneId = (
   if (announcement.detailScene) return announcement.detailScene
   if (!HOME_IN_DETAIL.test(announcement.detail)) return undefined
   return announcement.tone === 'positive' ? 'home-in-positive' : 'home-in-neutral'
+}
+
+/** detail 전용 이미지가 없으면 제목 단계의 이미지를 detail에도 유지한다. */
+export const resolveAnnouncementDetailImage = (
+  announcement: Pick<ScenarioAnnouncement, 'title' | 'detail' | 'tone' | 'scene' | 'detailScene'> | undefined,
+  playerBase: number | null,
+): string | undefined => {
+  if (!announcement) return undefined
+  const detailScene = resolveAnnouncementDetailSceneId(announcement)
+  return (detailScene ? resolveSceneImage({ title: announcement.title, scene: detailScene }, playerBase) : undefined)
+    ?? resolveSceneImage(announcement, playerBase)
+}
+
+export const resolveAnnouncementDetailImageFilename = (
+  announcement: Pick<ScenarioAnnouncement, 'title' | 'detail' | 'tone' | 'scene' | 'detailScene'> | undefined,
+  playerBase: number | null,
+): string | undefined => {
+  if (!announcement) return undefined
+  const detailScene = resolveAnnouncementDetailSceneId(announcement)
+  return (detailScene ? resolveSceneImageFilename({ title: announcement.title, scene: detailScene }, playerBase) : undefined)
+    ?? resolveSceneImageFilename(announcement, playerBase)
 }
 
 export const shouldShareDetailSceneForTitle = (

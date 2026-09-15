@@ -135,7 +135,7 @@ describe('offense core scenario pack', () => {
     expect(fieldingError.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
     expect(fieldingError.context.announcement).toEqual({ title: '강습 타구가 내야수를 뚫고 외야로 굴러갑니다!', detail: '실책으로 1루에 출루했습니다.' })
     expect(throwingError.nodeId).toBe('ground.infield.hard.throw.check')
-    expect(throwingError.context.announcement).toEqual({ title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' })
+    expect(throwingError.context.announcement).toEqual({ title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-hard-diving-catch', titleImageMode: 'same-as-detail-scene' })
     expect(throwingErrorClear.context).toMatchObject({ bases: [1, 3], playerBase: 1, hits: 0 })
     expect(throwingErrorClear.context.announcement).toEqual(ANNOUNCEMENTS.groundThrowingErrorClear)
   })
@@ -730,7 +730,7 @@ describe('offense core scenario pack', () => {
     expect(contact.nodeId).toBe('followUp.ground.contact.check')
     expect(fielding.nodeId).toBe('followUp.ground.hard.check')
     expect(throwCheck.nodeId).toBe('followUp.ground.hard.throw.check')
-    expect(throwCheck.context.announcement).toEqual({ title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' })
+    expect(throwCheck.context.announcement).toEqual({ title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-hard-diving-catch', titleImageMode: 'same-as-detail-scene' })
     expect(result.nodeId).toBe('plate.complete')
     expect(result.context).toMatchObject({ outs: 1, bases: [], playerBase: null })
     expect(result.context.announcement).toEqual({ title: '내야 땅볼 포스 아웃!', detail: '후속 타자의 내야 땅볼로 인해 2루에서 포스 아웃되었습니다.', tone: 'neutral', detailScene: 'out-ground-force', titleImageMode: 'same-as-detail-scene' })
@@ -886,7 +886,7 @@ describe('offense core scenario pack', () => {
     const cleanPlay = chooseScenarioChanceOutcome(OFFENSE_CORE_PACK, fielding, 'cleanPlay', { manualChance: true })
     expect(cleanPlay.context.announcementHistory.slice(-2).map(({ announcement }) => announcement)).toEqual([
       { title: '후속타자의 강한 내야 땅볼 발생!', detail: '내야수가 잡기 쉽지 않은 타구입니다.', detailScene: 'ball-ground-infield-fielder-moving' },
-      { title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' },
+      { title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-hard-diving-catch', titleImageMode: 'same-as-detail-scene' },
     ])
     expect(cleanPlay.context.announcement).toEqual({ title: '상대 내야수, 1루 송구 준비 완료!', detail: '3루 주자는 위험을 감수하고 송구 시점에 맞춰 홈 쇄도를 시도할 수 있습니다.', tone: 'caution', detailScene: 'ground-throw-ready', titleImageMode: 'same-as-detail-scene' })
     const throwCheck = chooseScenarioOption(OFFENSE_CORE_PACK, cleanPlay, 'advanceHome', { manualChance: true })

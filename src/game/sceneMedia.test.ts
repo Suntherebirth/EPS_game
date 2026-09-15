@@ -1,16 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { buildAnnouncementImageTrail, resolveAnnouncementDetailSceneId, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveSceneTransition, resolveViewImageFilename, shouldShareDetailSceneForTitle, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
+import { buildAnnouncementImageTrail, resolveAnnouncementDetailImageFilename, resolveAnnouncementDetailSceneId, resolveAnnouncementDetailView, resolveAnnouncementImageBase, resolveAnnouncementStepMissingImageName, resolveSceneImageFilename, resolveSceneTransitionState, resolveViewImageFilename, shouldShareDetailSceneForTitle, shouldUseViewImageForAnnouncementStep } from './sceneMedia'
 
 describe('scene media fallback names', () => {
   it('opens runner viewpoints from the center', () => {
-    expect(resolveSceneTransition({ view: 'runner:first', sceneId: 'advance-clear' })).toBe('runner-reveal')
-    expect(resolveSceneTransition({ view: 'runner:third', sceneId: 'home-in-positive' })).toBe('runner-reveal')
+    expect(resolveSceneTransitionState({ view: 'runner:first', sceneId: 'advance-clear' }).preset).toBe('runner-reveal')
+    expect(resolveSceneTransitionState({ view: 'runner:third', sceneId: 'home-in-positive' }).preset).toBe('runner-reveal')
   })
 
   it('uses impact for dangerous or defensive scenes and lift for positive plays', () => {
-    expect(resolveSceneTransition({ view: 'result', sceneId: 'out-strikeout' })).toBe('impact')
-    expect(resolveSceneTransition({ view: 'batter', sceneId: 'error-infield-fielding' })).toBe('impact')
-    expect(resolveSceneTransition({ view: 'batter', sceneId: 'hit-single', advance: 'safe' })).toBe('lift')
+    expect(resolveSceneTransitionState({ view: 'result', sceneId: 'out-strikeout' }).preset).toBe('impact')
+    expect(resolveSceneTransitionState({ view: 'batter', sceneId: 'error-infield-fielding' }).preset).toBe('impact')
+    expect(resolveSceneTransitionState({ view: 'batter', sceneId: 'hit-single', advance: 'safe' }).preset).toBe('arrival-safe')
+  })
+
+  it('uses one final preset and keeps a stable replay trigger key', () => {
+    expect(resolveSceneTransitionState({ view: 'runner:third', sceneId: 'out-strikeout', advance: 'bold', sequenceKey: 'play-1' })).toEqual({
+      preset: 'arrival-bold',
+      triggerKey: 'play-1',
+      enabled: true,
+    })
+    expect(resolveSceneTransitionState({ view: 'batter', sceneId: 'hit-single', preserveImage: true, sequenceKey: 'play-2' })).toEqual({
+      preset: 'fade',
+      triggerKey: 'play-2',
+      enabled: false,
+    })
   })
 
   it('returns the expected filename for an infield ground ball event', () => {
@@ -39,6 +52,10 @@ describe('scene media fallback names', () => {
 
   it('returns the dedicated fielder movement filename for an infield ground ball detail', () => {
     expect(resolveSceneImageFilename({ title: '약한 내야 땅볼 발생!', scene: 'ball-ground-infield-fielder-moving' }, 1)).toBe('ball-ground-infield-fielder-moving.png')
+  })
+
+  it('uses the dedicated diving-catch filename for a hard infield ground ball', () => {
+    expect(resolveSceneImageFilename({ title: '내야수가 다이빙 캐치에 성공합니다!', scene: 'ground-hard-diving-catch' }, 1)).toBe('ground-hard-diving-catch.png')
   })
 
   it('returns the expected filename for the batter view', () => {
@@ -113,6 +130,13 @@ describe('scene media fallback names', () => {
     expect(resolveSceneImageFilename({ title: '땅볼 처리 성공!', scene: undefined }, 1)).toBe('ground-first-base-catch.png')
   })
 
+  it('falls back to the title image for result details without a detail scene', () => {
+    expect(resolveAnnouncementDetailImageFilename({ title: '삼진 아웃되었습니다.', detail: '아웃 카운트가 올라갔습니다.' }, null)).toBe('out-strikeout.png')
+    expect(resolveAnnouncementDetailImageFilename({ title: '낫아웃 아웃!', detail: '상대 포수의 1루 송구가 빨라 1루에서 아웃되었습니다.' }, null)).toBe('out-strikeout.png')
+    expect(resolveAnnouncementDetailImageFilename({ title: '내야 땅볼 아웃!', detail: '플레이가 완료되었습니다.' }, null)).toBe('ground-first-base-catch.png')
+    expect(resolveAnnouncementDetailImageFilename({ title: '외야 뜬공 아웃!', detail: '플레이가 완료되었습니다.' }, null)).toBe('out-fly.png')
+  })
+
   it('shares a dedicated detail scene only when explicitly requested', () => {
     expect(shouldShareDetailSceneForTitle({ title: '명백하게 깊은 외야 플라이, 태그업을 시도합니다.', detail: '안전하게 태그업할 수 있는 타구입니다.', detailScene: 'sacrifice-fly-ambiguous', titleImageMode: 'same-as-detail-scene' })).toBe(true)
     expect(resolveAnnouncementDetailSceneId({ title: '태그업 성공!', detail: '3루 주자가 홈에 안전하게 들어왔습니다.', tone: 'neutral' })).toBe('home-in-neutral')
@@ -140,6 +164,7 @@ describe('scene media fallback names', () => {
     const announcement = { title: '후속타자의 1루타!', sceneBase: 1 }
 
     expect(resolveAnnouncementImageBase(announcement, 2)).toBe(1)
+    expect(resolveAnnouncementImageBase(undefined, 2)).toBe(2)
     expect(resolveSceneImageFilename(announcement, resolveAnnouncementImageBase(announcement, 2))).toBe('hit-single.png')
     expect(buildAnnouncementImageTrail([announcement], 'result', 2)[0]).toContain('hit-single')
     expect(resolveAnnouncementDetailView('result', 2)).toBe('runner:second')

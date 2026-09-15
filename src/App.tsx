@@ -15,21 +15,24 @@ import {
 import { OFFENSE_CORE_PACK } from './game/packs/offenseCorePack'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, getAvailableScenarioChoices, selectScenarioBattingEvent, settleScenario, startScenario } from './game/scenarioEngine'
 import { formatScenarioText } from './game/scenarioText'
-import type { AdvanceConcept, ScenarioState, ScenarioView } from './game/scenario'
+import type { ScenarioState, ScenarioView } from './game/scenario'
 import { resolveAdvanceConcept } from './game/advanceConcept'
 import {
   buildAnnouncementImageTrail,
   resolveAnnouncementDetailSceneId,
+  resolveAnnouncementDetailImage,
+  resolveAnnouncementDetailImageFilename,
   resolveAnnouncementDetailView,
   resolveAnnouncementImageBase,
   resolveSceneId,
   resolveSceneImage,
   resolveSceneImageFilename,
-  resolveSceneTransition,
+  resolveSceneTransitionState,
   getSceneImageUrls,
   resolveViewImage,
   resolveViewImageFilename,
   shouldShareDetailSceneForTitle,
+  shouldUseViewImageForAnnouncementStep,
 } from './game/sceneMedia'
 import './App.css'
 
@@ -217,9 +220,23 @@ function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number
   </div>
 }
 
-function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, arrivalEffect, sceneTransition, preserveImage, backgroundDimmingDelay, backgroundDimmingKey, hideBroadcastBug }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; arrivalEffect?: AdvanceConcept; sceneTransition?: string; preserveImage?: boolean; backgroundDimmingDelay?: number; backgroundDimmingKey?: string; hideBroadcastBug?: boolean }) {
+function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabel, isSurpriseEvent, isPlateEntry, videoUrl, missingImageName, transition, backgroundDimmingDelay, backgroundDimmingKey, hideBroadcastBug }: { situation: Situation; plateAppearance: number; playerBase: number | null; imageUrl?: string; viewLabel?: string | null; isSurpriseEvent?: boolean; isPlateEntry?: boolean; videoUrl?: string; missingImageName?: string | null; transition?: { preset: string; triggerKey: string; enabled: boolean }; backgroundDimmingDelay?: number; backgroundDimmingKey?: string; hideBroadcastBug?: boolean }) {
   const [backgroundDimmedToken, setBackgroundDimmedToken] = useState('')
+  const [imageLayers, setImageLayers] = useState<{ current?: string; previous?: string }>({ current: imageUrl })
   const backgroundDimmingToken = `${backgroundDimmingKey ?? ''}:${backgroundDimmingDelay ?? ''}`
+
+  useEffect(() => {
+    setImageLayers((layers) => {
+      if (layers.current === imageUrl && (!layers.previous || transition?.enabled)) return layers
+      return transition?.enabled ? { current: imageUrl, previous: layers.current } : { current: imageUrl }
+    })
+  }, [imageUrl, transition?.enabled])
+
+  useEffect(() => {
+    if (!imageLayers.previous) return
+    const timer = window.setTimeout(() => setImageLayers((layers) => ({ current: layers.current })), 720)
+    return () => window.clearTimeout(timer)
+  }, [imageLayers.previous])
 
   useEffect(() => {
     if (backgroundDimmingDelay === undefined) return
@@ -229,7 +246,8 @@ function MediaStage({ situation, plateAppearance, playerBase, imageUrl, viewLabe
 
   return <section className={`media-stage ${backgroundDimmedToken === backgroundDimmingToken && backgroundDimmingDelay !== undefined ? 'background-dimmed' : ''}`} aria-live="polite">
     {videoUrl && <video src={videoUrl} autoPlay muted playsInline controls />}
-    {!videoUrl && imageUrl && <img src={imageUrl} alt="" className={`${preserveImage ? 'preserve-image' : ''} ${sceneTransition ? `scene-transition-${sceneTransition}` : ''} ${arrivalEffect ? `arrival-${arrivalEffect}` : ''}`} key={imageUrl} />}
+    {!videoUrl && imageLayers.previous && <img src={imageLayers.previous} alt="" className="media-image-layer media-image-layer-previous" aria-hidden="true" />}
+    {!videoUrl && imageLayers.current && <img src={imageLayers.current} alt="" className={`media-image-layer media-image-layer-current ${transition?.enabled ? `media-transition-${transition.preset}` : 'preserve-image'}`} key={`${imageLayers.current}:${transition?.triggerKey ?? ''}`} />}
     {!videoUrl && missingImageName && <div className="media-image-fallback" aria-live="polite"><span>{missingImageName}</span></div>}
     {viewLabel && <div className={`media-view-label ${isSurpriseEvent ? 'surprise-chip' : ''}`}>{viewLabel}</div>}
     <div className={`broadcast-bug ${isPlateEntry ? 'plate-entry-flash' : ''} ${hideBroadcastBug ? 'completion-hidden' : ''}`}>
@@ -483,7 +501,7 @@ function App() {
   const sceneIsChoiceViewStep = sceneCurrentStage && 'showChoiceView' in sceneCurrentStage && sceneCurrentStage.showChoiceView
   const sceneRevealedCount = sceneAnnouncementCount === 0 ? 0 : sceneIsFinalStep ? sceneAnnouncementCount : sceneEventIndex + 1
   const currentAnnouncement = sceneAnnouncements[sceneEventIndex]
-  const isSurpriseAnnouncement = currentAnnouncement?.category === 'surprise'
+  const shouldUseViewImageForMain = shouldUseViewImageForAnnouncementStep(currentAnnouncement, isSurpriseScene)
   const sceneDetailScene = resolveAnnouncementDetailSceneId(currentAnnouncement)
   const sceneDetailAnnouncement = sceneDetailScene
     ? { title: currentAnnouncement!.title, scene: sceneDetailScene }
@@ -491,23 +509,21 @@ function App() {
   const shouldUseChoiceViewImage = sceneIsChoiceViewStep
   const sceneDetailImageUrl = shouldUseChoiceViewImage
     ? resolveViewImage(sceneDetailView)
-    : sceneDetailAnnouncement
-    ? resolveSceneImage(sceneDetailAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase))
-    : resolveViewImage(sceneDetailView)
+    : shouldUseViewImageForMain
+      ? resolveViewImage(sceneDetailView)
+    : resolveAnnouncementDetailImage(currentAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase)) ?? resolveViewImage(sceneDetailView)
   const shareDetailSceneForTitle = shouldShareDetailSceneForTitle(currentAnnouncement) && Boolean(sceneDetailAnnouncement && sceneDetailImageUrl)
-  const sceneMissingImageName = sceneIsDetailStep || isSurpriseAnnouncement || shareDetailSceneForTitle
+  const sceneMissingImageName = sceneIsDetailStep || shouldUseViewImageForMain || shareDetailSceneForTitle
     ? (sceneDetailImageUrl ? undefined : shouldUseChoiceViewImage
       ? resolveViewImageFilename(sceneDetailView)
-      : sceneDetailAnnouncement
-      ? resolveSceneImageFilename(sceneDetailAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase))
-      : resolveViewImageFilename(sceneDetailView))
+      : resolveAnnouncementDetailImageFilename(currentAnnouncement, resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase)) ?? resolveViewImageFilename(sceneDetailView))
     : (() => {
       if (!currentAnnouncement) return undefined
       const imageBase = resolveAnnouncementImageBase(currentAnnouncement, displayedState.context.playerBase)
       const expectedImage = resolveSceneImage(currentAnnouncement, imageBase)
       return expectedImage ? undefined : resolveSceneImageFilename(currentAnnouncement, imageBase)
     })()
-  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsDetailStep || isSurpriseAnnouncement || shareDetailSceneForTitle ? sceneDetailImageUrl : sceneImageTrail[sceneEventIndex])
+  const sceneImageUrl = sceneMissingImageName ? undefined : (sceneIsDetailStep || shouldUseViewImageForMain || shareDetailSceneForTitle ? sceneDetailImageUrl : sceneImageTrail[sceneEventIndex])
   const advanceScene = () => {
     if (sceneIsFinalStep) return
     setTapProgress({ key: sceneSequenceKey, step: sceneStep + 1 })
@@ -884,9 +900,14 @@ function App() {
   const isNormalChoiceOverlayVisible = canAct && !replaying && node.type === 'choice' && !isSurpriseEvent && availableChoices.length > 0
   const showPlayResult = playResultVisible && playResultReady
   const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : showPlayResult ? 0 : undefined
-  const arrivalEffect = sceneIsFinalStep ? resolveAdvanceConcept(currentAnnouncement ?? displayedState.context.announcement) : undefined
   const nextSceneId = currentAnnouncement ? resolveSceneId(currentAnnouncement) : undefined
-  const sceneTransition = resolveSceneTransition({ view: sceneIsFinalStep ? sceneDetailView : sceneImageView, sceneId: nextSceneId, advance: arrivalEffect })
+  const transition = resolveSceneTransitionState({
+    view: sceneIsFinalStep ? sceneDetailView : sceneImageView,
+    sceneId: nextSceneId,
+    advance: sceneIsFinalStep ? resolveAdvanceConcept(currentAnnouncement ?? displayedState.context.announcement) : undefined,
+    preserveImage: shareDetailSceneForTitle,
+    sequenceKey: sceneSequenceKey,
+  })
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random'
       ? '관리자: 후속 타자 결과를 지정하세요.'
@@ -915,7 +936,7 @@ function App() {
   return <main className="app-shell">
     <header className="brand-bar"><button className="brand-title audit-entry-enabled" type="button" onClick={openChoiceAuditFromGame} aria-label="선택지 체크 모드 열기"><b className="brand-mark">EPS</b><span>BASEBALL SIM</span></button><div className="header-controls">{replay && <button className="secondary-button audit-return-button" type="button" onClick={() => setAppMode('choiceCheck')}>선택지 체크로 돌아가기</button>}{findMatchingCaseId(scenario) && <button className="secondary-button" type="button" onClick={openChoiceAuditFromGame}><Bug size={14} /> 선택지 체크</button>}{adminMode && <button className="secondary-button" type="button" onClick={() => setAppMode('choiceCheck')}><Bug size={14} /> 선택지 체크</button>}<button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><div className="image-preload-control"><button className="secondary-button" type="button" onClick={() => void preloadAllSceneImages()} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
-      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} arrivalEffect={arrivalEffect} sceneTransition={sceneTransition} preserveImage={shareDetailSceneForTitle} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
+      <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} transition={transition} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
         {overlayMessages.length > 0 && <aside className={`result-notice ${overlayMessages.at(-1)?.tone ?? 'neutral'}`} aria-live="polite" key={replaying ? `replay:${replayFrame?.stepIndex ?? 'live'}` : sceneSequenceKey}>
           <span>{replaying ? '아나운스 재생' : '방금 일어난 일'}</span>

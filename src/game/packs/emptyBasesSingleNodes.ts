@@ -353,7 +353,7 @@ export const EMPTY_BASES_SINGLE_NODES: Record<string, ScenarioNode> = {
     id: 'followUp.ground.hard.check', tags: ['composite-event-step'], type: 'chance', view: 'batter', title: '후속 강한 땅볼 포구 판정',
     outcomes: [
       { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'followUp.ground.hard.fieldingError' } },
-      { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'followUp.ground.advanceOpportunity.route', effects: [{ type: 'setFlag', key: 'groundContact', value: 'hard' }, { type: 'announce', title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' }] } },
+      { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'followUp.ground.advanceOpportunity.route', effects: [{ type: 'setFlag', key: 'groundContact', value: 'hard' }, { type: 'announce', title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-hard-diving-catch', titleImageMode: 'same-as-detail-scene' }] } },
     ],
   },
   'followUp.ground.soft.check': {

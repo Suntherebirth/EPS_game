@@ -42,11 +42,13 @@ button { font: inherit; }
 .game-grid-tappable { cursor: pointer; }
 .media-stage { position: relative; height: 100%; min-height: 0; overflow: hidden; color: white; background-color: var(--green); background-image: linear-gradient(rgba(9,31,22,.12), rgba(9,31,22,.12)), repeating-linear-gradient(100deg, transparent 0, transparent 4rem, rgba(255,255,255,.018) 4rem, rgba(255,255,255,.018) 8rem); }
 .media-stage video, .media-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.media-stage img { animation: scene-fade .26s ease-out; }
-.media-stage img.preserve-image { animation: none; }
-.media-stage img.scene-transition-runner-reveal { animation: runner-reveal .62s cubic-bezier(.2, .8, .2, 1) both; }
-.media-stage img.scene-transition-impact { animation: scene-impact .44s cubic-bezier(.2, .8, .2, 1) both; }
-.media-stage img.scene-transition-lift { animation: scene-lift .48s cubic-bezier(.22, .61, .36, 1) both; }
+.media-stage img.media-image-layer { animation: none; }
+.media-stage img.media-image-layer-current { z-index: 1; animation: scene-fade .26s ease-out; }
+.media-stage img.media-image-layer-current.preserve-image { animation: none; }
+.media-stage img.media-image-layer-previous { z-index: 0; }
+.media-stage img.media-transition-runner-reveal { animation: runner-reveal .62s cubic-bezier(.2, .8, .2, 1) both; }
+.media-stage img.media-transition-impact { animation: scene-impact .44s cubic-bezier(.2, .8, .2, 1) both; }
+.media-stage img.media-transition-lift { animation: scene-lift .48s cubic-bezier(.22, .61, .36, 1) both; }
 .game-grid.surprise-overlay-visible .media-stage video, .game-grid.surprise-overlay-visible .media-stage img { opacity: .68; transition: opacity .3s ease; }
 .media-stage.background-dimmed video, .media-stage.background-dimmed img { opacity: .68; transition: opacity .3s ease; }
 .media-image-fallback { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; background: rgba(9, 16, 13, .52); backdrop-filter: blur(3px); }
@@ -87,15 +89,12 @@ button { font: inherit; }
   60% { transform: translateX(-3px); }
   100% { transform: translateX(0); filter: brightness(1); }
 }
-.media-stage img.arrival-safe { animation: arrival-safe-in .65s ease-out both; }
-.media-stage img.arrival-normal { animation: arrival-normal-in .45s cubic-bezier(.22, .61, .36, 1) both; }
-.media-stage img.arrival-bold { animation: arrival-bold-in .42s cubic-bezier(.34, 1.56, .64, 1) both; }
-.media-stage img.arrival-blocked { animation: arrival-blocked-bounce .35s ease-out both; }
-.media-stage img.scene-transition-runner-reveal { animation: runner-reveal .62s cubic-bezier(.2, .8, .2, 1) both; }
-.media-stage img.scene-transition-impact { animation: scene-impact .44s cubic-bezier(.2, .8, .2, 1) both; }
-.media-stage img.scene-transition-lift { animation: scene-lift .48s cubic-bezier(.22, .61, .36, 1) both; }
+.media-stage img.media-transition-arrival-safe { animation: arrival-safe-in .65s ease-out both; }
+.media-stage img.media-transition-arrival-normal { animation: arrival-normal-in .45s cubic-bezier(.22, .61, .36, 1) both; }
+.media-stage img.media-transition-arrival-bold { animation: arrival-bold-in .42s cubic-bezier(.34, 1.56, .64, 1) both; }
+.media-stage img.media-transition-arrival-blocked { animation: arrival-blocked-bounce .35s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
-  .media-stage img.arrival-safe, .media-stage img.arrival-normal, .media-stage img.arrival-bold, .media-stage img.arrival-blocked, .media-stage img.scene-transition-runner-reveal, .media-stage img.scene-transition-impact, .media-stage img.scene-transition-lift { animation: scene-fade .2s ease-out both; }
+  .media-stage img.media-transition-arrival-safe, .media-stage img.media-transition-arrival-normal, .media-stage img.media-transition-arrival-bold, .media-stage img.media-transition-arrival-blocked, .media-stage img.media-transition-runner-reveal, .media-stage img.media-transition-impact, .media-stage img.media-transition-lift { animation: scene-fade .2s ease-out both; }
 }
 
 .media-view-label { position: absolute; z-index: 2; top: var(--overlay-edge-y); left: var(--overlay-edge-x); display: inline-flex; padding: .3125rem .5rem; border-left: 3px solid var(--red); color: var(--ink); background: rgba(238,234,224,.94); font-size: .75rem; font-weight: 800; text-shadow: 0 1px 2px rgba(255,255,255,.35); }

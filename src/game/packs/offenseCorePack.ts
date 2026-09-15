@@ -159,7 +159,7 @@ export const OFFENSE_CORE_PACK: ScenarioPack = {
       id: 'ground.infield.hard.check', type: 'chance', view: 'batter', title: '강한 땅볼 포구 판정', tags: ['composite-event-step'],
       outcomes: [
         { id: 'fieldingError', label: '내야수 포구 실책', weight: RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'ground.infield.hard.fieldingError' } },
-        { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'ground.infield.hard.throw.check', effects: [{ type: 'announce', title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-fielded', titleImageMode: 'same-as-detail-scene' }] } },
+        { id: 'cleanPlay', label: '내야수 포구 성공', weight: 1 - RUNNING_CHANCES.infieldGroundHardFieldingError, transition: { to: 'ground.infield.hard.throw.check', effects: [{ type: 'announce', title: '내야수가 다이빙 캐치에 성공합니다!', detail: '송구를 준비합니다.', detailScene: 'ground-hard-diving-catch', titleImageMode: 'same-as-detail-scene' }] } },
       ],
     },
     'ground.infield.soft.check': {
