@@ -38,6 +38,21 @@ describe('playResultCodes', () => {
     })
   })
 
+  it('maps fly-ball fielding errors to their batting out codes', () => {
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.outfieldFieldingErrorSingle)).toEqual({
+      item: '외야수 뜬공 실책',
+      code: 'B-OF-O',
+      score: 0.0,
+      description: 'Batting-Outfield Fly-Out Error',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFieldingErrorSingle)).toEqual({
+      item: '내야수 뜬공 실책',
+      code: 'B-IF-O',
+      score: -1.0,
+      description: 'Batting-Infield Fly-Out Error',
+    })
+  })
+
   it('maps successful steals to BR-2nd and BR-3rd with +1 points', () => {
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.stealSecondSuccess)).toEqual({
       item: '2루 도루 성공',
@@ -74,9 +89,30 @@ describe('playResultCodes', () => {
     })
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceNormalSacrificeFly)).toEqual({
       item: '홈 당연 진루 (외야 희생플라이)',
-      code: '',
+      code: '-',
       score: 0.0,
       description: 'Base Running-Normal Advance on Sacrifice Fly',
+    })
+  })
+
+  it('maps infield fly outs and ground double plays to their batting out codes', () => {
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFlyOut)).toEqual({
+      item: '내야 뜬공 아웃',
+      code: 'B-IF-O',
+      score: -1.0,
+      description: 'Batting-Infield Fly-Out',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFlyRuleOut)).toEqual({
+      item: '인필드 플라이 아웃',
+      code: 'B-IF-O',
+      score: -1.0,
+      description: 'Batting-Infield Fly-Out',
+    })
+    expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundDoublePlay)).toEqual({
+      item: '내야 땅볼 (더블 플레이)',
+      code: 'B-GD-O',
+      score: -2.0,
+      description: 'Batting-Ground Double-Play Out',
     })
   })
 
@@ -165,7 +201,7 @@ describe('playResultCodes', () => {
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.homeAdvanceMissed)).toEqual({
       item: '홈 진루 기회 놓침',
       code: 'BR-E-5',
-      score: -1.5,
+      score: -2.0,
       description: 'Base Running-Missed Chance at Home',
     })
   })

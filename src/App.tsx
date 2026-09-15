@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createAnnouncementAuditCases, findMatchingCaseId, getAnnouncementMessages, replayAnnouncementCase, type AnnouncementAuditCase, type AnnouncementReplayFrame } from './game/announcementAudit'
 import { createChoiceAuditCases, getChoiceBranchAuditCaseId, replayChoiceAuditCase, type ChoiceAuditCase } from './game/choiceAudit'
 import { BATTING_CATEGORIES, BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES, resolveProbabilisticBattingChoice, type BattingCategory, type BattingEventId, type ProbabilisticBattingChoice } from './game/battingEvents'
-import { PLAY_RESULT_CODES, PLAY_RESULT_ITEMS, resolvePlayResultCode } from './game/playResultCodes'
+import { PLAY_RESULT_CODES, resolvePlayResultCode } from './game/playResultCodes'
 import {
   createRandomSituation,
   createScenarioContext,
@@ -65,8 +65,6 @@ const preloadSceneImage = (url: string, previousEntryCount: number) => new Promi
   image.onerror = () => resolve(getResourceTransferSize(url, previousEntryCount))
   image.src = url
 })
-
-const filterHiddenPlayResultItems = (items: string[], hideFollowUpGroundOut: boolean) => items.filter((item) => item !== PLAY_RESULT_ITEMS.followUpGroundForceOut && (!hideFollowUpGroundOut || item !== PLAY_RESULT_ITEMS.followUpGroundOut))
 
 const ANNOUNCEMENT_AUDIT_STORAGE_KEY = 'eps:announcement-check:completed:v1'
 const ANNOUNCEMENT_AUDIT_TAB_STORAGE_KEY = 'eps:announcement-check:tab:v1'
@@ -453,10 +451,7 @@ function App() {
   const sceneStep = tapProgress.key === sceneSequenceKey ? Math.min(tapProgress.step, sceneTotalTapSteps - 1) : 0
   const sceneIsFinalStep = replay !== null || sceneStep >= sceneTotalTapSteps - 1
   const playResultVisible = phase === 'between' && sceneIsFinalStep
-  const playResultItems = filterHiddenPlayResultItems(
-    scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result ?? ''],
-    scenario.context.flags.followUpGroundOut === true,
-  )
+  const playResultItems = scenario.context.completionRecords.length > 0 ? scenario.context.completionRecords : [records.at(-1)?.result ?? '']
   const playResultTotal = playResultItems.reduce((total, item) => total + (resolvePlayResultCode(item ?? '').score ?? 0), 0)
   const playResultTotalTone = playResultTotal > 0 ? 'positive' : playResultTotal < 0 ? 'negative' : 'zero'
   const sceneCurrentStage = sceneAnnouncementStages[sceneStep]
@@ -526,7 +521,7 @@ function App() {
   }
 
   const completeScenario = (state: ScenarioState) => {
-    const result = filterHiddenPlayResultItems(state.context.completionRecords, state.context.flags.followUpGroundOut === true).join('\n') || state.context.selectedLabel || '플레이 완료'
+    const result = state.context.completionRecords.join('\n') || state.context.selectedLabel || '플레이 완료'
     setPlayResultReady(false)
     setStats((current) => ({
       runs: current.runs + state.context.runs,
