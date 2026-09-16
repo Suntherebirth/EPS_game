@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, SlidersHorizontal, X } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, ChevronRight, Download, Pause, Play, RotateCcw, SkipBack, SkipForward, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import logoImage from './assets/eg_logo-header.png'
 import { getAnnouncementMessages, getReplayOptions, type AnnouncementReplayFrame } from './game/announcementAudit'
@@ -38,7 +38,6 @@ import './App.css'
 
 type Phase = 'playing' | 'between' | 'finished'
 type AppMode = 'game' | 'codeMapping'
-type BattingInputMode = 'direct' | 'probabilistic'
 type RecordEntry = {
   number: number
   situation: string
@@ -77,25 +76,6 @@ const preloadSceneImage = (url: string, previousEntryCount: number) => new Promi
   image.onerror = () => resolve(getResourceTransferSize(url, previousEntryCount))
   image.src = url
 })
-
-const BATTING_INPUT_MODE_STORAGE_KEY = 'eps:batting-input-mode:v1'
-
-const loadBattingInputMode = (): BattingInputMode => {
-  try {
-    const value = localStorage.getItem(BATTING_INPUT_MODE_STORAGE_KEY)
-    return value === 'direct' || value === 'probabilistic' ? value : 'probabilistic'
-  } catch {
-    return 'probabilistic'
-  }
-}
-
-const saveBattingInputMode = (mode: BattingInputMode) => {
-  try {
-    localStorage.setItem(BATTING_INPUT_MODE_STORAGE_KEY, mode)
-  } catch {
-    // ignore
-  }
-}
 
 function BaseDiamond({ bases, playerBase }: { bases: Base[]; playerBase?: number | null }) {
   return <div className="diamond" aria-label={describeBases(bases)}>
@@ -175,7 +155,6 @@ function TapContinueButton({ stepKey, onClick }: { stepKey: string; onClick: () 
 function App() {
   const [appMode, setAppMode] = useState<AppMode>('game')
   const [adminMode, setAdminMode] = useState(false)
-  const [battingInputMode, setBattingInputModeState] = useState<BattingInputMode>(() => loadBattingInputMode())
   const [selectedBattingCategory, setSelectedBattingCategory] = useState<BattingCategory | null>(null)
   const [replay, setReplay] = useState<{ frames: AnnouncementReplayFrame[]; index: number; playing: boolean } | null>(null)
   const [replayReturnPhase, setReplayReturnPhase] = useState<Phase | null>(null)
@@ -352,12 +331,6 @@ function App() {
     setPhase('between')
   }
 
-  const setBattingInputMode = (mode: BattingInputMode) => {
-    setSelectedBattingCategory(null)
-    setBattingInputModeState(mode)
-    saveBattingInputMode(mode)
-  }
-
   const acceptState = (next: ScenarioState, selectedAction?: { id: string; kind: 'batting' | 'choice' | 'chance' }) => {
     setSelectedBattingCategory(null)
     const terminal = OFFENSE_CORE_PACK.nodes[next.nodeId].type === 'terminal'
@@ -451,7 +424,6 @@ function App() {
             <span>EPS Simulator</span>
           </div>
           <div className="header-controls">
-            <button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button>
             <button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기">
               <RotateCcw size={18} />
             </button>
@@ -588,14 +560,14 @@ function App() {
   })
   const actionInstruction = node.type === 'batting'
     ? adminMode && node.mode === 'random'
-      ? '관리자: 후속 타자 결과를 지정하세요.'
-      : battingInputMode === 'probabilistic'
-        ? '타격 방침을 선택해주세요.'
-        : '타격 결과를 선택해주세요.'
+      ? '후속 타자 결과를 선택해주세요.'
+      : adminMode
+        ? '타격 결과를 선택해주세요.'
+        : '타격 방침을 선택해주세요.'
     : node.type === 'choice'
       ? choiceDescription ?? '주루 방침을 선택해주세요.'
       : node.type === 'chance' && adminMode
-        ? '관리자: 확률 결과를 지정하세요.'
+        ? '확률 결과를 선택해주세요.'
       : ''
   const sceneTapProps = sceneIsFinalStep ? {} : {
     onClick: advanceScene,
@@ -613,7 +585,7 @@ function App() {
 
   return <>
     <main className="app-shell">
-    <header className="brand-bar"><div className="brand-title"><img className="brand-logo" src={logoImage} alt="" /><span>EPS Simulator</span></div><div className="header-controls"><button className="secondary-button" type="button" onClick={() => setAppMode('codeMapping')}>코드 매핑 보기</button><div className="image-preload-control"><button className="secondary-button" type="button" onClick={requestImagePreload} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><label className="admin-toggle"><SlidersHorizontal size={14} /><span>관리자</span><input type="checkbox" checked={adminMode} onChange={(event) => toggleAdminMode(event.target.checked)} aria-label="관리자 콘솔" /><i /></label><button className="icon-button" type="button" onClick={resetGame} title="새 경기" aria-label="새 경기"><RotateCcw size={18} /></button></div></header>
+    <header className="brand-bar"><div className="brand-title"><img className="brand-logo" src={logoImage} alt="" /><span>EPS Simulator</span></div><div className="header-controls"><div className="image-preload-control"><button className="secondary-button" type="button" onClick={requestImagePreload} disabled={imagePreloadState === 'loading'}><Download size={14} />{imagePreloadState === 'loading' ? `이미지 ${imagePreloadProgress.loaded}/${imagePreloadProgress.total}` : imagePreloadState === 'complete' ? '이미지 준비 완료' : '이미지 준비'}</button>{imagePreloadState !== 'idle' && <small>{formatDataSize(imagePreloadProgress.bytes)} 사용</small>}</div><div className="mode-segmented-toggle" role="group" aria-label="타격 결과 판정 방식"><button className={!adminMode ? 'active' : ''} type="button" onClick={() => toggleAdminMode(false)} aria-pressed={!adminMode}>확률형</button><button className={adminMode ? 'active' : ''} type="button" onClick={() => toggleAdminMode(true)} aria-pressed={adminMode}>결과확정형</button></div><button className="secondary-button" type="button" onClick={resetGame}><RotateCcw size={14} />초기화</button></div></header>
     <div className={`game-grid ${sceneIsFinalStep ? '' : 'game-grid-tappable'} ${isSurpriseEvent ? 'surprise-overlay-visible' : ''}`} {...sceneTapProps}>
       <MediaStage situation={displayedSituation} plateAppearance={plateAppearance} playerBase={displayedPlayerBase} imageUrl={sceneImageUrl} viewLabel={highlightedViewLabel} isSurpriseEvent={isSurpriseEvent} isPlateEntry={isPlateEntry} missingImageName={sceneMissingImageName} transition={transition} backgroundDimmingDelay={backgroundDimmingDelay} backgroundDimmingKey={`${displayedState.nodeId}:${announcementRenderKey}:${showPlayResult}`} hideBroadcastBug={showPlayResult} />
       <section className={`decision-panel ${isPlateEntry ? 'plate-entry-panel' : ''} ${isSurpriseEvent ? 'surprise-event-panel' : ''} ${overlayMessages.length > 0 ? 'has-announcement' : ''} ${overlayMessages.length > 1 ? 'has-compound-announcement' : ''}`}>
@@ -673,28 +645,7 @@ function App() {
         {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && (
           <div className={`batting-container ${adminMode && node.mode === 'random' ? 'admin-batting-container' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>
-            {!adminMode && (
-              <div className="batting-mode-toggle" role="radiogroup" aria-label="타격 모드 선택">
-                <button
-                  type="button"
-                  className={`mode-toggle-chip ${battingInputMode === 'probabilistic' ? 'active' : ''}`}
-                  onClick={() => {
-                    setSelectedBattingCategory(null)
-                    setBattingInputMode('probabilistic')
-                  }}
-                >
-                  확률형
-                </button>
-                <button
-                  type="button"
-                  className={`mode-toggle-chip ${battingInputMode === 'direct' ? 'active' : ''}`}
-                  onClick={() => setBattingInputMode('direct')}
-                >
-                  결과확정형
-                </button>
-              </div>
-            )}
-            {battingInputMode === 'probabilistic' && !adminMode ? (
+            {!adminMode ? (
               <div className="choices probabilistic-choices">
                 {PROBABILISTIC_BATTING_CHOICES.map((choice) => (
                   <button type="button" onClick={() => chooseProbabilisticBatting(choice.id)} key={choice.id}>
@@ -764,7 +715,7 @@ function App() {
         {canAct && !replaying && node.type === 'choice' && <div className={`choices runner-choices ${availableChoices.length === 1 ? 'single-choice' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{availableChoices.map((choice) => (
           <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>
         ))}</div>}
-        {canAct && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`} onClick={(event) => event.stopPropagation()}><span>관리자 콘솔 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => (
+        {canAct && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`} onClick={(event) => event.stopPropagation()}><span>결과확정형 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => (
           <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>
         ))}</div></div>}
         {showPlayResult && <section className="play-result" aria-live="polite">
