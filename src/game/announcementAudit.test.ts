@@ -1,11 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { createAnnouncementAuditCases, getAnnouncementMessages, replayAnnouncementCase } from './announcementAudit'
+import { createAnnouncementAuditCases, getAnnouncementMessages, getReplayOptions, replayAnnouncementCase } from './announcementAudit'
 import { createScenarioContext } from './gameSetup'
 import { OFFENSE_CORE_PACK } from './packs/offenseCorePack'
 import { chooseScenarioChanceOutcome, chooseScenarioOption, selectScenarioBattingEvent, startScenario } from './scenarioEngine'
 import type { AnnouncementAuditCase } from './announcementAudit'
 
 describe('announcement audit cases', () => {
+  it('uses the same batting choices shown by each live play mode', () => {
+    const state = startScenario(OFFENSE_CORE_PACK, createScenarioContext({ outs: 0, bases: [] }), { manualChance: true })
+
+    expect(getReplayOptions(state, { type: 'batting', id: 'contact', label: '컨택트 스윙' }, false)).toMatchObject([
+      { id: 'contact', chosen: true },
+      { id: 'power', chosen: false },
+      { id: 'watch', chosen: false },
+    ])
+    expect(getReplayOptions(state, { type: 'batting', id: 'single', label: '1루타' }, true)).toMatchObject([
+      { id: 'hit', chosen: true },
+      { id: 'out', chosen: false },
+      { id: 'strikeoutWalk', chosen: false },
+    ])
+  })
+
   it('collects a bounded set of announcement flows', () => {
     const cases = createAnnouncementAuditCases()
     expect(cases.length).toBeGreaterThan(50)

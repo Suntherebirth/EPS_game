@@ -182,7 +182,7 @@ function App() {
   const [scenario, setScenario] = useState<ScenarioState>(() => startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: adminMode }))
   const [plateReplayFrames, setPlateReplayFrames] = useState<AnnouncementReplayFrame[]>(() => {
     const initial = startScenario(OFFENSE_CORE_PACK, createScenarioContext(situation), { manualChance: adminMode })
-    return [{ stepIndex: 0, label: `시작 · ${describeSituation(situation)}`, state: initial, options: getReplayOptions(initial) }]
+    return [{ stepIndex: 0, label: `시작 · ${describeSituation(situation)}`, state: initial, options: getReplayOptions(initial, undefined, adminMode) }]
   })
   const [records, setRecords] = useState<RecordEntry[]>([])
   const [playResultReady, setPlayResultReady] = useState(false)
@@ -306,7 +306,7 @@ function App() {
       stepIndex: 0,
       label: `시작 · ${describeSituation(nextSituation)}`,
       state: initialScenario,
-      options: getReplayOptions(initialScenario),
+      options: getReplayOptions(initialScenario, undefined, adminMode),
     }])
     setPhase('playing')
   }
@@ -355,13 +355,22 @@ function App() {
     setScenario(next)
     const previous = plateReplayFrames.at(-1)
     const selectedFrame = previous && selectedAction
-      ? { ...previous, options: previous.options.map((option) => ({ ...option, chosen: option.kind === selectedAction.kind && option.id === selectedAction.id })) }
+      ? {
+          ...previous,
+          options: previous.options.map((option) => ({
+            ...option,
+            chosen: option.kind === selectedAction.kind && (
+              option.id === selectedAction.id ||
+              selectedAction.kind === 'batting' && BATTING_CATEGORIES.find((category) => category.id === option.id)?.eventIds.includes(selectedAction.id as BattingEventId) === true
+            ),
+          })),
+        }
       : previous
     const nextFrame = {
       stepIndex: plateReplayFrames.length,
       label: next.context.selectedLabel || '진행',
       state: next,
-      options: getReplayOptions(next),
+      options: getReplayOptions(next, undefined, adminMode),
     }
     const nextReplayFrames = selectedFrame
       ? [...plateReplayFrames.slice(0, -1), selectedFrame, nextFrame]
@@ -370,14 +379,14 @@ function App() {
     if (terminal) completeScenario(next, nextReplayFrames)
   }
 
-  const chooseBatting = (eventId: BattingEventId, customLabel?: string) =>
-    acceptState(selectScenarioBattingEvent(OFFENSE_CORE_PACK, scenario, eventId, { manualChance: adminMode, selectedLabel: customLabel }), { id: eventId, kind: 'batting' })
+  const chooseBatting = (eventId: BattingEventId, customLabel?: string, replayChoiceId: string = eventId) =>
+    acceptState(selectScenarioBattingEvent(OFFENSE_CORE_PACK, scenario, eventId, { manualChance: adminMode, selectedLabel: customLabel }), { id: replayChoiceId, kind: 'batting' })
 
   const chooseProbabilisticBatting = (choiceId: ProbabilisticBattingChoice) => {
     const config = PROBABILISTIC_BATTING_CHOICES.find((item) => item.id === choiceId)
     if (!config) return
     const eventId = resolveProbabilisticBattingChoice(choiceId)
-    chooseBatting(eventId, config.label)
+    chooseBatting(eventId, config.label, choiceId)
   }
 
   const chooseOption = (choiceId: string) => acceptState(chooseScenarioOption(OFFENSE_CORE_PACK, scenario, choiceId, { manualChance: adminMode }), { id: choiceId, kind: 'choice' })
@@ -579,6 +588,11 @@ function App() {
       : []
   const canAct = phase === 'playing' && (sceneIsFinalStep || adminMode && sceneNode.type === 'chance')
   const isNormalChoiceOverlayVisible = canAct && !replaying && node.type === 'choice' && !isSurpriseEvent && availableChoices.length > 0
+  const replayChoiceLayoutClass = replayFrame?.options.some((option) => option.kind === 'chance')
+    ? `runner-choices chance-result-choices choice-count-${replayFrame.options.length} ${replayFrame.options.length === 1 ? 'single-choice' : ''}`
+    : node.type === 'batting'
+      ? replayFrame?.options.some((option) => option.id === 'contact') ? 'probabilistic-choices' : 'batting-category-choices'
+      : `runner-choices ${replayFrame?.options.length === 1 ? 'single-choice' : ''}`
   const showPlayResult = playResultVisible && playResultReady
   const backgroundDimmingDelay = isNormalChoiceOverlayVisible ? overlayMessages.length > 1 ? 1410 : overlayMessages.length > 0 ? 770 : 520 : showPlayResult ? 0 : undefined
   const nextSceneId = currentAnnouncement ? resolveSceneId(currentAnnouncement) : undefined
@@ -676,7 +690,7 @@ function App() {
           <button type="button" className="category-back-chip" onClick={() => setSelectedBattingCategory(null)} aria-label="타격 카테고리 선택으로 돌아가기"><ChevronLeft size={16} /><span>카테고리: {BATTING_CATEGORIES.find((category) => category.id === selectedBattingCategory)?.label}</span></button>
         </div>}
         {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' || node.type === 'chance' || node.type === 'batting' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
-        {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
+        {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayChoiceLayoutClass}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && (
           <div className={`batting-container ${adminMode && node.mode === 'random' ? 'admin-batting-container' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>
             {!adminMode ? (

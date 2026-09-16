@@ -549,7 +549,7 @@ button { font: inherit; }
 .replay-buttons button.replay-auto-on { color: white; border-color: var(--green); background: var(--green); }
 .replay-buttons button.replay-ok-button { border-color: var(--green); color: white; background: var(--green); }
 .replay-buttons button.replay-ok-button:hover { border-color: #0d3022; color: white; background: #0d3022; }
-.decision-panel > .replay-choices { position: absolute; right: 30%; bottom: var(--broadcast-bottom); left: 10%; width: auto; max-height: 26%; overflow-y: auto; transform: none; pointer-events: none; animation: choice-panel-in .26s cubic-bezier(.2, .8, .2, 1) both; }
+.decision-panel > .replay-choices { position: absolute; right: 30%; bottom: var(--broadcast-bottom); left: 10%; width: auto; max-height: 36%; overflow-y: visible; transform: none; pointer-events: none; animation: choice-panel-in .26s cubic-bezier(.2, .8, .2, 1) both; }
 .replay-choices button { animation: none; cursor: default; opacity: .55; }
 .replay-choices button.chosen { opacity: 1; border-color: rgba(255,249,194,1); background: rgba(55,42,12,.9); box-shadow: 0 0 0 4px rgba(255,219,94,.42), 0 0 30px rgba(255,219,94,.68); }
 .replay-choices button.chosen strong::after { content: '선택됨'; margin-left: auto; padding: 2px 7px; border-radius: 3px; color: #1d1405; background: var(--gold); font-size: 10px; font-weight: 800; }

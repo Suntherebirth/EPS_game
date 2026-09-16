@@ -1,4 +1,4 @@
-import { BATTING_EVENTS } from './battingEvents'
+import { BATTING_CATEGORIES, BATTING_EVENTS, PROBABILISTIC_BATTING_CHOICES } from './battingEvents'
 import { BASE_COMBINATIONS, createScenarioContext, describeSituation, type Base, type Situation } from './gameSetup'
 import { OFFENSE_CORE_PACK } from './packs/offenseCorePack'
 import type { ScenarioAnnouncement, ScenarioAnnouncementHistoryEntry, ScenarioState } from './scenario'
@@ -161,13 +161,28 @@ export const getAnnouncementMessages = (state: ScenarioState): AnnouncementAudit
   ]
 }
 
-export const getReplayOptions = (state: ScenarioState, chosen?: AnnouncementAuditStep): AnnouncementReplayOption[] => {
+export const getReplayOptions = (state: ScenarioState, chosen?: AnnouncementAuditStep, adminMode = true): AnnouncementReplayOption[] => {
   const node = OFFENSE_CORE_PACK.nodes[state.nodeId]
   if (!node) return []
   if (node.type === 'batting') {
-    return BATTING_EVENTS
-      .filter((event) => node.eventIds.includes(event.kind))
-      .map((event) => ({ id: event.kind, label: event.label, description: event.description, kind: 'batting' as const, chosen: chosen?.type === 'batting' && chosen.id === event.kind }))
+    if (!adminMode) {
+      return PROBABILISTIC_BATTING_CHOICES.map((choice) => ({
+        id: choice.id,
+        label: choice.label,
+        description: choice.description,
+        kind: 'batting' as const,
+        chosen: chosen?.type === 'batting' && chosen.id === choice.id,
+      }))
+    }
+    return BATTING_CATEGORIES
+      .filter((category) => category.eventIds.some((eventId) => node.eventIds.includes(eventId)))
+      .map((category) => ({
+        id: category.id,
+        label: category.label,
+        description: category.description,
+        kind: 'batting' as const,
+        chosen: chosen?.type === 'batting' && category.eventIds.includes(chosen.id as never),
+      }))
   }
   if (node.type === 'choice') {
     return getAvailableScenarioChoices(OFFENSE_CORE_PACK, state).map((choice) => ({ id: choice.id, label: choice.label, ...(choice.description ? { description: choice.description } : {}), kind: 'choice' as const, chosen: chosen?.type === 'choice' && chosen.id === choice.id }))
