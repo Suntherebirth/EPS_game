@@ -116,6 +116,11 @@ describe('playResultCodes', () => {
     })
   })
 
+  it('does not attach a result code to the in-progress "발생" announcement, only to the final "아웃" outcome', () => {
+    expect(matchAnnouncementToResultCode({ title: '내야 뜬공 발생!', detail: '내야수가 타구를 처리하러 이동합니다.' })).toBeNull()
+    expect(matchAnnouncementToResultCode({ title: '내야 뜬공 아웃!', detail: '플레이가 완료되었습니다.' })?.code).toBe('B-IF-O')
+  })
+
   it('maps infield ground-ball results by contact strength', () => {
     expect(resolvePlayResultCode(PLAY_RESULT_ITEMS.groundSafeSoft)).toEqual({
       item: '내야 땅볼 세이프 (약한 타구)',

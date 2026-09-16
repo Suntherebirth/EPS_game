@@ -186,7 +186,7 @@ export const matchAnnouncementToResultCode = (announcement?: { title?: string; d
   if (title.includes('낫아웃 아웃') || title.includes('낫아웃')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.droppedThirdStrikeOut)
   if (title.includes('삼진')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.strikeout)
   if (title.includes('인필드 플라이')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFlyRuleOut)
-  if (title.includes('내야 뜬공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFlyOut)
+  if (title.includes('내야 뜬공 아웃')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.infieldFlyOut)
   if (title.includes('희생플라이')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.sacrificeFly)
   if (title.includes('외야 뜬공 아웃') || title.includes('뜬공 처리 성공')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.flyOut)
   if (title.includes('병살') || title.includes('더블 플레이')) return resolvePlayResultCode(PLAY_RESULT_ITEMS.groundDoublePlay)

@@ -152,9 +152,25 @@ function TapContinueButton({ stepKey, onClick }: { stepKey: string; onClick: () 
   return <button type="button" className="tap-continue-button" onClick={(event) => { event.stopPropagation(); onClick() }} aria-label="다음 장면 보기">탭하여 계속 <ChevronRight size={15} aria-hidden="true" /></button>
 }
 
+type ChoiceCard = {
+  id: string
+  label: string
+  description?: string
+  onSelect: () => void
+}
+
+function ChoiceCardList({ choices, className = '' }: { choices: ChoiceCard[]; className?: string }) {
+  return <div className={`choices ${className}`.trim()}>{choices.map((choice) => (
+    <button type="button" onClick={choice.onSelect} key={choice.id}>
+      <span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span>
+      <ChevronRight size={18} />
+    </button>
+  ))}</div>
+}
+
 function App() {
   const [appMode, setAppMode] = useState<AppMode>('game')
-  const [adminMode, setAdminMode] = useState(false)
+  const [adminMode, setAdminMode] = useState(true)
   const [selectedBattingCategory, setSelectedBattingCategory] = useState<BattingCategory | null>(null)
   const [replay, setReplay] = useState<{ frames: AnnouncementReplayFrame[]; index: number; playing: boolean } | null>(null)
   const [replayReturnPhase, setReplayReturnPhase] = useState<Phase | null>(null)
@@ -546,6 +562,21 @@ function App() {
     ? resolveSceneImageFilename(surpriseOverlayAnnouncement, resolveAnnouncementImageBase(surpriseOverlayAnnouncement, displayedState.context.playerBase))
     : undefined
   const announcementRenderKey = `${displayedState.context.announcementHistory.length}:${displayedState.context.announcement?.title ?? ''}:${displayedState.context.announcement?.detail ?? ''}`
+  const runnerChoiceCards: ChoiceCard[] = node.type === 'choice'
+    ? availableChoices.map((choice) => ({
+      id: choice.id,
+      label: choice.label,
+      description: choice.description,
+      onSelect: () => chooseOption(choice.id),
+    }))
+    : node.type === 'chance'
+      ? node.outcomes.map((outcome) => ({
+        id: outcome.id,
+        label: outcome.label ?? `${node.title} ${outcome.id}`,
+        description: `확률 ${Math.round(outcome.weight * 100)}%`,
+        onSelect: () => chooseChanceOutcome(outcome.id),
+      }))
+      : []
   const canAct = phase === 'playing' && (sceneIsFinalStep || adminMode && sceneNode.type === 'chance')
   const isNormalChoiceOverlayVisible = canAct && !replaying && node.type === 'choice' && !isSurpriseEvent && availableChoices.length > 0
   const showPlayResult = playResultVisible && playResultReady
@@ -641,7 +672,10 @@ function App() {
           {surpriseOverlayImageUrl ? <img src={surpriseOverlayImageUrl} alt="" /> : <span>{surpriseOverlayImageName ?? '돌발 이벤트 이미지 파일 필요'}</span>}
         </div>}
         {shouldShowTapHint && <TapContinueButton key={tapHintTargetKey} stepKey={tapHintTargetKey} onClick={advanceScene} />}
-        {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' || node.type === 'batting' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
+        {canAct && node.type === 'batting' && selectedBattingCategory !== null && <div className="category-back-positioner">
+          <button type="button" className="category-back-chip" onClick={() => setSelectedBattingCategory(null)} aria-label="타격 카테고리 선택으로 돌아가기"><ChevronLeft size={16} /><span>카테고리: {BATTING_CATEGORIES.find((category) => category.id === selectedBattingCategory)?.label}</span></button>
+        </div>}
+        {canAct && actionInstruction && <p className={`action-instruction ${node.type === 'choice' || node.type === 'chance' || node.type === 'batting' ? 'choice-instruction' : ''}`} key={`${displayedState.nodeId}:${actionInstruction}:${announcementRenderKey}`}>{actionInstruction}</p>}
         {replaying && replayFrame && replayFrame.options.length > 0 && <div className={`choices replay-choices ${replayFrame.options.some((option) => option.kind === 'chance') ? 'replay-chance-choices' : ''}`}>{replayFrame.options.map((option) => <button type="button" key={option.id} disabled className={option.chosen ? 'chosen' : ''}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span><ChevronRight size={18} /></button>)}</div>}
         {canAct && !replaying && node.type === 'batting' && (node.mode === 'direct' || adminMode) && (
           <div className={`batting-container ${adminMode && node.mode === 'random' ? 'admin-batting-container' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>
@@ -685,17 +719,6 @@ function App() {
               </div>
             ) : (
               <div className="batting-subcategory-wrapper">
-                <div className="batting-subcategory-header">
-                  <button
-                    type="button"
-                    className="category-back-chip"
-                    onClick={() => setSelectedBattingCategory(null)}
-                    aria-label="카테고리 선택으로 돌아가기"
-                  >
-                    <ChevronLeft size={16} />
-                    <span>카테고리: {BATTING_CATEGORIES.find((c) => c.id === selectedBattingCategory)?.label}</span>
-                  </button>
-                </div>
                 <div className="choices batting-subcategory-choices">
                   {BATTING_EVENTS.filter(
                     (event) =>
@@ -712,12 +735,8 @@ function App() {
             )}
           </div>
         )}
-        {canAct && !replaying && node.type === 'choice' && <div className={`choices runner-choices ${availableChoices.length === 1 ? 'single-choice' : ''}`} key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}>{availableChoices.map((choice) => (
-          <button type="button" onClick={() => chooseOption(choice.id)} key={choice.id}><span><strong>{choice.label}</strong>{choice.description && <small>{choice.description}</small>}</span><ChevronRight size={18} /></button>
-        ))}</div>}
-        {canAct && !replaying && adminMode && node.type === 'chance' && <div className="admin-console" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`} onClick={(event) => event.stopPropagation()}><span>결과확정형 · 확률 결과 선택</span><div className={`choices runner-choices ${node.outcomes.length === 1 ? 'single-choice' : ''}`}>{node.outcomes.map((outcome) => (
-          <button type="button" onClick={() => chooseChanceOutcome(outcome.id)} key={outcome.id}><span><strong>{outcome.label ?? `${node.title} ${outcome.id}`}</strong><small>확률 {Math.round(outcome.weight * 100)}%</small></span><ChevronRight size={18} /></button>
-        ))}</div></div>}
+        {canAct && !replaying && node.type === 'choice' && <div className="batting-container" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`}><ChoiceCardList choices={runnerChoiceCards} className={`runner-choices ${runnerChoiceCards.length === 1 ? 'single-choice' : ''}`} /></div>}
+        {canAct && !replaying && adminMode && node.type === 'chance' && <div className="batting-container chance-result-container" key={`choices:${displayedState.nodeId}:${announcementRenderKey}`} onClick={(event) => event.stopPropagation()}><ChoiceCardList choices={runnerChoiceCards} className={`runner-choices chance-result-choices choice-count-${runnerChoiceCards.length} ${runnerChoiceCards.length === 1 ? 'single-choice' : ''}`} /></div>}
         {showPlayResult && <section className="play-result" aria-live="polite">
           <h2>이번 타석 결산</h2>
           <div className="play-result-record" aria-label="플레이 점수 기록">
